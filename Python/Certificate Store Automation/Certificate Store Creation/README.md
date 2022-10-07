@@ -22,7 +22,7 @@ This Python script can be put into a Python Scheduler and ran to keep Windows Se
 
 * At least one configured Universal Orchestrator
 
-* The [IIS w/ Bindings Certificate Store type](https://github.com/Keyfactor/gps-configuration-playbooks/blob/main/attachments/certificate_store_creation/IIS_With_Binding.ps1) must be created prior to running the script.
+* The IIS w/ Bindings Certificate Store type must be created prior to running the script.
 
 * There are two options with this automation package: 
 
@@ -36,10 +36,10 @@ This Python script can be put into a Python Scheduler and ran to keep Windows Se
 * Ensure the Containers for each IIS Certificate Store Type is created
 
 # **Scripts**
- * [add_iis_v9.py](https://github.com/Keyfactor/gps-configuration-playbooks/blob/main/attachments/certificate_store_automation/add_iis_v9.py) : Keyfactor version 9 script
- * [add_iis_v10.py](https://github.com/Keyfactor/gps-configuration-playbooks/blob/main/attachments/certificate_store_automation/add_iis_v10.py) : Keyfactor version 10 script
- * [config.py](https://github.com/Keyfactor/gps-configuration-playbooks/blob/main/attachments/certificate_store_automation/config.py) : contains configuration information
- * [mapping.csv](https://github.com/Keyfactor/gps-configuration-playbooks/blob/main/attachments/certificate_store_automation/mapping.csv) : sample import csv
+ * [add_iis_v9.py](add_iis_v9.py) : Keyfactor Command v9 script
+ * [add_iis_v10.py](add_iis_v10.py) : Keyfactor Command v10 script
+ * [config.py](config.py) : Required configuration file
+ * [mapping.csv](mapping.csv) : Sample CSV Import file
 
 # **Deployment & Configuration Playbook**
 
