@@ -40,7 +40,7 @@ This automation package is configured so that after running the provided python 
 
 # **Scripts**
  * [discovery_v9.py](discovery_v9.py) : Keyfactor Command v9 Script
- * * [discovery_v10.py](discovery_v10.py) : Keyfactor Command v10 Script
+ *  [discovery_v10.py](discovery_v10.py) : Keyfactor Command v10 Script
  * [config.py](config.py) : Required configuration file
 
 # **Deployment & Configuration Playbook**
