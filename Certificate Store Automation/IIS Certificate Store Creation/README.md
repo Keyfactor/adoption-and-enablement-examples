@@ -4,6 +4,7 @@
 |--|--|--|
 | 9/29/2022 | Jeremy Howland | Added Removal and Schedule Capabilities |
 | 10/7/2022 | Adam Joyner | Convert to public facing document | 
+| 5/2/2023 | Adam Joyner | Update to support IISU store type |
 
 
 # **Supported Versions**
@@ -22,7 +23,7 @@ This Python script can be put into a Python Scheduler and ran to keep Windows Se
 
 * At least one configured Universal Orchestrator
 
-* The IIS w/ Bindings Certificate Store type must be created prior to running the script.
+* The IISU Certificate Store type must be created prior to running the script.
 
 * There are two options with this automation package: 
 
