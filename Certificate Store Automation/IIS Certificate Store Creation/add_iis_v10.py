@@ -287,7 +287,7 @@ def remove_stores(env, keyfactor_store):
 
 def work(env, clientmachine, iiswbinstorepath, username, password, schedule, iteration, run_time, day_of_week,
          orchestrator=None):
-    ctypenames = ['IIS', "IISwbin"]
+    ctypenames = ['IIS', "IISU"]
     for name in ctypenames:
         ctype_info = pull_certstore_types(env, name)
         if orchestrator is None:
@@ -296,7 +296,7 @@ def work(env, clientmachine, iiswbinstorepath, username, password, schedule, ite
             orchestrator = orchestrator['ClientMachine']
         for ctype in ctype_info:
             shortname = ctype['ShortName']
-            if shortname == 'IISWBin':
+            if shortname == 'IISU':
                 properties = '{\"ServerPassword\": {\"value\": {\"SecretValue\": \"' + password + '\"}},\"ServerUsername\": {\"value\": {\"SecretValue\": \"' + username + '\"}},\"ServerUseSsl\": {\"value\":\"false\"},\"spnwithport\":{\"value\":\"false\"},\"WinRm Port\":{\"value\":\"5985\"},\"WinRm Protocol\":{\"value\":\"http\"}}'
                 print(properties)
                 add_iis(env, iiswbinstorepath, orchestrator, clientmachine, ctype_info, properties, schedule, iteration, run_time, day_of_week)

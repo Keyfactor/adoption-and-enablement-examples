@@ -13,7 +13,7 @@ Keyfactor Command 9.X
 Keyfactor Command 10.X
 
 # **Overview**
-This automation package is configured so that after running the provided python script, the IIS Personal, IIS Revoked, IIS Roots, and IIS w/ Bindings Certificate stores will be created and optionally scheduled.
+This automation package is configured so that after running the provided python script, the IIS Personal, IIS Revoked, IIS Roots, and IISU Certificate stores will be created and optionally scheduled.
 
 # **Optional Use Case**
 This Python script can be put into a Python Scheduler and ran to keep Windows Server Certificate Stores up-to-date with Keyfactor.
@@ -32,7 +32,7 @@ This Python script can be put into a Python Scheduler and ran to keep Windows Se
      *   All endpoints have share a common local administrator service account.
      *   The provided script must have read access to the customers' entire Active Directory.
      *   Windows Server AD objects must have their operating system in the operatingSystem attribute, and the value must contain the string `server`
-* Ensure that the IIS w/ Bindings certificate store type has been created in the Keyfactor Instance
+* Ensure that the IISU certificate store type has been created in the Keyfactor Instance
 * Ensure the Containers for each IIS Certificate Store Type is created
 
 # **Scripts**
