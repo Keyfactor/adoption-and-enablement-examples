@@ -297,7 +297,7 @@ def work(env, clientmachine, iiswbinstorepath, username, password, schedule, ite
         for ctype in ctype_info:
             shortname = ctype['ShortName']
             if shortname == 'IISU':
-                properties = '{"spnwithport":{"value":"false"},"WinRm Protocol":{"value":"http"},"WinRm Port":{"value":"5985"},"ServerUsername":{"value":{"SecretValue":"' + password + '"}},"ServerPassword":{"value":{"SecretValue":"' + username + '"}},"ServerUseSsl":{"value":"true"}}'
+                properties = '{"spnwithport":{"value":"false"},"WinRm Protocol":{"value":"http"},"WinRm Port":{"value":"5985"},"ServerUsername":{"value":{"SecretValue":"' + username + '"}},"ServerPassword":{"value":{"SecretValue":"' + password + '"}},"ServerUseSsl":{"value":"true"}}'
                 print(properties)
                 add_iis(env, iiswbinstorepath, orchestrator, clientmachine, ctype_info, properties, schedule, iteration, run_time, day_of_week)
             else:
