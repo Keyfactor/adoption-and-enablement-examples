@@ -297,7 +297,7 @@ def work(env, clientmachine, iiswbinstorepath, username, password, schedule, ite
         for ctype in ctype_info:
             shortname = ctype['ShortName']
             if shortname == 'IISU':
-                properties = '{\"ServerPassword\": {\"value\": {\"SecretValue\": \"' + password + '\"}},\"ServerUsername\": {\"value\": {\"SecretValue\": \"' + username + '\"}},\"ServerUseSsl\": {\"value\":\"false\"},\"spnwithport\":{\"value\":\"false\"},\"WinRm Port\":{\"value\":\"5985\"},\"WinRm Protocol\":{\"value\":\"http\"}}'
+                properties = '{"spnwithport":{"value":"false"},"WinRm Protocol":{"value":"http"},"WinRm Port":{"value":"5985"},"ServerUsername":{"value":{"SecretValue":"' + password + '"}},"ServerPassword":{"value":{"SecretValue":"' + username + '"}},"ServerUseSsl":{"value":"true"}}'
                 print(properties)
                 add_iis(env, iiswbinstorepath, orchestrator, clientmachine, ctype_info, properties, schedule, iteration, run_time, day_of_week)
             else:
@@ -310,7 +310,7 @@ def main():
     # Required Argument
     requirednamed = parser.add_argument_group('required arguments')
     requirednamed.add_argument("-e", "--environment", help="Environment Name", required=True)
-    requirednamed.add_argument("-s", "--schedule", help="defines if a schedule will be used", required=True)
+    requirednamed.add_argument("-s", "--schedule", help="defines if a schedule will be used", default=False, action=argparse.BooleanOptionalAction)
 
     # One is required
     mutually_exclusive_group = parser.add_mutually_exclusive_group(required=True)

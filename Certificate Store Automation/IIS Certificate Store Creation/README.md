@@ -45,30 +45,30 @@ This Python script can be put into a Python Scheduler and ran to keep Windows Se
 # **Deployment & Configuration Playbook**
 
 1.  Copy the scripts to a host that has Python 3+ installed. Ensure that the `add_iis` script and `config.py` are in the same directory
-2.  Ensure that `ldap3` has been installed from pip
+2.  Ensure that `ldap3` and `pytz` has been installed from pip
 ```
-pip3 install ldap3
+pip3 install ldap3 pytz
 ``` 
 3. Modify `config.py` with the details corresponding to your Keyfactor instance information
 4. Run the provided `add_iis` script. 
 #### **CSV Import:**
 This can be run from any host that can access the Keyfactor server
 ```
-python3 add_iis.py -e <environment> -s <schedule(true/false)> -f /path/to/mapping.csv
+python3 add_iis_v10.py -e <environment> -f /path/to/mapping.csv
 ```
 
 #### **Domain Scan Import:**
 This can be run from any host that can access the Keyfactor server. This also must be run in an environment that has access to the specified domain
 ```
-python3 add_iis.py -e <environment> -s <schedule(true/false)> -i my -u domain\username -p password -dc DC.command.local
+python3 add_iis_v10.py -e <environment> -i my -u domain\username -p password -dc DC.command.local
 ```
-The `-u` and `-p` correspond to the common account that must have localadmin privileges on each of the client machine endpoints whose certificate stores are being inventoried.
+The `-u` and `-p` args correspond to the common account that must have localadmin privileges on each of the client machine endpoints whose certificate stores are being inventoried.
 
 The `-dc` flag must correspond to an entry in the `LDAP_CONTROLLERS` dictionary in `config.py`. The entry can either map to a DNS name or and IP address if local DNS lookups are unavailable.
 
-The `-s` flag correspond to a boolean true or false statement if you choose to have a set schedule for all your certificate stores.
+The `-s` flag corresponds to if you choose to have a set schedule for all your certificate stores.
 
-If the `-s` is set to "true", the following flags are also required: 
+If the `-s` flag is set, the following flags are also required: 
 * `-r` corresponds to a run_time variable which is the time you want the schedule to run.  It is required in this format: HH:MM:SS.
-* `-fr` corresponds to a frequency variable which is the frequency the schedule will run.  the  options are: (case-sensitive) exactlyOnce, monthly, weekly, daily.
+* `-fr` corresponds to a frequency variable which is the frequency the schedule will run.  the  options are: (case-sensitive) exactlyOnce, daily.
 * `-d` corresponds to a day variable which is the day you want the job to run.  The options are: Mon, Tue, Wed, Thu, Fri, Sat, Sun
