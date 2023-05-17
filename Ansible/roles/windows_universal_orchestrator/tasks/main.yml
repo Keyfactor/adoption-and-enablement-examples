@@ -1,6 +1,6 @@
-- import_tasks: check-requirments.yml
+- import_tasks: check-requirements.yml
   tags:
-  - requirments
+  - requirements
 - import_tasks: copy-files.yml
   tags:
   - copy
