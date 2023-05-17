@@ -1,0 +1,15 @@
+- import_tasks: check-requirements.yml
+  tags:
+  - requirements
+- import_tasks: copy-files.yml
+  tags:
+  - copy
+- import_tasks: install-orchestrator.yml
+  tags:
+  - install
+- import_tasks: install_files_cleanup.yml
+  tags:
+  - cleanup
+- import_tasks: validation.yml
+  tags:
+  - validation
