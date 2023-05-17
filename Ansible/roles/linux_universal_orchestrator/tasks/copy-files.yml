@@ -1,0 +1,10 @@
+---
+- name: Copy Zip Install Files
+  Copy:
+    src: "{{ orchestrator_zip }}"
+    dest: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+
+- name: unzip Install Files
+  unarchive: 
+    src: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+    desc: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
