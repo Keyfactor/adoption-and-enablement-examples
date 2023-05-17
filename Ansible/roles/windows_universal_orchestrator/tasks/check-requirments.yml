@@ -1,0 +1,14 @@
+---
+- name: Check for current .NET Core version
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedhost
+    name: Version
+  register: dotnet_version
+  failed_when: dotnet_version.value is version(min_dotnet_version, operator='<', strict=True)
+  
+- name: Check for current OS version
+  win_shell: |
+    (Get-CimInstance Win32_OperatingSystem).version
+  register: OS_version
+  failed_when: OS_version.stdout_lines[0] < os_min_version
+  

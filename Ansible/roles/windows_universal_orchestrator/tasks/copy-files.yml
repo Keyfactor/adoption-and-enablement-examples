@@ -1,0 +1,19 @@
+---
+- name: Create Install Source Directory
+  win_file:
+    path: "{{ install_source_dir }}"
+    state: directory
+
+- name: Copy Zip Install Files
+  win_copy:
+    src: "{{ orchestrator_zip }}"
+    dest: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+
+- name: unzip Install Files
+  win_shell: |
+    Expand-Archive -LiteralPath "{{ install_source_dir }}{{ orchestrator_zip_name }}" -DestinationPath "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
+
+- name: Create powershell script
+  win_template:
+    src: "{{ powershell_template }}"
+    dest: "{{ install_source_dir }}{{ powershell_file_name }}"

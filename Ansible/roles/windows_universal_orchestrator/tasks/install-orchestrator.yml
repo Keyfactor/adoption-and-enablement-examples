@@ -1,0 +1,3 @@
+---
+- name: Run Powershell
+  win_shell: "{{ install_source_dir }}{{ powershell_file_name }}"
