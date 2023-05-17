@@ -54,7 +54,7 @@ ansible-playbook -i <inventory> playbook.yml
 
 ## Tags
 
-- `requirments` - Validaqtes Server and Software Requirments.
+- `requirements` - Validates Server and Software Requirements.
 - `copy` - Copies specified files to Target Host.
 - `install` - Runs existing installation with configuration file generated.
 - `cleanup` - removes install directory and files.
@@ -70,13 +70,13 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 
 - `keyfactorUser`: `<domain\\user>` active directory account used to connect Keyfactor Command.
 
-- `orchestrator_name`: `<name of Orchstrator>` The name that will be known in Keydactor Command.  This can be passed as a variable in the playbook.
+- `orchestrator_name`: `<name of Orchestrator>` The name that will be known in Keyfactor Command.  This can be passed as a variable in the playbook.
 
 - `orchestrator_zip`: `KeyfactorUniversalOrchestrator-10.2.0.zip` Name of the zipped install files.  this is expected in the files directory.
 
 - `orchestrator_dir`: `Keyfactor Orchestrator\` Default directory name of where the Orchestrator will be installed. DO NOT CHANGE.
 
-- `orchestrator_zip_name`: `<password>` Name of the zipfile once it is moved locally to the host. DO NOT CHANGE.
+- `orchestrator_zip_name`: `<password>` Name of the zip file once it is moved locally to the host. DO NOT CHANGE.
 
 - `orchestrator_Install_dir_name`: `KeyfactorUniversalOrchestrator` Name of the unzipped directory on the local host. DO NOT CHANGE.
 
