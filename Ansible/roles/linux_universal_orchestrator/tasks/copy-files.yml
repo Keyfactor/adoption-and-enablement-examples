@@ -5,12 +5,7 @@
     state: directory
     mode: '0755'
 
-#- name: Copy Zip Install Files
-#  copy:
-#    src: "{{ orchestrator_zip }}"
-#    dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
-
-- name: unzip Install Files
+- name: Copy and Unzip Install Files
   unarchive:
     src: "{{ orchestrator_zip }}"
     dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
