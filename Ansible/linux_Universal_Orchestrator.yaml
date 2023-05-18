@@ -1,8 +1,0 @@
----
-- name: linux_Universal_Orchestrator.yaml
-  hosts: all
-  gather_facts: yes
-  tasks:
-  - name: include role
-    include_role:
-      name: linux_universal_orchestrator

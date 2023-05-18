@@ -1,8 +1,8 @@
-command_url: https://customer.keyfactor.com
-keyfactorPassword: password
-keyfactorUser: "domain\\aduser"
-orchestrator_name: "name"
-orchestrator_zip: file.zip
+command_url: https://jhowland102.kfdelivery.com
+keyfactorPassword: Wh5G2Tc6VBYjSMpC
+keyfactorUser: "command\\kfadmin"
+orchestrator_name: "IIS2.Command.local"
+orchestrator_zip: KeyfactorUniversalOrchestrator-10.2.0.zip
 
 #Do Not Change Below
 orchestrator_zip_name: KeyfactorUniversalOrchestrator.zip
