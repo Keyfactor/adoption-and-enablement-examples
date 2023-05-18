@@ -8,7 +8,7 @@
     status_code: 200
     return_content: true
   register: result
-  fail_when: result.x_total_count != "1"
+  failed_when: result.x_total_count != "1"
 
 - name: dubug
   debug:
