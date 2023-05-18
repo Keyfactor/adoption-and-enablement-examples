@@ -1,8 +1,8 @@
-command_url: https://jhowland102.kfdelivery.com
-keyfactorPassword: Wh5G2Tc6VBYjSMpC
-keyfactorUser: "kfadmin@command.local"
-orchestrator_name: "linux.Command.local"
-orchestrator_zip: KeyfactorUniversalOrchestrator-10.2.0.zip
+command_url: https://customerurl.keyfactor.com
+keyfactorPassword: password
+keyfactorUser: "aduser@domain.local"
+orchestrator_name: "orchesrator_name"
+orchestrator_zip: file.zip
 
 #Do Not Change Below
 install_source_dir: /var/tmp/KeyfactorUniversalOrchestrator

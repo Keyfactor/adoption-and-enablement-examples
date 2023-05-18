@@ -46,9 +46,9 @@ This Python script can be put into a Python Scheduler and ran to keep Windows Se
 
 1.  Copy the scripts to a host that has Python 3+ installed. Ensure that the `add_iis` script and `config.py` are in the same directory
 2.  Ensure that `ldap3` has been installed from pip
-```
-pip3 install ldap3
-``` 
+    ```
+    pip3 install ldap3
+    ``` 
 3. Modify `config.py` with the details corresponding to your Keyfactor instance information
 4. Run the provided `add_iis` script. 
 #### **CSV Import:**
