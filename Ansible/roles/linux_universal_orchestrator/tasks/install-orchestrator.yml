@@ -1,7 +1,7 @@
 ---
 - name: Run install
   shell:
-    cmd: sudo chmod +x install.sh
+    cmd: sudo chmod +x "{{ install_source_dir }}"/install.sh
 
 - name: Run install
   shell:
