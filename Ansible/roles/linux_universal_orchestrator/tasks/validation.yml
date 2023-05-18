@@ -11,4 +11,4 @@
 
 - name: dubug
   debug:
-    var: result
+    var: result.x_total_count
