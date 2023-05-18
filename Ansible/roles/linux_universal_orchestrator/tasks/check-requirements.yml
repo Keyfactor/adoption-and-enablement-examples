@@ -27,7 +27,7 @@
 - name: Check for current unzip version
   shell: unzip -v
   register: unzip_result
-  failed_when: unzip.rc != 0
+  failed_when: unzip_result.rc != 0
 
 - name: Check for current OS version for Redhat
   fail:
