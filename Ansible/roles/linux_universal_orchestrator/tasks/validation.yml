@@ -9,7 +9,3 @@
     return_content: true
   register: result
   failed_when: result.x_total_count != "1"
-
-- name: dubug
-  debug:
-    var: result.x_total_count
