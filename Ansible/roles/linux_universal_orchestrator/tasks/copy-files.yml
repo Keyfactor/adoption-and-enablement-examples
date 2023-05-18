@@ -7,7 +7,7 @@
 - name: unzip Install Files
   unarchive:
     src: "{{ orchestrator_zip }}"
-    dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
+    dest: "{{ install_source_dir }}"
 
 #- name: unzip Install Files
 #  unarchive:
