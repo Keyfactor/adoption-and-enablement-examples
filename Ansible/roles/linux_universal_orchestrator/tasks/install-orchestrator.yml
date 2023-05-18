@@ -1,4 +1,8 @@
 ---
 - name: Run install
   script:
-    cmd: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}/install.sh --url "{{command_url}}/KeyfactorAgents" --username "{{keyfactorUser}}" --password "{{keyfactorPassword}}" --orchestrator-name "{{ orchestrator_name }}" --capabilities all --force"
+    cmd: sudo chmod +x install.sh
+
+- name: Run install
+  script:
+    cmd: ./install.sh --url "{{command_url}}/KeyfactorAgents" --username "{{keyfactorUser}}" --password "{{keyfactorPassword}}" --orchestrator-name "{{ orchestrator_name }}" --capabilities all --force

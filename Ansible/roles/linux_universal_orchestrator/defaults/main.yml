@@ -5,6 +5,4 @@ orchestrator_name: "linux.Command.local"
 orchestrator_zip: KeyfactorUniversalOrchestrator-10.2.0.zip
 
 #Do Not Change Below
-orchestrator_zip_name: KeyfactorUniversalOrchestrator.zip
-orchestrator_Install_dir_name: KeyfactorUniversalOrchestrator
-install_source_dir: /var/tmp/
+install_source_dir: /var/tmp/KeyfactorUniversalOrchestrator

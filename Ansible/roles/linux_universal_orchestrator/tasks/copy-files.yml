@@ -1,11 +1,11 @@
 ---
 - name: Create a directory if it does not exist
   file:
-    path: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
+    path: "{{ install_source_dir }}"
     state: directory
     mode: '0755'
 
 - name: Copy and Unzip Install Files
   unarchive:
     src: "{{ orchestrator_zip }}"
-    dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
+    dest: "{{ install_source_dir }}"
