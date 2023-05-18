@@ -1,11 +1,16 @@
 ---
-- name: Copy Zip Install Files
-  copy:
-    src: "{{ orchestrator_zip }}"
-    dest: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+#- name: Copy Zip Install Files
+#  copy:
+#    src: "{{ orchestrator_zip }}"
+#    dest: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
 
 - name: unzip Install Files
-  unarchive: 
-    src: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+  unarchive:
+    src: "{{ orchestrator_zip }}"
     dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
-    remote_src: true
+
+#- name: unzip Install Files
+#  unarchive:
+#    src: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+#    dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
+#    remote_src: true
