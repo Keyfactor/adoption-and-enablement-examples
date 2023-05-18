@@ -6,7 +6,7 @@ orchestrator_zip: KeyfactorUniversalOrchestrator-10.2.0.zip
 
 #Do Not Change Below
 orchestrator_zip_name: KeyfactorUniversalOrchestrator.zip
-orchestrator_Install_dir_name: KeyfactorUniversalOrchestrator\
+orchestrator_Install_dir_name: KeyfactorUniversalOrchestrator
 orchestrator_dir: Keyfactor Orchestrator\
 install_target_dir: C:\Program Files\Keyfactor\
 install_source_dir: /var/tmp/
