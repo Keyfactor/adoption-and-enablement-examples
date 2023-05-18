@@ -13,5 +13,5 @@
 - name: unzip Install Files
   unarchive:
     src: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
-    dest: "{{ install_source_dir }}"
+    dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
     remote_src: true
