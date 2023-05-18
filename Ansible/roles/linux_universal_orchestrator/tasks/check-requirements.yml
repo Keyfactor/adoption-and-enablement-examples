@@ -24,6 +24,11 @@
   register: curl_result
   failed_when: curl_result.rc != 0
 
+- name: Check for current unzip version
+  shell: unzip --version
+  register: unzip_result
+  failed_when: unzip.rc != 0
+
 - name: Check for current OS version for Redhat
   fail:
     msg: " the OS does not meet Minum requirments"
