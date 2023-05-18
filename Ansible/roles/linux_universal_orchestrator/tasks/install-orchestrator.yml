@@ -5,4 +5,4 @@
 
 - name: Run install
   shell:
-    cmd: ./install.sh --url "{{command_url}}/KeyfactorAgents" --username "{{keyfactorUser}}" --password "{{keyfactorPassword}}" --orchestrator-name "{{ orchestrator_name }}" --capabilities all --force
+    cmd: sudo bash "{{ install_source_dir }}/install.sh" --url "{{command_url}}/KeyfactorAgents" --username "{{keyfactorUser}}" --password "{{keyfactorPassword}}" --orchestrator-name "{{ orchestrator_name }}" --capabilities all --force
