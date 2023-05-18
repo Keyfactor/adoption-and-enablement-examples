@@ -1,17 +1,16 @@
 ---
-- name: Copy Zip Install Files
-  copy:
-    src: "{{ orchestrator_zip }}"
-    dest: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
-
 - name: Create a directory if it does not exist
   file:
     path: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
     state: directory
     mode: '0755'
 
+#- name: Copy Zip Install Files
+#  copy:
+#    src: "{{ orchestrator_zip }}"
+#    dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
+
 - name: unzip Install Files
   unarchive:
-    src: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
+    src: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}{{ orchestrator_zip_name }}"
     dest: "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}"
-    remote_src: true
