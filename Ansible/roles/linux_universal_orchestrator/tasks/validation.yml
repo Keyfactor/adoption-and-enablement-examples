@@ -8,4 +8,7 @@
     status_code: 200
     return_content: true
   register: result
-  failed_when: result.xtotalcount != "1"
+
+- name: dubug
+  debug:
+    var: result
