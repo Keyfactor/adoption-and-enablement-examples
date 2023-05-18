@@ -2,27 +2,27 @@
 - name: Check for current .NET Core version
   shell: dotnet --list-runtimes
   register: dot_net_result
-  failed_when: dot_net_result is not defined
+  failed_when: dot_net_result.rc != 0
 
 - name: Check for current jq version
   shell: jq --version
   register: jq_result
-  failed_when: jq_result is not defined
+  failed_when: jq_result.rc != 0
 
 - name: Check for current systemd version
   shell: ps -p 1
   register: systemd_result
-  failed_when: systemd_result is not defined
+  failed_when: systemd_result.rc != 0
 
 - name: Check for current bash version
   shell: bash --version
   register: bash_result
-  failed_when: bash_result is not defined
+  failed_when: bash_result.rc != 0
 
 - name: Check for current curl version
   shell: curl --version
   register: curl_result
-  failed_when: curl_result is not defined
+  failed_when: curl_result.rc != 0
 
 - name: Check for current OS version for Redhat
   fail:
