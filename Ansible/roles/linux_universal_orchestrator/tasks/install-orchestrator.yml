@@ -1,4 +1,4 @@
 ---
 - name: Run install
   script:
-    cmd: install.sh --url "{{command_url}}/KeyfactorAgents" --username "{{keyfactorUser}}" --password "{{keyfactorPassword}}" --orchestrator-name "{{ orchestrator_name }}" --capabilities all --force
+    cmd: bash install.sh --url "{{command_url}}/KeyfactorAgents" --username "{{keyfactorUser}}" --password "{{keyfactorPassword}}" --orchestrator-name "{{ orchestrator_name }}" --capabilities all --force
