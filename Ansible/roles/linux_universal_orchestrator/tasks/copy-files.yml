@@ -1,6 +1,6 @@
 ---
 - name: Copy Zip Install Files
-  Copy:
+  copy:
     src: "{{ orchestrator_zip }}"
     dest: "{{ install_source_dir }}{{ orchestrator_zip_name }}"
 
