@@ -8,7 +8,12 @@
       name: linux_universal_orchestrator
     when: inventory_hostname in groups["linux"]
 
-#  - name: include role
-#    include_role:
-#      name: windows_universal_orchestrator
-#    when: inventory_hostname in groups["windows"]
+  - name: include role
+    include_role:
+      name: windows_universal_orchestrator
+    when: inventory_hostname in groups["windows"]
+
+  - name: include role
+    include_role:
+      name: anygateway
+    when: inventory_hostname in groups["anygateway"]
