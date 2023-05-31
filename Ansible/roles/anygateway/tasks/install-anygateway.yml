@@ -1,0 +1,61 @@
+---
+- name: block new install
+  block:
+    - name: Import a certificate
+      win_certificate_store:
+        path: "{{ install_source_dir }}{{ root_cert }}"
+        store_name: AuthRoot
+        state: present
+      register: root_result
+
+    - name: Import a certificate
+      win_certificate_store:
+        path: "{{ install_source_dir }}{{ int_cert }}"
+        store_name: CertificateAuthority
+        state: present
+      register: int_result
+
+    - name: Install Keyfactor AnyGateway
+      win_package:
+        path: "{{ install_source_dir }}{{ anygateway_dir }}{{ anygateway_msi_file_name }}"
+        arguments: "INSTALLFOLDER=\"{{ default_install_dir }}\""
+        log_path: "{{ install_source_dir }}\\install_anygateway_log.txt"
+      register: install_result
+      failed_when: install_result.rc != 0
+
+    - name: Copy dll
+      win_copy:
+        src: "{{ gw_dll }}"
+        dest: "{{ default_install_dir }}\\{{ gw_dll }}"
+
+    - name: Update a line using backrefs
+      win_shell: |
+        $file = Get-Content "{{ default_install_dir }}\CAProxyServer.exe.config"
+        $find = '    <alias alias="CAConnector" type="CAProxy.AnyGateway.NoOpCAConnector, CAProxy.AnyGateway.Core"/>'
+        $replace = '{{ ca_proxy_config_line }}'
+        $file -replace $find,$replace| Set-Content -Path "{{ default_install_dir }}\CAProxyServer.exe.config"
+      register: line_update_result
+      failed_when: line_update_result.rc != 0
+
+    - name: check local fw settings
+      win_shell: |
+        $get_rule = Get-NetFirewallRule -DisplayName "Keyfactor CA AnyGateway RPC-IN -ErrorAction Ignore"
+        if($get_rule){$result = $true}else{$result = $false}
+      register: result
+
+    - name: Set local fw settings
+      win_shell: |
+        New-NetFirewallRule -DisplayName "Keyfactor CA AnyGateway RPC-IN" `
+          -Description "An inbound rule to allow traffic to the Keyfactor CA Gateway for Enterprise certificate enrollment." `
+          -Direction Inbound `
+          -RemoteAddress "10.1.1.25" `
+          -LocalPort "RPC" `
+          -RemotePort "49152-65535" `
+          -Program "{{ default_install_dir }}\CAProxyServer.exe" `
+          -Protocol TCP `
+          -Action Allow
+        Set-NetFirewallRule -DisplayName "COM+ Network Access (DCOM-In)" -Enabled True
+        Get-NetFirewallRule -DisplayName "COM+ Network Access (DCOM-In)"
+      register: fw_result
+      when: result.stderr is defined
+  when: new_install == true

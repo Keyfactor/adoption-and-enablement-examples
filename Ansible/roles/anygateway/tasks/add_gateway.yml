@@ -1,0 +1,46 @@
+- name: add gateway to command
+  win_uri:
+    url: "{{ command_url }}/KeyfactorAPI/CertificateAuthority"
+    url_username: "{{keyfactorUser}}"
+    url_password: "{{keyfactorPassword}}"
+    method: POST
+    body: {
+      "LogicalName": "{{ logicalname }}",
+      "HostName": "{{ cahostname }}",
+      "Delegate": false,
+      "DelegateEnrollment": true,
+      "ConfigurationTenant": "{{ rootforest }}",
+      "Remote": false,
+      "Agent": null,
+      "Standalone": false,
+      "MonitorThresholds": false,
+      "IssuanceMax": null,
+      "IssuanceMin": null,
+      "FailureMax": null,
+      "RFCEnforcement": false,
+      "Properties": "{\"syncExternal\":false}",
+      "AllowedEnrollmentTypes": 0,
+      "KeyRetention": 0,
+      "KeyRetentionDays": null,
+      "ExplicitCredentials": false,
+      "SubscriberTerms": false,
+      "ExplicitUser": null,
+      "ExplicitPassword": null,
+      "UseAllowedRequesters": true,
+      "AllowedRequesters": [
+        "Administrator"
+      ],
+      "FullScan": null,
+      "IncrementalScan": null,
+      "ThresholdCheck": null,
+      "AuthCertificate": null,
+      "CAType": 0,
+      "EnforceUniqueDN": false
+      }
+    headers:
+      x-keyfactor-requested-with: XMLHttpRequest
+    content_type: application/json
+    force_basic_auth: true
+    status_code: 200
+    return_content: true
+  when: new_install == true
