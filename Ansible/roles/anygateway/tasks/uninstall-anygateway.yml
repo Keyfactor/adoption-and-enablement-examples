@@ -1,0 +1,5 @@
+---
+- name: Uninstall Keyfactor Gateway
+  win_shell: 'Get-WmiObject Win32_Product | where-Object {$_.name -Like "Keyfactor AnyGateway"} | ForEach-Object { $_.Uninstall() }'
+  register: uninstall_result
+  when: uninstall == true

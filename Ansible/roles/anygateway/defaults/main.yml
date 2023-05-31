@@ -1,0 +1,34 @@
+# actions needed #
+new_install: true
+upgrade: false
+update_json: false
+uninstall: false
+
+# Variables #
+command_url: https://<commandurl>
+keyfactorUser: "<domain>\\<user>"
+keyfactorPassword: "<password>"
+anygateway_zip: <nameofzipfile>.zip
+anygateway_dir: <unzippeddirname>\
+anygateway_msi_file_name: <unzippedmsiname>.msi
+sql_fqdn: <sqlserverfqdn>
+database_name: <databasename>
+db_user: "<db aql user>"
+db_password: "<password>"
+db_service_user: "<domain>\\<user>"
+cahostname: <gatewayhostname>
+logicalname: "<logicalcaname>"
+rootforest: "<rootdomain>.local"
+ca_proxy_config_line: '    <proxylinefromgit>'  #spaces needed at the begining
+root_cert: <root cert file name>
+int_cert: <intermediate cert file name>
+default_install_dir: "<default install dir>"
+gw_dll: DigiCertCAProxy.dll
+
+### DO NOT CHANGE ###
+install_source_dir: C:\InstallSource\
+min_dotnet_version: 4.6.2
+os_min_version: 10.0.17763
+json_file_name: anygatewayconfig.json
+temp_json: temp.json
+

@@ -1,0 +1,37 @@
+---
+- name: block new\upgrade install
+  block:
+    - name: Create Install Source Directory
+      win_file:
+        path: "{{ install_source_dir }}"
+        state: directory
+
+    - name: Copy MSI
+      win_copy:
+        src: "{{ anygateway_zip }}"
+        dest: "{{ install_source_dir }}{{ anygateway_zip }}"
+      when: new_install == true or upgrade == true
+
+    - name: Copy json
+      win_copy:
+        src: "{{ json_file_name }}"
+        dest: "{{ install_source_dir }}{{ json_file_name }}"
+
+    - name: Copy Root Certificate
+      win_copy:
+        src: "{{ root_cert }}"
+        dest: "{{ install_source_dir }}{{ root_cert }}"
+      when: new_install == true or upgrade == true
+
+    - name: Copy Root Certificate
+      win_copy:
+        src: "{{ int_cert }}"
+        dest: "{{ install_source_dir }}{{ int_cert }}"
+      when: new_install == true or upgrade == true
+
+    - name: unzip Install Files
+      win_shell: |
+        Expand-Archive -LiteralPath "{{ install_source_dir }}{{ anygateway_zip }}" -DestinationPath "{{ install_source_dir }}{{ anygateway_dir }}"
+      when: new_install == true or upgrade == true
+  when: new_install == true or update_json == true
+

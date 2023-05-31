@@ -1,7 +1,7 @@
-command_url: https://customer.keyfactor.com
+command_url: https://customerurl.keyfactor.com
 keyfactorPassword: password
 keyfactorUser: "domain\\aduser"
-orchestrator_name: "name"
+orchestrator_name: "orchestrator_name"
 orchestrator_zip: file.zip
 
 #Do Not Change Below

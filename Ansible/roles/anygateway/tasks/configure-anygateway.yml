@@ -1,0 +1,39 @@
+---
+- name: block new install
+  block:
+    - name: Create gateway database
+      win_shell: |
+        cd "{{ default_install_dir }}"
+        .\DatabaseManagementConsole.exe create --server {{ sql_fqdn }} --database {{ database_name }} -u "{{ db_user }}" -p {{ db_password }} --service-user "{{ db_service_user }}"
+      register: create_db_result
+      when: new_install == true
+
+    - name: configure DB connection
+      win_shell: |
+        cd "{{ default_install_dir }}"
+        Import-Module ".\ConfigurationCmdlets.dll"
+        Set-KeyfactorGatewayEncryptionCert
+        $password = ConvertTo-SecureString "{{ db_password }}" -AsPlainText -Force
+        $account = New-Object System.Management.Automation.PSCredential ("{{ db_user }}", $password)
+        Set-KeyfactorGatewayDatabaseConnection -Database {{ database_name }} -Server {{ sql_fqdn }} -account $account
+      register: connection_db_result
+      failed_when: connection_db_result.rc != 0
+
+    - name: get json
+      win_shell: |
+        cd "{{ default_install_dir }}"
+        Import-Module ".\ConfigurationCmdlets.dll"
+        Get-KeyfactorGatewayConfig -CAHostname "{{ cahostname }}" -FilePath {{ install_source_dir }}{{ temp_json }}
+      register: get_json_result
+      failed_when: get_json_result.rc != 0
+  when: new_install == true
+
+- name: set json config
+  win_shell: |
+    $password = ConvertTo-SecureString "{{ db_password }}" -AsPlainText -Force
+    $account = New-Object System.Management.Automation.PSCredential ("{{ keyfactorUser }}", $password)
+    Invoke-Command -ComputerName localhost -Credential $account -ScriptBlock {
+    cd "{{ default_install_dir }}"
+    Import-Module ".\ConfigurationCmdlets.dll"
+    Set-KeyfactorGatewayConfig -CAHostname "{{ cahostname }}" -LogicalName "{{ logicalname }}" -FilePath "{{ install_source_dir }}{{ json_file_name }}"}
+  when: new_install == true or update_json == true

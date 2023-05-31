@@ -1,0 +1,65 @@
+{
+    "Security": {
+        "DOMAIN\\Username": {
+            "READ": "Allow",
+            "ENROLL": "None",
+            "OFFICER": "Allow",
+            "ADMINISTRATOR": "Allow"
+        },
+        "DOMAIN\\GroupName": {
+            "READ": "None",
+            "ENROLL": "Allow",
+            "OFFICER": "None",
+            "ADMINISTRATOR": "None"
+        },
+        "DOMAIN\\Username2": {
+            "READ": "Allow",
+            "ENROLL": "None",
+            "OFFICER": "Deny",
+            "ADMINISTRATOR": "Deny"
+        }
+    },
+    "CAConnection": {},
+    "Templates": {
+        "MyTemplateShortName": {
+            "ProductID": "GatewayProductID",
+            "Parameters": {}
+        }
+    },
+  "CertificateManagers":{
+          "DOMAIN\\Username":{
+              "Templates":{
+                  "MyTemplateShortName":{
+                       "Requesters":{
+                              "Everyone":"Allow",
+                              "DOMAIN\\Groupname":"Deny"
+                      }
+                  },
+                  "<All>":{
+                      "Requesters":{
+                              "Everyone":"Allow"
+                      }
+                  }
+              }
+          }
+      },
+    "GatewayRegistration": {
+        "LogicalName": "",
+        "GatewayCertificate": {
+            "StoreName": "CA",
+            "StoreLocation": "LocalMachine",
+            "Thumbprint": "1234567890123456789123"
+        }
+    },
+    "ServiceSettings": {
+        "ViewIdleMinutes": 8,
+        "FullScanPeriodHours": 24,
+        "PartialScanPeriodMinutes": 10
+    },
+  "CommandConnection": {
+      "ApiUrl": "https://example.com/KeyfactorAPI",
+      "UseDefaultCredentials": false,
+      "Username": "DOMAIN\\username",
+      "Password": "password"
+  }
+}

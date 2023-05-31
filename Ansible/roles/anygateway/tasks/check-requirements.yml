@@ -1,0 +1,33 @@
+---
+- name: block new install
+  block:
+    - name: Check for current .NET framework version
+      win_reg_stat:
+        path: HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full
+        name: Version
+      register: dotnet_version
+      failed_when: dotnet_version.value is version(min_dotnet_version, operator='<', strict=True)
+
+    - name: Check for current OS version
+      win_shell: |
+        (Get-CimInstance Win32_OperatingSystem).version
+      register: OS_version
+      failed_when: OS_version.stdout_lines[0] < os_min_version
+
+    - name: Check for current connection string
+      win_reg_stat:
+        path: HKLM:\SOFTWARE\Keyfactor\Keyfactor CA Gateway
+        name: ConnectionString
+      register: connection_string
+
+    - name: set connection string value
+      set_fact:
+        new_install: true
+      when: connection_string.exists == false
+
+    - name: set connection string value
+      set_fact:
+        new_install: false
+      when: connection_string.exists == true
+  when: new_install == true
+

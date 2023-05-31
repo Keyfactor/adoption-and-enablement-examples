@@ -1,0 +1,11 @@
+- name: Validate
+  uri:
+    url: "{{ command_url }}/KeyfactorAPI/Agents?pq.queryString=(Status%20-eq%20%221%22%20OR%20Status%20-eq%20%222%22)%20AND%20LastSeen%20-gt%20%22%25TODAY-1%25%22%20AND%20ClientMachine%20-eq%20%22{{ orchestrator_name }}%22"
+    url_username: "{{keyfactorUser}}"
+    url_password: "{{keyfactorPassword}}"
+    method: GET
+    force_basic_auth: true
+    status_code: 200
+    return_content: true
+  register: result
+  failed_when: result.x_total_count != "1"

@@ -1,0 +1,19 @@
+---
+- import_tasks: check-requirements.yml
+  tags:
+    - install
+- import_tasks: copy-files.yml
+  tags:
+    - install
+- import_tasks: install-anygateway.yml
+  tags:
+    - install
+- import_tasks: configure-anygateway.yml
+  tags:
+    - install
+- import_tasks: add_gateway.yml
+  tags:
+    - install
+- import_tasks: uninstall-anygateway.yml
+  tags:
+    - uninstall
