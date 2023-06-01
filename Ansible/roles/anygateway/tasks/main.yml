@@ -17,3 +17,6 @@
 - import_tasks: uninstall-anygateway.yml
   tags:
     - uninstall
+- import_tasks: install_files_cleanup.yml
+  tags:
+    - install

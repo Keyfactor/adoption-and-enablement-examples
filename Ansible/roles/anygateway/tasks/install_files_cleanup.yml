@@ -1,0 +1,5 @@
+---
+- name: remove Install Source Directory
+  win_file:
+    path: "{{ install_source_dir }}"
+    state: absent
