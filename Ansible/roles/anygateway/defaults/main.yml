@@ -21,7 +21,7 @@ logicalname: "<logicalcaname>"
 rootforest: "<rootdomain>.local"
 ca_proxy_config_line: '    <proxylinefromgit>'  #spaces needed at the begining
 root_cert: <root cert file name>
-int_cert: <intermidiate cert file name>
+int_cert: <intermediate cert file name>
 default_install_dir: "<default install dir>"
 gw_dll: DigiCertCAProxy.dll
 

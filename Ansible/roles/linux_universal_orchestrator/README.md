@@ -52,7 +52,7 @@ ansible-playbook -i <inventory> playbook.yml
 
 ## Tags
 
-- `requirments` - Validates Server and Software Requirements.
+- `requirements` - Validates Server and Software Requirements.
 - `copy` - Copies specified files to Target Host.
 - `install` - Runs existing installation with configuration file generated.
 - `cleanup` - removes install directory and files.
