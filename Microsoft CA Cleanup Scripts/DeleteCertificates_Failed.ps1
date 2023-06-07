@@ -27,24 +27,23 @@ $CertDisposition = "30"
 #******************************************** Config Section  ********************************************
 
 #********************************************** Usage *************************************************************
-#  .\DeleteCertificates.ps1 -Scan  -Denied -DeleteCerts"
+#  .\DeleteCertificates_Failed.ps1 -Scan  -Failed -DeleteCerts"
 #  Case insensitive inputs.  The order, of the parameters, does not matter
 #       -Scan : Scans for expired certificates to delete based on predefined certificate templates
-#       -Denied : Performs the deletion of denied certificate requests from the CA DB
+#       -Failed : Performs the deletion of denied certificate requests from the CA DB. This argument is optional.
 #       -DeleteCerts : Performs the deletion of certificates from the CA DB
 #
 #  * Retrieve certs to delete only 
-#       .\DeleteCertificates.ps1 ñscan 
+#       .\DeleteCertificates_Failed.ps1 ‚Äìscan 
 # 
-#  * Perform deletes based on previously ran "-Scan" 
-#    Deletes the certs based on the data in the ìCertsToDelete.txtî file.  It will not rescan the CA DB.
-#       .\DeleteCertificates.ps1 ñDeleteCerts
+#  * Perform deletes based on previously ran "-Scan" and deletes the certs based on the data in the ‚ÄúCertsToDelete.txt‚Äù file.  It will not rescan the CA DB.
+#       .\DeleteCertificates_Failed.ps1 ‚ÄìDeleteCerts
 #
-#  * Scans the CA DB for denied cert requests then delete the requests.
-#       .\DeleteCertificates.ps1 ñscan -Denied ñDeleteCerts
+#  * Scans the CA DB for failed cert requests then delete the requests.
+#       .\DeleteCertificates_Failed.ps1 ‚Äìscan -Failed ‚ÄìDeleteCerts
 # 
-#  * Scans the CA DB for expired certs then delete the certs.
-#       .\DeleteCertificates.ps1 ñscan ñDeleteCerts
+#  * Scans the CA DB for failed certs then delete the certs.
+#       .\DeleteCertificates_Failed.ps1 ‚Äìscan ‚ÄìDeleteCerts
 #   
 #******************************************************************************************************************
 
@@ -52,12 +51,12 @@ $CertDisposition = "30"
 # Variable Section
 ####################
 
-$enableScan = $false
-$enableDenied = $false
-$enableDeleteCerts = $false
-$daysToModify = 0
-$hoursToModify = 0
-$minutesToModify = 0
+$enableScan = $false #Sets default behavior of the Scan argument. Setting to true will force the script to always scan the CA regardless of arguments.
+$enableFailed = $true #Sets default behavior of the Failed argument. Setting to true will force the script to always delete Failed certificates regardless of arguments.
+$enableDeleteCerts = $false #Sets default behavior of the DeleteCerts argument. Setting to true will force the script to always delete the scanned certificates from the CA regardless of arguments.
+$daysToModify = 0 #Used to keep a sub set of failed requests based on days from script run time.
+$hoursToModify = 0 #Used to keep a sub set of failed requests based on hours from script run time.
+$minutesToModify = 0 #Used to keep a sub set of failed requests based on minutes from script run time.
 
 # Get current directory
 $CurrentPath = $PWD
@@ -210,7 +209,7 @@ function Determine-Certs-To-Delete()
         }
 
         
-        #if ($enableDenied -eq $true)
+        #if ($enableFailed -eq $true)
         #{
         #    $certRestrict = '"'+$certDisp+'"'
         #}
@@ -219,9 +218,9 @@ function Determine-Certs-To-Delete()
         #    $certRestrict = '"NotAfter<='+$CurrentTimeStampDeletes+'"'
         #}
 
-        $ExpiredCerts = "certutil ñview $CAName ñrestrict $certRestrict,$certDisp ñout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
+        $ExpiredCerts = "certutil ‚Äìview $CAName ‚Äìrestrict $certRestrict,$certDisp ‚Äìout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
 
-        # $ExpiredCerts = "certutil ñview $CAName ñrestrict `"NotAfter<=$CurrentTimeStampDeletes`" ñout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
+        # $ExpiredCerts = "certutil ‚Äìview $CAName ‚Äìrestrict `"NotAfter<=$CurrentTimeStampDeletes`" ‚Äìout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
 
         #execute the certutil command and write to a file
         # LogEvent "Processing Certificate Template OID: $certTemplateItem" "Information"
@@ -350,7 +349,7 @@ function Delete-Certs()
                 $rowID = $split[0]
         
                 #Define the certutil command
-                $deleteCerts = "certutil ñdeleterow $rowID"
+                $deleteCerts = "certutil ‚Äìdeleterow $rowID"
         
                 $CurrentTimeStamp = Get-Date -Format "MM/dd/yyyy hh:mm.ffftt"
                 $StartMsg = "Deletes started at $CurrentTimeStamp - $deleteCerts"
@@ -419,9 +418,9 @@ else #correct number of parms
                 $enableScan = $true
                 break
             }
-            "-Denied"
+            "-Failed"
             {   
-                $enableDenied = $true
+                $enableFailed = $true
                 break
             }
             "-DeleteCerts"
