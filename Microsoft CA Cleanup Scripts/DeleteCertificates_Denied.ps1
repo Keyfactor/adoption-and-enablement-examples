@@ -27,21 +27,21 @@ $CertDisposition = "31"
 #******************************************** Config Section  ********************************************
 
 #********************************************** Usage *************************************************************
-#  .\DeleteCertificates.ps1 -Scan  -Denied -DeleteCerts"
+#  .\DeleteCertificates_Denied.ps1 -Scan  -Denied -DeleteCerts"
 #  Case insensitive inputs.  The order, of the parameters, does not matter
 #       -Scan : Scans for expired certificates to delete based on predefined certificate templates
 #       -Denied : Performs the deletion of denied certificate requests from the CA DB
 #       -DeleteCerts : Performs the deletion of certificates from the CA DB
 #
 #  * Retrieve certs to delete only 
-#       .\DeleteCertificates.ps1 –scan 
+#       .\DeleteCertificates_Denied.ps1 –scan 
 # 
 #  * Perform deletes based on previously ran "-Scan" 
 #    Deletes the certs based on the data in the “CertsToDelete.txt” file.  It will not rescan the CA DB.
-#       .\DeleteCertificates.ps1 –DeleteCerts
+#       .\DeleteCertificates_Denied.ps1 –DeleteCerts
 #
 #  * Scans the CA DB for denied cert requests then delete the requests.
-#       .\DeleteCertificates.ps1 –scan -Denied –DeleteCerts
+#       .\DeleteCertificates_Denied.ps1 –scan -Denied –DeleteCerts
 # 
 #   
 #******************************************************************************************************************
@@ -50,12 +50,12 @@ $CertDisposition = "31"
 # Variable Section
 ####################
 
-$enableScan = $false
-$enableDenied = $false
-$enableDeleteCerts = $false
-$daysToModify = 0
-$hoursToModify = 0
-$minutesToModify = 0
+$enableScan = $false #Sets default behavior of the Scan argument. Setting to true will force the script to always scan the CA regardless of arguments.
+$enableDenied = $true #Sets default behavior of the Denied argument. Setting to true will force the script to always delete Denied certificates regardless of arguments.
+$enableDeleteCerts = $false #Sets default behavior of the DeleteCerts argument. Setting to true will force the script to always delete the scanned certificates from the CA regardless of arguments.
+$daysToModify = 0 #Used to keep a sub set of denied requests based on days from script run time.
+$hoursToModify = 0 #Used to keep a sub set of denied requests based on hours from script run time.
+$minutesToModify = 0 #Used to keep a sub set of denied requests based on minutes from script run time.
 
 # Get current directory
 $CurrentPath = $PWD
