@@ -10,16 +10,16 @@
 ####################################################################################################
 
 #********************************************** Usage *************************************************************
-#  .\DeleteCertificates.ps1 -Scan  -DeleteCerts"
+#  .\DeleteCertificates_Expired.ps1 -Scan  -DeleteCerts"
 #  Case insensitive inputs.  The order, of the parameters, does not matter
 #       -Scan : Scans for expired certificates to delete based on predefined certificate templates
 #       -DeleteCerts : Performs the deletion of certificates from the CA DB
 #
 #  * Retrieve certs to delete only 
-#       .\DeleteCertificates.ps1 –scan 
+#       .\DeleteCertificates_Expired.ps1 –scan 
 # 
 #  * Scans the CA DB for expired certs then delete the certs.
-#       .\DeleteCertificates.ps1 –scan –DeleteCerts
+#       .\DeleteCertificates_Expired.ps1 –scan –DeleteCerts
 #   
 #******************************************************************************************************************
 
