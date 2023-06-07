@@ -6,7 +6,7 @@ These scripts will not compact the database, and that function will need to be d
 
 
 ## Delete Expired Certificates Script
-This script is designed to delete expired certificates from the Microsoft CA database. The amount it deletes is based on the variable $AmountToDelete, which is set to 10000 records by default. This value was found to have the best balance of number of certificates deleted vs impact to the CA, though individual performance may vary; anything over this amount could degrade the performance of the MSCA. 
+This script is designed to delete expired certificates from the Microsoft CA database. The amount it deletes is based on the variable $AmountToDelete, which is set to 10000 records by default. This value was found to have the best balance of number of certificates deleted vs impact to the CA, though individual performance may vary; the use of this script may degrade the performance of the MSCA. 
 ### Usage
 Case insensitive inputs.  The order of the parameters does not matter:
 - -Scan : Scans for expired certificates to delete based on predefined certificate templates and creates a file in which populated certificates are ready to be deleted.
@@ -15,7 +15,7 @@ Case insensitive inputs.  The order of the parameters does not matter:
 Retrieve certs to delete only: 
 - .\DeleteCertificates_Expired.ps1 –scan
 
-Perform deletes based on previously ran "-Scan" and deletes the certs based on the data in the “CertsToDelete.txt” file.  It will not rescan the CA DB.
+Perform deletes based on previously ran "–Scan" and deletes the certs based on the data in the “CertsToDelete.txt” file.  It will not rescan the CA DB.
 - .\DeleteCertificates_Expired.ps1 –DeleteCerts
 
 Scans the CA DB for expired certs then delete the certs:
@@ -23,7 +23,7 @@ Scans the CA DB for expired certs then delete the certs:
 
 
 ## Delete Denied Certificates Script
-This script is designed to delete denied certificates from the Microsoft CA database. This script will delete all denied certificates regardless of amount found.
+This script is designed to delete denied certificates from the Microsoft CA database. This script will delete all denied certificate requests regardless of amount found.
 ### Usage
 Case insensitive inputs.  The order of the parameters does not matter:
 - -Scan : Scans for expired certificates to delete based on predefined certificate templates
@@ -33,18 +33,18 @@ Case insensitive inputs.  The order of the parameters does not matter:
 Retrieve certs to delete only 
 - .\DeleteCertificates_Denied.ps1 –scan 
 
-Perform deletes based on previously ran "-Scan" and deletes the certs based on the data in the “CertsToDelete.txt” file.  It will not rescan the CA DB.
+Perform deletes based on previously ran "–Scan" and deletes the certs based on the data in the “CertsToDelete.txt” file.  It will not rescan the CA DB.
 - .\DeleteCertificates_Denied.ps1 –DeleteCerts
 
 Scans the CA DB for denied cert requests then delete the requests.
-- .\DeleteCertificates_Denied.ps1 –scan -Denied –DeleteCerts
+- .\DeleteCertificates_Denied.ps1 –scan –Denied –DeleteCerts
 
 Scans the CA DB for failed cert requests then deletes the requests.
 - .\DeleteCertificates_Failed.ps1 –scan –DeleteCerts
 
 
 ## Delete Failed Certificates Script
-This script is designed to delete failed certificates from the Microsoft CA database. This script will delete all failed certificates regardless of amount found.
+This script is designed to delete failed certificates from the Microsoft CA database. This script will delete all failed certificate requests regardless of amount found.
 ### Usage
 Case insensitive inputs.  The order, of the parameters, does not matter:
 - -Scan : Scans for expired certificates to delete based on predefined certificate templates
