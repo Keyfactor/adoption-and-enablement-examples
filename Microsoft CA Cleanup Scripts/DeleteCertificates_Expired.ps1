@@ -336,7 +336,7 @@ function Delete-Certs()
     $deletedCertificateCounter = 0    
     Try
     {
-        for ($i=0;$i -lt 1000000;$i++)
+        for ($i=0;$i -lt 10000;$i++)
         {
             $line = $streamReaderCD.ReadLine()
             if ($line -eq $null) { break }  #read to end of file...exit for()
