@@ -42,7 +42,7 @@ $CertDisposition = "30"
 #  * Scans the CA DB for failed cert requests then delete the requests.
 #       .\DeleteCertificates_Failed.ps1 –scan -Failed –DeleteCerts
 # 
-#  * Scans the CA DB for failed certs then delete the certs.
+#  * Scans the CA DB for failed cert requests then delete the cert requests.
 #       .\DeleteCertificates_Failed.ps1 –scan –DeleteCerts
 #   
 #******************************************************************************************************************
