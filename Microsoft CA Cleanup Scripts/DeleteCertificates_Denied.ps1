@@ -42,7 +42,9 @@ $CertDisposition = "31"
 #
 #  * Scans the CA DB for denied cert requests then delete the requests.
 #       .\DeleteCertificates_Denied.ps1 –scan -Denied –DeleteCerts
-# 
+#
+#  * Scans the CA DB for denied cert requests then delete the requests.
+#       .\DeleteCertificates_Failed.ps1 –scan –DeleteCerts
 #   
 #******************************************************************************************************************
 
