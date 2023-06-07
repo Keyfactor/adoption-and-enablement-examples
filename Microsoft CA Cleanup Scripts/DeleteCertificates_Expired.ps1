@@ -36,7 +36,7 @@
 # Define certificates to delete by Dispositon
 $certDispositionList = @(20,30,31)
 $stopwatch =  [system.diagnostics.stopwatch]::StartNew()
-
+$AmountToDelete = 10000
 #Days prior to today to removed certs (Must be 0 or a non-negative value)
 $daysInThePastDeniedFailed = 0
 $daysInThePastIssuedRevoked = 0
@@ -336,7 +336,7 @@ function Delete-Certs()
     $deletedCertificateCounter = 0    
     Try
     {
-        for ($i=0;$i -lt 10000;$i++)
+        for ($i=0;$i -lt $AmountToDelete;$i++)
         {
             $line = $streamReaderCD.ReadLine()
             if ($line -eq $null) { break }  #read to end of file...exit for()
