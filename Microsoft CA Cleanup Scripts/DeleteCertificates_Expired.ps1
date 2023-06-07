@@ -1,7 +1,7 @@
 ﻿#######################################################################################################
 #
 #
-#	Usage:  This script will delete expired issued and revoked certs, and certificate 
+#	Usage:  This script will delete expired certs, and certificate 
 #           requests form the CA Database base on specific variables/configurations.
 #
 #
