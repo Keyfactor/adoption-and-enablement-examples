@@ -46,7 +46,7 @@ Scans the CA DB for failed cert requests then deletes the requests.
 ## Delete Failed Certificates Script
 This script is designed to delete failed certificates from the Microsoft CA database. This script will delete all failed certificate requests regardless of amount found.
 ### Usage
-Case insensitive inputs.  The order, of the parameters, does not matter:
+Case insensitive inputs.  The order of the parameters does not matter:
 - -Scan : Scans for expired certificates to delete based on predefined certificate templates
 - -Failed : Performs the deletion of denied certificate requests from the CA DB
 - -DeleteCerts : Performs the deletion of certificates from the CA DB
