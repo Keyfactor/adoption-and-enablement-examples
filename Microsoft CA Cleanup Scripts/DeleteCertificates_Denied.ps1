@@ -1,7 +1,7 @@
 #######################################################################################################
 #
 #
-#	Usage:  This script will delete expired certs form the CA Database
+#	Usage:  This script will delete Denied certs form the CA Database
 #           base on specific variables. 
 #
 #
@@ -34,14 +34,14 @@ $CertDisposition = "31"
 #       -DeleteCerts : Performs the deletion of certificates from the CA DB
 #
 #  * Retrieve certs to delete only 
-#       .\DeleteCertificates.ps1 ñscan 
+#       .\DeleteCertificates.ps1 ‚Äìscan 
 # 
 #  * Perform deletes based on previously ran "-Scan" 
-#    Deletes the certs based on the data in the ìCertsToDelete.txtî file.  It will not rescan the CA DB.
-#       .\DeleteCertificates.ps1 ñDeleteCerts
+#    Deletes the certs based on the data in the ‚ÄúCertsToDelete.txt‚Äù file.  It will not rescan the CA DB.
+#       .\DeleteCertificates.ps1 ‚ÄìDeleteCerts
 #
 #  * Scans the CA DB for denied cert requests then delete the requests.
-#       .\DeleteCertificates.ps1 ñscan -Denied ñDeleteCerts
+#       .\DeleteCertificates.ps1 ‚Äìscan -Denied ‚ÄìDeleteCerts
 # 
 #   
 #******************************************************************************************************************
@@ -217,9 +217,9 @@ function Determine-Certs-To-Delete()
         #    $certRestrict = '"NotAfter<='+$CurrentTimeStampDeletes+'"'
         #}
 
-        $ExpiredCerts = "certutil ñview $CAName ñrestrict $certRestrict,$certDisp ñout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
+        $ExpiredCerts = "certutil ‚Äìview $CAName ‚Äìrestrict $certRestrict,$certDisp ‚Äìout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
 
-        # $ExpiredCerts = "certutil ñview $CAName ñrestrict `"NotAfter<=$CurrentTimeStampDeletes`" ñout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
+        # $ExpiredCerts = "certutil ‚Äìview $CAName ‚Äìrestrict `"NotAfter<=$CurrentTimeStampDeletes`" ‚Äìout `"RequestID,SerialNumber,CertificateTemplate,NotBefore,NotAfter`""
 
         #execute the certutil command and write to a file
         # LogEvent "Processing Certificate Template OID: $certTemplateItem" "Information"
@@ -348,7 +348,7 @@ function Delete-Certs()
                 $rowID = $split[0]
         
                 #Define the certutil command
-                $deleteCerts = "certutil ñdeleterow $rowID"
+                $deleteCerts = "certutil ‚Äìdeleterow $rowID"
         
                 $CurrentTimeStamp = Get-Date -Format "MM/dd/yyyy hh:mm.ffftt"
                 $StartMsg = "Deletes started at $CurrentTimeStamp - $deleteCerts"
