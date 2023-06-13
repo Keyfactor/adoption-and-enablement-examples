@@ -27,13 +27,20 @@ The different phases of this script are below:
 
 # **Requirements**
 
-* At least one configured Universal Orchestrator
+* At least one registered Keyfactor Universal Orchestrator
 
 * The RFJKS,RFPEM,RFPKCS12 Certificate Store types must be created prior to running the script.
 
+* A Keyfactor API user with appropriate access to Certificate Stores and Agents
+
 # **Execution**
 
-1.  Copy the script to a Windows server that is running PowerShell 5.
-2.  Update the mandatory variables with your Keyfactor Command information.
+1.  Copy the script to a Windows Server that is has PowerShell v5.
+2.  Edit the script and update the mandatory variables with your Keyfactor information.
+3.  Optionally, update the other variables to specify a different directory to use (default: "C:\temp").
+4.  Execute the script. This will create a "machine details" file at the defined location.
+a.  You will need to enter define your Orchestrator's ID in the file. If this is unknown, enter YES at the prompt to retrieve your Orchestrator(s) ID.
+5.  Locate the new file. For ease of editing, use Microsoft Excel to open and edit this file.
+
 
 ```

@@ -63,9 +63,9 @@
 
 # MUST be updated for your Keyfactor environment.
 
-$username = '<domain>\<API_User_Name'
-$password = '<API_User_Secure_Password>'
-$apiurl   = 'https://<domain>.keyfactorAPI.com/KeyfactorAPI/'
+$Username = '<domain>\<API_User_Name>'
+$Password = '<API_User_Secure_Password>'
+$Apiurl   = 'https://<domain>.keyfactorAPI.com/KeyfactorAPI/'
 
 
 ##########################
