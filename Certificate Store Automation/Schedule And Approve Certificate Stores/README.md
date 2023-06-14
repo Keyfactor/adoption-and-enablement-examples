@@ -16,21 +16,19 @@ This automation script allows Keyfactor administrators to perform mass discovery
 
 Multiple executions of this script are required to complete the discovery and approval phases of this process. After each execution, the user will add additional information to newly created files that this script creates, which will be used in the next step.
 
-The different phases of this script are below:
+The different phases of this script are:
 
-1. [Script]  Create a "Machine Details" file.
-2. [User]    Populate server details in the "Machine Details" file.
-2. [Script]  Create Discovery jobs to discover certificate stores on machines provided in the machine details file.
-3. [Script]  Export newly discovered Certificate Stores to a "Pending Cert Stores" file.
-4. [User]    Populate certificate store details in the "Pending Cert Stores" file.
-5. [Script]  Approve pending Certificate Stores using details in the pending cert stores file.
+1. [Script]  Create a "Machine Details" file. [[Goto]](#create--prepare-the-machine-details-file)
+2. [User]    Populate the file with server details.
+2. [Script]  Schedule Certificate Store Discovery jobs for machines provided. [[Goto]](#schedule-certificate-store-discovery-jobs)
+3. [Script]  Export newly discovered Certificate Stores to a "Pending Cert Stores" file. [[Goto]](#export-newly-discovered-certificate-stores)
+4. [User]    Populate certificate store details in the "Pending Cert Stores" file. [[Goto]](#prepare-the-pending-certificate-stores-file)
+5. [Script]  Approve pending Certificate Stores. [[Goto]](#approve-pending-certificate-stores)
 
 # **Requirements**
 
 * At least one registered Keyfactor Universal Orchestrator
-
 * The RFJKS,RFPEM,RFPKCS12 Certificate Store types must be created prior to running the script.
-
 * A Keyfactor API user with appropriate access to Certificate Stores and Agents
 
 # **Execution**
@@ -44,7 +42,7 @@ The different phases of this script are below:
 >You will need to enter define your Orchestrator's ID in the file. If this is unknown, enter YES when prompted to retrieve your Orchestrator(s) ID.<br><br>
 >![](images/KF-Approve-CertStores-OrchestratorID.png)
 6. Upon continuing, the script will finish since expected files and/or pending Certificate Stores will be found in Keyfactor.
-7. Locate the new "machine details" file. Optionally, and for ease of editing, use Microsoft Excel to open and edit this file.  <IMAGE>
+7. Locate the new "machine details" file. Optionally, for ease of editing, use Microsoft Excel to open and edit this file.  <IMAGE>
 8. Add servers that you wish to scan for Certificate Stores, taking care that the file header row is not modified.<br><br>
   ![](images/KF-Approve-CertStores-MachineDetails-Added.png)
   
@@ -76,19 +74,20 @@ The different phases of this script are below:
   </details>
   
 ### Schedule Certificate Store Discovery Jobs
-  8. Once the machine details file is saved, ensure the updated copy is in the originally created location.
-  9. Execute the script again, and enter "Yes" when asked to create new discovery jobs. <br> ![](KF-Approve-CertStores-Discovery.png)
+  8. Once the machine details file is saved, ensure the updated copy is located its original location.
+  9. Execute the script again, and enter "Yes" when prompted to create new discovery jobs. <br> ![](KF-Approve-CertStores-Discovery.png)
   10. Once completed, Keyfactor Command will perform a Certificate Store discovery with the orchestrator you previously defined.
   
-### Export Newly Discovered (Pending) Certificate Stores
+### Export Newly Discovered Certificate Stores
   11. Wait until "Discovered" Certificate Stores are seen within Keyfactor Command.<br><br>
-  ![](images/)
+  ![](images/KF-Approve-CertStores-PendingCertStores.png)
   12. Execute the script again. Enter "No" when prompted to create discovery jobs.
-  13. Enter "Yes" when prompted to export Pending Certificate Stores.
-  14. Locate the new "Pending Certificate Stores" file. Optionally, and for ease of editing, use Microsoft Excel to open and edit this file.<br><br>
-  ![](images/)
+  13. Enter "Yes" when prompted to export Pending Certificate Stores.<br><br>
+  ![](images/KF-Approve-CertStores-ExportPending.png)
+  15. Locate the new "Pending Certificate Stores" file. Optionally, for ease of editing, use Microsoft Excel to open and edit this file.<br><br>
+  ![](images/KF-Approve-CertStores-PendingFile.png)
 
-### Prepare the "Pending Certificate Stores file"
+### Prepare the Pending Certificate Stores file
   15. Edit the file
 
 
