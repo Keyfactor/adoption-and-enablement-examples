@@ -343,7 +343,7 @@ function Get-KF-CerificateStores{
     # Define array and paging limits
     $cert_stores = @()
     $query_page = 1
-    $query_limit = 10
+    $query_limit = 25
     
     # Initial query
     $cert_stores_query = (Submit-KFAPI -KeyfactorAPI_URL $apiurl -API_Call "/CertificateStores?certificateStoreQuery.queryString=$querystring&pageReturned=$query_page&certificateStoreQuery.returnLimit=$query_limit" -Method Get)
@@ -375,7 +375,7 @@ function Get-KF-CerificateStores{
 
 }
 
-# Function to schedule certificate store
+# Function to schedule certificate store discovery
 function New-KF-DiscoveryJob{
 
     param(
@@ -464,6 +464,27 @@ function New-KF-DiscoveryJob{
 
     return (Submit-KFAPI -KeyfactorAPI_URL $apiurl -API_Call "/CertificateStores/DiscoveryJob" -Body $body -Method Put)
 
+}
+
+# Function to retrieve scheduled discovery jobs
+function Get-KF-DiscoveryJobs{
+    param(
+            [Parameter(HelpMessage='Keyfactor agent ID')]
+            [string]$OrchestratorID
+    )
+    
+    # If an Orchestrator ID was provided, query specific discovery jobs for it. Otherwise, return all.
+    IF($OrchestratorID){
+
+        $discovery_jobs = (Submit-KFAPI -KeyfactorAPI_URL $apiurl -API_Call ("OrchestratorJobs/ScheduledJobs?pq.queryString=AgentID%20-eq%20%22"+$OrchestratorID+"%22%20AND%20JobType%20-contains%20%22Discovery%22%20AND%20JobType%20-notcontains%20%22SslDiscovery%22") -Method Get)
+        return ($discovery_jobs | select JobType,@{Name='Orchestrator';Expression={$_.ClientMachine}},Requested)
+
+    }ELSE{
+
+        $discovery_jobs = (Submit-KFAPI -KeyfactorAPI_URL $apiurl -API_Call ("OrchestratorJobs/ScheduledJobs?pq.queryString=JobType%20-contains%20%22Discovery%22%20AND%20JobType%20-notcontains%20%22SslDiscovery%22") -Method Get)
+        return ($discovery_jobs | select JobType,@{Name='Orchestrator';Expression={$_.ClientMachine}},Requested)
+
+    }        
 }
 
 # Function to approve certificate store
@@ -936,6 +957,7 @@ try{
     cls
     Write-KFLog -Message "Created Machine Details file" -Artifact $machine_details
 
+    write-host `n
     Write-Host -ForegroundColor Yellow "A machine details file was not found. which is needed for creating Keyfactor Discovery Jobs."
     Write-Host -ForegroundColor Yellow "A file with the required headers has been created at: $machine_details"
     
@@ -948,9 +970,10 @@ try{
         $orchestrators = Get-KF-Orchestrator
 
         IF($orchestrators){
+        write-host `n
         $orchestrators | ForEach-Object{
-                                        Write-Host $_.AgentID
-                                        Write-Host -nonewline -ForegroundColor Green $_.ClientMachine
+                                        Write-Host $_.AgentID -nonewline
+                                        Write-Host -ForegroundColor Green (" | "+$_.ClientMachine)
                                         }
 
         $orchestrators | ForEach-Object{Write-KFLog -Message "Registered Orchestrator" -Artifact ($_.AgentID+"|"+$_.ClientMachine)}
@@ -984,6 +1007,7 @@ try{
 try{
     IF(Get-Item -Path $machine_details -ErrorAction Stop){
         cls
+        Write-Host `n
         write-host "A machine details file was found at the expected location: " -NoNewline
         Write-Host -ForegroundColor Green  $machine_details
 
@@ -1009,20 +1033,25 @@ IF($discovery_prompt -like "*y*"){
 
     foreach($machine in $machine_details_content){
 
-       $machine.MachineName
+       write-host "Machine: " -nonewline
+       write-host -foregroundcolor Green $machine.MachineName
        Write-KFLog -Message "Scheduling discovery job" -Artifact ($machine.MachineName+"|"+$machine.'StoreType(RFJKS/RFPEM/RFPKCS12)')
        New-KF-DiscoveryJob -OrchestratorID $machine.OrchestratorID -CertStoreTypeShortName $machine.'StoreType(RFJKS/RFPEM/RFPKCS12)' -MachineName $machine.MachineName -UseSSL $machine.UseSSL -ServerUsername $machine.ServerUsername -ServerPassword $machine.ServerPassword -directoriesToScan $machine.DirectoriesToSearch `
        -directoriesToIgnore $machine.DirectoriesToIgnore -FileExtension $machine.Extensions -FilePatternToMatch $machine.FilePatternToMatch -IncludePKCS12 $machine.IncludePKS12 -FollowSymLinks $machine.FollowSymLinks
 
     }
 
-    write-host "Finished Discovery Job scheduling"
+    write-host "Finished Discovery Job scheduling."
+
     write-host `n
+    write-host "Printing currently scheduled jobs:"
+    $scheduledJobs = Get-KF-DiscoveryJobs
+    $scheduledJobs | ForEach-Object{Write-Host -ForegroundColor Green ($_.JobType+" | "+$_.Orchestrator+" | "+$_.Requested)}
 }
 
 # Retrieve pending certificate stores
 write-host `n
-write-host "Checking for pending Certificate Stores"
+write-host "Checking for pending Certificate Stores..."
 $Pending_CertStores = Get-KF-CerificateStores -ReturnPending
 
 # First check if a pending cert store file exist with info
@@ -1037,6 +1066,8 @@ IF($Check_Pending_CertStores -and $Pending_CertStores){
 
     # Prompt if certificate stores should be approved
     $prompt_cert_approval = Read-Host "Do you wish to continue with Certificate Store Approval? (y/n)"
+
+    write-host `n
 
 }ELSEIF(!$Pending_CertStores){
     write-host -ForegroundColor Yellow "No pending certificate stores were found."
@@ -1092,8 +1123,9 @@ IF($import_chosen){
 
         # Loop through pending stores
         foreach($store in $Pending_CertStores){
-        
-            Write-Host ("Pending certificate store: "+$store.DisplayName)
+            
+            write-host `n
+            Write-Host ("Processing Certificate Store: "+$store.DisplayName)
             Write-KFLog -Message "Processing Pending Cert Store" -Artifact $store
 
             # Reset variables
@@ -1111,13 +1143,13 @@ IF($import_chosen){
             $matched_store = $import_pending_stores | where {$_.MachineName -eq $machine_name -and $_.StorePath -eq $store.Storepath}
 
             write-host `n
-            Write-Host "Pending Certificate Store found in import: "  -NoNewline
+            Write-Host "`t Pending Certificate Store found in import: "  -NoNewline
             write-host -ForegroundColor Green $machine_name
 
             # Default to using import pending cert store file
             IF($matched_store.ServerUsername){
             
-                write-host "Credentials found for machine in Pending Certificate Stores file!"            
+                write-host "`t Credentials found for machine in Pending Certificate Stores file!"            
                 Write-KFLog -Message "Credentials found in Pending Certificate Store file. Using these." -Artifact $matched_store.ServerUsername
 
                 $ServerUsername = $matched_store.ServerUsername
@@ -1126,13 +1158,13 @@ IF($import_chosen){
             } # Else, use machine details file, if it exist.
             ELSEIF($import_machine_details){
             
-                write-host "Credentials not found in certificate store file. Checking $machine_details"
+                write-host "`t Credentials not found in Pending certificate store file. Checking $machine_details"
 
                 # Determine if machine credentials exist in machine credentials file
                 $machine_creds = $import_machine_details | where {$_.MachineName -eq $machine_name} | select -First 1
 
                 IF($machine_creds){
-                    write-host  "Credentials found for machine: " -NoNewline
+                    write-host  "`t Credentials found for machine: " -NoNewline
                     Write-Host -ForegroundColor Green $machine_creds.ServerUserName
                     Write-KFLog -Message "Credentials defined in Machine Details file will be used" -Artifact $machine_creds.ServerUserName
 
@@ -1158,9 +1190,11 @@ IF($import_chosen){
                     Approve-KF-CertificateStore-PEM -CertStoreID $store.Id -CertStoreTypeID $matched_store.CertStoreTypeId -ContainerID $store.ContainerId -StorePassword $matched_store.CertStorePassword -ServerUserName $ServerUsername -ServerPassword $ServerPassword -UseSSL $matched_store.UseSSL `
                     -IncludesChain $matched_store.'IncludesChain(true/false)' -IsTrustStore $matched_store.'IsTrustStore(true/false)(PEM only)' -IsRSAPrivateKey $matched_store.'IsRSAPrivateKey(true/false)(PEM only)' -SeparatePrivateKeyFile $matched_store.'SeparatePrivateKeyFile(FilePath)(PEM only)' `
                     -LinuxFilePermissionOnCreate $matched_store.LinuxFilePermissionOnCreate -LinuxFileOwnerOnCreate $matched_store.LinuxFileOwnerOnCreate 
-
+                    
+                    Write-Host -ForegroundColor Green "`t Approved!"
                     Write-KFLog -Message "Approved certificate store"
                 }Catch{
+                    Write-Host -ForegroundColor Red "`t Could not approve. See log..."
                     Write-KFLog -Message "Error while approving" -Artifact $_
                 }
             }
@@ -1169,9 +1203,11 @@ IF($import_chosen){
             IF($CertStoreTypeName -eq "RFPKCS12"){
                 try{                    
                     Approve-KF-CertificateStore-PKCS12 -CertStoreID $store.id -CertStoreTypeID $matched_store.CertStoreTypeId -ContainerID $store.ContainerId -StorePassword $matched_store.CertStorePassword -ServerUserName $serverUsername -ServerPassword $ServerPassword -UseSSL $matched_store.UseSSL -LinuxFilePermission $matched_store.LinuxFilePermissionOnCreate -LinuxFileOwner $matched_store.LinuxFileOwnerOnCreate
-
+                    
+                    Write-Host -ForegroundColor Green "`t Approved!"
                     Write-KFLog -Message "Approved certificate store"
                 }Catch{
+                    Write-Host -ForegroundColor Red "`t Could not approve. See log..."
                     Write-KFLog -Message "Error while approving" -Artifact $_
                 }
             }
@@ -1180,8 +1216,10 @@ IF($import_chosen){
                 try{                    
                     Approve-KF-CertificateStore-JKS -CertStoreID $store.id -CertStoreTypeID $matched_store.CertStoreTypeId -ContainerID $store.ContainerId -StorePassword $matched_store.CertStorePassword -ServerUserName $serverUsername -ServerPassword $ServerPassword -UseSSL $matched_store.UseSSL -LinuxFilePermission $matched_store.LinuxFilePermissionOnCreate -LinuxFileOwner $matched_store.LinuxFileOwnerOnCreate
 
+                    Write-Host -ForegroundColor Green "`t Approved!"
                     Write-KFLog -Message "Approved certificate store"
                 }Catch{
+                    Write-Host -ForegroundColor Red "`t Could not approve. See log..."
                     Write-KFLog -Message "Error while approving" -Artifact $_
                 }
             }
@@ -1189,38 +1227,35 @@ IF($import_chosen){
                 # Set provided schedule
                 IF($matched_store.'InventorySchedule(Daily(Time))'){
                     try{
-                        Set-Kf-CertStoreSchedule -CertStoreID $store.Id -Daily $matched_store.'InventorySchedule(Daily(Time))'              
-                        write-host -ForegroundColor Green "Schedule set"
+                        Set-KF-CertStoreSchedule -CertStoreID $store.Id -Daily $matched_store.'InventorySchedule(Daily(Time))'
                         Write-KFLog -Message "Schedule set successfully"
                     }Catch{
-                        write-host -ForegroundColor Red "Schedule could not be set"
+                        write-host -ForegroundColor Red "`t Schedule could not be set"
                         Write-KFLog -Message "Schedule could not be set" -Artifact $_
                     }
                 }
                 IF($matched_store.'InventorySchedule(Minutes)'){
                     try{
-                        Set-Kf-CertStoreSchedule -CertStoreID $store.Id -IntervalMinutes $matched_store.'InventorySchedule(Minutes)'
-                        write-host -ForegroundColor Green "Schedule set"
+                        Set-KF-CertStoreSchedule -CertStoreID $store.Id -IntervalMinutes $matched_store.'InventorySchedule(Minutes)'
                         Write-KFLog -Message "Schedule set successfully"
                       }Catch{
-                        write-host -ForegroundColor Red "Schedule could not be set"
+                        write-host -ForegroundColor Red "`t Schedule could not be set"
                         Write-KFLog -Message "Schedule could not be set" -Artifact $_
                     }
                 }
                 IF($matched_store.'InventorySchedule(Once(DateTime))'){
                     try{
-                        Set-Kf-CertStoreSchedule -CertStoreID $store.Id -Once $matched_store.'InventorySchedule(Once(DateTime))'
-                        write-host -ForegroundColor Green "Schedule set"
+                        Set-KF-CertStoreSchedule -CertStoreID $store.Id -Once $matched_store.'InventorySchedule(Once(DateTime))'
                         Write-KFLog -Message "Schedule set successfully"
                       }Catch{
-                        write-host -ForegroundColor Red "Schedule could not be set"
+                        write-host -ForegroundColor Red "`t Schedule could not be set"
                         Write-KFLog -Message "Schedule could not be set" -Artifact $_
                     }
                 }
 
             }
             IF(!$matched_store.CertStorePassword){
-                write-host -ForegroundColor Yellow "Warning: Certificate Store file password not provided. This may affect Keyfactor reading the Certificate Store file properly."
+                write-host -ForegroundColor Yellow "`t Warning: Certificate Store file password not provided. This may affect Keyfactor reading the Certificate Store file properly."
                 Write-KFLog -Message "Warning: Missing CertStore Password" -Artifact $store.DisplayName
             }
         }
