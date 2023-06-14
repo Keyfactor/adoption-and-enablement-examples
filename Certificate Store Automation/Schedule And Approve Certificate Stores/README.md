@@ -28,7 +28,7 @@ The different phases of this script are:
 # **Requirements**
 
 * At least one registered Keyfactor Universal Orchestrator
-* The RFJKS,RFPEM,RFPKCS12 Certificate Store types must be created prior to running the script.
+* The RFJKS, RFPEM, and RFPKCS12 Certificate Store types must be created prior to running the script.
 * A Keyfactor API user with appropriate access to Certificate Stores and Agents
 
 # **Execution**
@@ -45,28 +45,28 @@ The different phases of this script are:
 7. Locate the new "machine details" file. Optionally, for ease of editing, use Microsoft Excel to open and edit this file.  <IMAGE>
 8. Add servers that you wish to scan for Certificate Stores, taking care that the file header row is not modified.<br><br>
   ![](images/KF-Approve-CertStores-MachineDetails-Added.png)
-  
+<br>  
 <details><summary>See: Machine Details File - Value definitions</summary>
   
   
   #### Machine Details File - Details
   The acceptable values are:
   * **StoreType(RFJKS/RFPEM/RFPKCS12)**
-     * (String) The type of Certificate Store to scan for: RFJKS, RFPEM, or RFPKCS12.
+     * (string) The type of Certificate Store to scan for: RFJKS, RFPEM, or RFPKCS12.
   * **OrchestratorID**
-     * (GUID) The ID of the Keyfactor Orchestrator to perform discovery
+     * (guid) The ID of the Keyfactor Orchestrator to perform discovery
   * **MachineName**
-     * (String) The FQDN of the server to be scanned
+     * (string) The FQDN of the server to be scanned
   * **ServerUsername**
-     * (String) The username of the account used for authenticating to the server, which has appropriate access.
+     * (string) The username of the account used for authenticating to the server, which has appropriate access.
   * **ServerPassword**
-     * (String) The password of the account (above).
+     * (string) The password of the account (above).
   * **UseSSL**
-     * (Boolean) Whether SSL (WinRM HTTPS) will be used when connecting to the target sserver.
+     * (bool) Whether SSL (WinRM HTTPS) will be used when connecting to the target sserver.
   * **DirectoriesToSearch**
-     * (String) The filepath to start recursive scanning.
+     * (string) The filepath to start recursive scanning.
   * **DirectoriesToIgnore**
-     * (String) Directory
+     * (string) Directory
   
   Additional information about Certificate Store Discovery can be found in the official Keyfactor Documentation here: [Keyfactor Certificate Store Discovery](https://software.keyfactor.com/Content/ReferenceGuide/Certificate%20Store%20Discovery.htm?Highlight=certificate%20store%20discovery "Keyfactor Certificate Store Discovery")
     
@@ -74,28 +74,87 @@ The different phases of this script are:
   </details>
   
 ### Schedule Certificate Store Discovery Jobs
-  8. Once the machine details file is saved, ensure the updated copy is located its original location.
-  9. Execute the script again, and enter "Yes" when prompted to create new discovery jobs. <br> ![](KF-Approve-CertStores-Discovery.png)
-  10. Once completed, Keyfactor Command will perform a Certificate Store discovery with the orchestrator you previously defined.
+  9. Once the machine details file is saved, ensure the updated copy is located its original location.
+  10. Execute the script again, and enter "Yes" when prompted to create new discovery jobs. <br><br> ![](images/KF-Approve-CertStores-Discovery.png)
+  11. Once completed, Keyfactor Command will perform a Certificate Store discovery with the orchestrator you previously defined.
   
 ### Export Newly Discovered Certificate Stores
-  11. Wait until "Discovered" Certificate Stores are seen within Keyfactor Command.<br><br>
+  12. Wait until "Discovered" Certificate Stores are seen within Keyfactor Command.<br><br>
   ![](images/KF-Approve-CertStores-PendingCertStores.png)
-  12. Execute the script again. Enter "No" when prompted to create discovery jobs.
-  13. Enter "Yes" when prompted to export Pending Certificate Stores.<br><br>
+  13. Execute the script again. Enter "No" when prompted to create discovery jobs.
+  14. Enter "Yes" when prompted to export Pending Certificate Stores.<br><br>
   ![](images/KF-Approve-CertStores-ExportPending.png)
   15. Locate the new "Pending Certificate Stores" file. Optionally, for ease of editing, use Microsoft Excel to open and edit this file.<br><br>
   ![](images/KF-Approve-CertStores-PendingFile.png)
 
 ### Prepare the Pending Certificate Stores file
-  15. Edit the file
+  16. Edit the file to provide additional information to approve the Certificate Stores.<br><br>
+  ![](images/KF-Approve-CertStores-PreparePendingStores.png)<br>
+  > Note: Supplying server credentials in this file is optional if a completed Machine Details file is still available for this script to use. When the process attempts to approve Certificate Stores, it first attempts to use credentials in the Pending Certificate Stores file. If a credential is not found, the Machine Details file will then be checked.<br>
+  17. When adding Certificate Store details, not all fields are required and will depend on the certificate store file. For example, is a PEM file encrypted or not? Does it include a private Key?
+  > Note: For boolean values, leaving values null will default it to FALSE.
+<br>
+<details><summary>SEE: Pending Certificate Stores File - Value Definitions</summary>
+  
+  ### Pending Certificate Stores File - Details
+  Details regarding the values within the Pending Certificate Stores file can be found below:
+  * **CertStoreTypeID**
+     * (int) Keyfactor ID of the certificate store type. This is automatically included in the file.
+  * **ContainerID**
+     * (int) Optional Keyfactor Container ID to assign the certificate store to.
+  * **MachineName**
+     * (string) The FQDN of the server for the certificate store. This is automatically included in the file.
+  * **UseSSL**
+     * (bool) Whether to use SSL for connections. For Windows Servers, UseSSL enables WinRM (HTTPS)
+  * **ServerUsername**
+     * (string)(optional) The username of the account to use for authentication. If provided, this value takes priority over credentials supplied in the "machine details" file.
+  * **ServerPassword**
+     * (string) Optional: The password of the account above. Must be supplied if ServerUsername includes a value. 
+  * **StorePath**
+     * (string) The filepath of the discovered certificate store. This is automatically included in the file.
+  * **CertStorePassword**
+     * (string) The password for the certificate store file. If the certificate store does not include a password, this value can remain null, however, a warning will be displayed when approving certificate stores.
+  * **IncludesChain**
+     * (bool)(optional) Whether the file includes a full certificate chain.
+  * **IsRSAPrivateKey**
+     * (bool)(optional) Whether the file includes a private key. <br><br>
+        > Only relevant for .PEM certificate stores.
+  * **IsTrustStore**
+     * (bool)(optional) Whether the certificate file is a Trust Store. <br><br>
+       > Only relevant for .PEM certificate stores. <br>
+       >
+       > If 'true', this store will be identified as a trust store. Any certificates attempting to be added via a Management-Add job that contains a private key will raise an error with an accompanying message.
+  * **SeparatePrivateKeyFile**
+     * (string)(optional) Filepath for the private key of the certificate store. <br><br>
+        > Only relevant for .PEM certificate stores.
+  * **LinxFilePermissionOnCreate**
+     * (int)(optional) Linux File Permissions to set, if Keyfactor is creating the file. (e.g '600')
+  * **LinuxFileOwnerOnCreate**
+     * (string)(optional) The owner to set, if Keyfactor is creating the file. (e.g "myuser")
+  * **InventorySchedule(Minutes)**
+     * (int)(optional) The interval in minutes for Keyfactor to inventory the certificate store.
+  * **InventorySchedule(Daily)(Time)**
+     * (time)(optional) The time of day for Keyfactor to inventory the certificate store (e.g "12:00")
+  * **InventorySchedule(Once(DateTime))**
+     * (string)(optional) The datetime for Keyfactor to perform a SINGLE inventory job of the certifcate store (e.g "6/14/2023 13:00")<br><br>
+        > Note about schedules: Only 1 schedule can be defined for a certificate store (either interval minutes, daily, or once). Leaving all values blank is permissable, but will cause Keyfactor to not inventory the certificate store until a schedule has been added.
+  
+</details>
 
 
 ### Approve Pending Certificate Stores
+18. Once you have completed preparing the Pending Certificate Stores file, execute the script again.
+19. Enter "No" when asked to schedule discovery jobs.
+20. When prompted to continue with Certificate Store approval, enter "Yes"
+21. When prompted if the correct file has been identified, enter "Yes"
+    > If multiple "Pending Certificate Stores" files exist, enter "No" until you are prompted for the correct file.
+22. The process will approve all certificate stores:<br><br>
+![](images/KF-Approve-CertStores-ApproveStores.png)
   
   
-  
-  
+### Logging
+This process logs all events to the defined file. 
+![](images/KF-Approve-CertStores-Log.png)
   
  
 ```
