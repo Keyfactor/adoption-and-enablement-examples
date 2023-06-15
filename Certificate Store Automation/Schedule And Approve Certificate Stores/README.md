@@ -44,15 +44,16 @@ A workflow diagram of this process can be found [here.](KF-Approve-CertStores-Pr
 ![](images/KF-Approve-CertStores-MachineDetails.png)
 >You will need to enter define your Orchestrator's ID in the file. If this is unknown, enter "**Yes**" when prompted to retrieve your Orchestrator(s) ID.<br><br>
 >![](images/KF-Approve-CertStores-OrchestratorID.png)
-6. Upon continuing, the script will finish since expected files and/or pending Certificate Stores will be found in Keyfactor.
+6. Upon continuing, the script will finish since expected files are missing and/or pending Certificate Stores will not be found in Keyfactor.
 7. Locate the new "machine details" file. Optionally, for ease of editing, use Microsoft Excel to open and edit this file.  <IMAGE>
 8. Add servers that you wish to scan for Certificate Stores, taking care that the file header row is not modified.<br><br>
   ![](images/KF-Approve-CertStores-MachineDetails-Added.png)
-<br>  
-<details><summary>SEE: Machine Details File - Value definitions</summary>
+<br>
+  Additional information for this file and its columns requirements can be found below:
+  <details><summary><h4>SEE: Machine Details File - Value definitions</h4></summary>
   
   
-  #### Machine Details File - Details
+  ### Machine Details File - Details
   The acceptable values are:
   * **StoreType(RFJKS/RFPEM/RFPKCS12)**
      * (string) The type of Certificate Store to scan for: RFJKS, RFPEM, or RFPKCS12.
@@ -69,7 +70,7 @@ A workflow diagram of this process can be found [here.](KF-Approve-CertStores-Pr
   * **DirectoriesToSearch**
      * (string) The filepath to start recursive scanning.
   * **DirectoriesToIgnore**
-     * (string) Directory
+     * (string) Directories to ignore (comma delimited)
   
   Additional information about Certificate Store Discovery can be found in the official Keyfactor Documentation here: [Keyfactor Certificate Store Discovery](https://software.keyfactor.com/Content/ReferenceGuide/Certificate%20Store%20Discovery.htm?Highlight=certificate%20store%20discovery "Keyfactor Certificate Store Discovery")
     
@@ -97,7 +98,8 @@ A workflow diagram of this process can be found [here.](KF-Approve-CertStores-Pr
   17. When adding Certificate Store details, not all fields are required and will depend on the certificate store file. For example, is a PEM file encrypted or not? Does it include a private Key?
   > Note: For boolean values, leaving values null will default it to FALSE.
 <br>
-<details><summary>SEE: Pending Certificate Stores File - Value Definitions</summary>
+Additional information for this file and its columns requirements can be found below:
+<details><summary><h4>SEE: Pending Certificate Stores File - Value Definitions</h4></summary>
   
   ### Pending Certificate Stores File - Details
   Details regarding the values within the Pending Certificate Stores file can be found below:
