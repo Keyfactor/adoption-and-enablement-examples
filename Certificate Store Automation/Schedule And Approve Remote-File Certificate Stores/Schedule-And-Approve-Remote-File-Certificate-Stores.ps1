@@ -2,7 +2,7 @@
 .NOTES
     Created on:   	6/9/2023
     Created by:   	Keyfactor
-    Filename: Schedule-And-Approve-Certificate-Stores.ps1
+    Filename: Schedule-And-Approve-Remote-File-Certificate-Stores.ps1
     Tested on Keyfactor Command v10.3
 
 .DESCRIPTION
