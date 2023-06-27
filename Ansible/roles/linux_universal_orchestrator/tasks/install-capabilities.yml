@@ -13,7 +13,7 @@
 
     - name: move files
       copy:
-        src: "{{ install_source_dir }}/{{ unziped_capabilities_name }}/"
+        src: "{{ install_source_dir }}/{{ unziped_capabilities_name }}/{{ unziped_capabilities_name }}/"
         dest: "{{ capabilities_directory }}"
 
     - name: Restart Service
