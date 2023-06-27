@@ -17,15 +17,15 @@
         agentid: "{{ result.json[0].AgentId }}"
 
     - name: Approve
-      win_uri:
+      uri:
         url: "{{ command_url }}/KeyfactorAPI/Agents/Approve"
         url_username: "{{keyfactorUser}}"
         url_password: "{{keyfactorPassword}}"
         method: POST
         body: '["{{ agentid }}"]'
-        content_type: application/json
         headers:
           x-keyfactor-requested-with: XMLHttpRequest
+          content_type: application/json
         force_basic_auth: true
         status_code: 204
         return_content: false
