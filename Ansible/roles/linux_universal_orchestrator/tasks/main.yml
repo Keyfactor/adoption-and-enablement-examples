@@ -7,6 +7,9 @@
 - import_tasks: install-orchestrator.yml
   tags:
   - install
+- import_task: install-capabilities.yml
+  tags:
+  - install
 - import_tasks: install_files_cleanup.yml
   tags:
   - cleanup
