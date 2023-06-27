@@ -1,21 +1,23 @@
 ---
 - name: block new install
   block:
-#    - name: ensure tomcat directory exists
-#      file:
-#        path: "{{ install_source_dir }}/{{ unziped_capabilities_name }}"
-#        state: directory
-
     - name: Copy and Unzip Install Files
       unarchive:
         src: "{{ capabilities_file }}"
         dest: "{{ capabilities_directory }}"
+      become: true
 
     - name: move files
       copy:
         src: "{{ capabilities_directory }}{{ unziped_capabilities_name }}/"
         dest: "{{ capabilities_directory }}"
         remote_src: true
+      become: true
+
+    - name: move files
+      file:
+        path: "{{ capabilities_directory }}{{ unziped_capabilities_name }}/"
+        state: absent
 
     - name: Restart Service
       service:
