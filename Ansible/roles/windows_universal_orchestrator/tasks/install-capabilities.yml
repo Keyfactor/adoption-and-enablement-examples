@@ -1,0 +1,17 @@
+---
+- name: block new install
+  block:
+    - name: Copy Cap Zip Files
+      win_copy:
+        src: "{{ capabilities_file }}"
+        dest: "{{ install_source_dir }}{{ capabilities_file }}"
+
+    - name: unzip Cap Files
+      win_shell: |
+        Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_source_dir }}{{ orchestrator_Install_dir_name }}\extensions"
+
+    - name: Restart Service
+      win_service:
+        name: "{{ orchestrator_service }}"
+        state: restarted
+  when install_capabilities: true

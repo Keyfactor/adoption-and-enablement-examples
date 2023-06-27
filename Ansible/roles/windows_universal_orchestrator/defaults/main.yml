@@ -1,8 +1,10 @@
-command_url: https://customerurl.keyfactor.com
-keyfactorPassword: password
-keyfactorUser: "domain\\aduser"
-orchestrator_name: "orchestrator_name"
-orchestrator_zip: file.zip
+command_url: https://jhowland104.kfdelivery.com
+keyfactorPassword: "Wh5G2Tc6VBYjSMpC"
+keyfactorUser: "command\\kfadmin"
+orchestrator_name: "iis.command.local"
+orchestrator_zip: KeyfactorUniversalOrchestrator-10.4.0.zip
+install_capabilities: true
+capabilities_file: capabilites.zip
 
 #Do Not Change Below
 orchestrator_zip_name: KeyfactorUniversalOrchestrator.zip
@@ -14,3 +16,4 @@ powershell_template: generate-install-config.ps1
 powershell_file_name: install-config.ps1
 min_dotnet_version: 3.1.29
 os_min_version: 10.0.17763
+orchestrator_service: "KeyfactorOrchestrator-Default"

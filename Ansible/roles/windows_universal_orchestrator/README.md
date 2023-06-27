@@ -29,10 +29,8 @@ Note: This role is still in active development.  There may be unidentified issue
 * See Keyfactor Orchestrator Installation and Configuration Guide for Orchestrator Prerequisite details
 * Windows Server 2019 (Minimum Version Requirement)
 * Ansible AWX 22.2.0 (Tested with 22.2.0)
-* Add Orchestrator MSI and update variables.
-
-**Git**
-Use `git clone TBD` to pull the latest edge commit of the role from GitHub
+* Add Orchestrator MSI zip file and Capabilities zip file to a directory called "files"
+* update variables.
 
 ## Example Playbook
 
@@ -72,7 +70,11 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 
 - `orchestrator_name`: `<name of Orchestrator>` The name that will be known in Keyfactor Command.  This can be passed as a variable in the playbook.
 
-- `orchestrator_zip`: `KeyfactorUniversalOrchestrator-10.2.0.zip` Name of the zipped install files.  this is expected in the files directory.
+- `orchestrator_zip`: `KeyfactorUniversalOrchestrator-10.2.0.zip` Name of the zipped installation files.  this is expected in the files' directory.
+
+- `install_capabilities`: `true` used to tell the script to install capabilities in the "capabilities" file.
+
+- `capabilities_file`: `capabilites.zip` Name of the zipfile with all the capabilities.
 
 - `orchestrator_dir`: `Keyfactor Orchestrator\` Default directory name of where the Orchestrator will be installed. DO NOT CHANGE.
 
@@ -82,14 +84,15 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 
 - `install_target_dir`: `C:\Program Files\Keyfactor\` Default directory name of where keyfactor installs its products. DO NOT CHANGE.
 
-- `install_source_dir`: `C:\InstallSource\` Directory where all install files will be moved.  This directory will be removed after the install. DO NOT CHANGE.
+- `install_source_dir`: `C:\InstallSource\` Directory where all install files will be moved.  This directory will be removed after the installation. DO NOT CHANGE.
 
-- `powershell_template`: `generate-install-config.ps1` The name of the powershell script template install the Orchestrator. DO NOT CHANGE.
+- `powershell_template`: `generate-install-config.ps1` The name of the powershell script template installs the Orchestrator. DO NOT CHANGE.
 
 - `powershell_file_name`: `install-config.ps1` The name of the generated powershell script to install the Orchestrator. DO NOT CHANGE.
 
-- `os_min_version`: `10.0.17763` Requirement for Universal Orchestrator and can change as newer versions of the Orchestrator is released. DO NOT CHANGE.
+- `os_min_version`: `10.0.17763` Requirement for Universal Orchestrator and can change as newer versions of the Orchestrator are released. DO NOT CHANGE.
 
-- `min_dotnet_version`: `3.1.29` Requirement for Universal Orchestrator and can change as newer versions of the Orchestrator is released. DO NOT CHANGE.
+- `min_dotnet_version`: `3.1.29` Requirement for Universal Orchestrator and can change as newer versions of the Orchestrator are released. DO NOT CHANGE.
 
+- `orchestrator_service: 'KeyfactorOrchestrator-Default` Name of the Orchestrator Service. DO NOT CHANGE
 ***
