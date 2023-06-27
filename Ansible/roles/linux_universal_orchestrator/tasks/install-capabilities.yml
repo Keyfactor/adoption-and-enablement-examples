@@ -10,9 +10,6 @@
       unarchive:
         src: "{{ capabilities_file }}"
         dest: "{{ install_source_dir }}/{{ unziped_capabilities_name }}"
-        create: true
-
-
 
     - name: move files
       copy:
