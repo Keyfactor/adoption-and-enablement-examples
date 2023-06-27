@@ -3,10 +3,10 @@ keyfactorPassword: "Wh5G2Tc6VBYjSMpC"
 keyfactorUser: "kfadmin@command.local"
 orchestrator_name: "linux.command.local"
 orchestrator_zip: KeyfactorUniversalOrchestrator-10.4.0.zip
-install_capabilities: true
+install_capabilities: false
 capabilities_file: capabilities.zip
 unziped_capabilities_name: capabilities
-approve_agent: false
+approve_agent: true
 
 #Do Not Change Below
 install_source_dir: /var/tmp/KeyfactorUniversalOrchestrator
