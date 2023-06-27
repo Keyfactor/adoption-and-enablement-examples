@@ -11,7 +11,7 @@
   failed_when: result.xtotalcount != "1"
 
 - name: approve agent
-  Block:
+  block:
     - name: set_var
       set_fact:
         agentid: "{{ result.json[0].AgentId }}"
