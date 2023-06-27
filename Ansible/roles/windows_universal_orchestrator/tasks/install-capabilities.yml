@@ -8,7 +8,7 @@
 
     - name: unzip Cap Files
       win_shell: |
-        Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_source_dir }}"
+        Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_source_dir }}{{ unziped_capabilities_name }}"
 
     - name: unzip Cap Files
       win_shell: |
