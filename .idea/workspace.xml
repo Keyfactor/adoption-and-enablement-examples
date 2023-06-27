@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f8f1df03-6361-4d42-b2ed-a84aac4a6352" name="Changes" comment="adding capabilities tasks">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/orchide.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" show_ignored="true" />
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="ansible" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2QZVRbc6YQ4OcxsDk8TaA90nyCo" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "OrchideMappingSettingsSimpleMapping.checked": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "ansible",
+    "last_opened_file_path": "C:/Users/jhowland/Downloads/GitHub/adoption-and-enablement-examples/Ansible/roles/linux_universal_orchestrator/files",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible\roles\linux_universal_orchestrator\files" />
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible\roles\windows_universal_orchestrator\files" />
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible\roles\linux_universal_orchestrator\tasks" />
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible\roles\linux_universal_orchestrator" />
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible\roles\anygateway\tasks" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible\roles\windows_universal_orchestrator\files" />
+      <recent name="C:\Users\jhowland\Downloads\GitHub\adoption-and-enablement-examples\Ansible" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f8f1df03-6361-4d42-b2ed-a84aac4a6352" name="Changes" comment="" />
+      <created>1685561082378</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1685561082378</updated>
+      <workItem from="1685561083303" duration="3371000" />
+      <workItem from="1687864635358" duration="19745000" />
+    </task>
+    <task id="LOCAL-00001" summary="inital commit">
+      <created>1685565183002</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1685565183002</updated>
+    </task>
+    <task id="LOCAL-00002" summary="inital commit">
+      <created>1685565321645</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1685565321645</updated>
+    </task>
+    <task id="LOCAL-00003" summary="adding removing install files">
+      <created>1685649604343</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1685649604343</updated>
+    </task>
+    <task id="LOCAL-00004" summary="adding removing install files">
+      <created>1685649742920</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1685649742920</updated>
+    </task>
+    <task id="LOCAL-00005" summary="adding capabilities tasks">
+      <created>1687867527595</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1687867527595</updated>
+    </task>
+    <task id="LOCAL-00006" summary="adding capabilities tasks">
+      <created>1687868118181</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1687868118181</updated>
+    </task>
+    <task id="LOCAL-00007" summary="adding capabilities tasks">
+      <created>1687868218794</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1687868218794</updated>
+    </task>
+    <task id="LOCAL-00008" summary="adding capabilities tasks">
+      <created>1687868980056</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1687868980056</updated>
+    </task>
+    <task id="LOCAL-00009" summary="adding capabilities tasks">
+      <created>1687873398456</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1687873398456</updated>
+    </task>
+    <task id="LOCAL-00010" summary="adding capabilities tasks">
+      <created>1687874210406</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1687874210406</updated>
+    </task>
+    <task id="LOCAL-00011" summary="adding capabilities tasks">
+      <created>1687874501629</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1687874501629</updated>
+    </task>
+    <task id="LOCAL-00012" summary="adding capabilities tasks">
+      <created>1687874962244</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1687874962244</updated>
+    </task>
+    <task id="LOCAL-00013" summary="adding capabilities tasks">
+      <created>1687875069853</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1687875069853</updated>
+    </task>
+    <task id="LOCAL-00014" summary="adding capabilities tasks">
+      <created>1687875406090</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1687875406090</updated>
+    </task>
+    <task id="LOCAL-00015" summary="adding capabilities tasks">
+      <created>1687875725897</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1687875725897</updated>
+    </task>
+    <task id="LOCAL-00016" summary="adding capabilities tasks">
+      <created>1687875907437</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1687875907437</updated>
+    </task>
+    <task id="LOCAL-00017" summary="adding capabilities tasks">
+      <created>1687875934744</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1687875934744</updated>
+    </task>
+    <task id="LOCAL-00018" summary="adding capabilities tasks">
+      <created>1687875996688</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1687875996688</updated>
+    </task>
+    <task id="LOCAL-00019" summary="adding capabilities tasks">
+      <created>1687877426958</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1687877426958</updated>
+    </task>
+    <task id="LOCAL-00020" summary="adding capabilities tasks">
+      <created>1687877787855</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1687877787855</updated>
+    </task>
+    <task id="LOCAL-00021" summary="adding capabilities tasks">
+      <created>1687877924085</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1687877924085</updated>
+    </task>
+    <task id="LOCAL-00022" summary="adding capabilities tasks">
+      <created>1687878038261</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1687878038261</updated>
+    </task>
+    <task id="LOCAL-00023" summary="adding capabilities tasks">
+      <created>1687878738266</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1687878738266</updated>
+    </task>
+    <task id="LOCAL-00024" summary="adding capabilities tasks">
+      <created>1687879733508</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1687879733508</updated>
+    </task>
+    <task id="LOCAL-00025" summary="adding capabilities tasks">
+      <created>1687879935458</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1687879935458</updated>
+    </task>
+    <task id="LOCAL-00026" summary="adding capabilities tasks">
+      <created>1687881554323</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1687881554323</updated>
+    </task>
+    <task id="LOCAL-00027" summary="adding capabilities tasks">
+      <created>1687882143638</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1687882143638</updated>
+    </task>
+    <task id="LOCAL-00028" summary="adding capabilities tasks">
+      <created>1687882564984</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1687882564984</updated>
+    </task>
+    <task id="LOCAL-00029" summary="adding capabilities tasks">
+      <created>1687883208425</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1687883208425</updated>
+    </task>
+    <task id="LOCAL-00030" summary="adding capabilities tasks">
+      <created>1687884348320</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1687884348320</updated>
+    </task>
+    <task id="LOCAL-00031" summary="adding capabilities tasks">
+      <created>1687884704168</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1687884704169</updated>
+    </task>
+    <task id="LOCAL-00032" summary="adding capabilities tasks">
+      <created>1687888927066</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1687888927066</updated>
+    </task>
+    <task id="LOCAL-00033" summary="adding capabilities tasks">
+      <created>1687891086197</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1687891086197</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="inital commit" />
+    <MESSAGE value="adding removing install files" />
+    <MESSAGE value="adding capabilities tasks" />
+    <option name="LAST_COMMIT_MESSAGE" value="adding capabilities tasks" />
+  </component>
+</project>
