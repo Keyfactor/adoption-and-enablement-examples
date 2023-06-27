@@ -1,25 +1,10 @@
 ---
 - name: block new install
   block:
-    - name: Create a directory if it does not exist
-      file:
-        path: "{{ install_source_dir }}"
-        state: directory
-        mode: '0755'
-
     - name: Copy and Unzip Install Files
       unarchive:
-        src: "{{ orchestrator_zip }}"
-        dest: "{{ install_source_dir }}"
-
-    - name: Copy Cap Zip Files
-      win_copy:
         src: "{{ capabilities_file }}"
-        dest: "{{ install_source_dir }}{{ capabilities_file }}"
-
-    - name: unzip Cap Files
-      win_shell: |
-        Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_source_dir }}"
+        dest: "{{ install_source_dir }}"
 
     - name: unzip Cap Files
       win_shell: |

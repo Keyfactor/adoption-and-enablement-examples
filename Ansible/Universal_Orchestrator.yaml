@@ -1,8 +1,8 @@
 ---
 - name: Universal_Orchestrator.yaml
-  hosts: windows
+  hosts: linux
   gather_facts: no
   tasks:
   - name: include role
     include_role:
-      name: windows_universal_orchestrator
+      name: linux_universal_orchestrator
