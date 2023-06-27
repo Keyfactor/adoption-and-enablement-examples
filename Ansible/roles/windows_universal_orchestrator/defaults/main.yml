@@ -4,7 +4,7 @@ keyfactorUser: "command\\kfadmin"
 orchestrator_name: "iis5.command.local"
 orchestrator_zip: KeyfactorUniversalOrchestrator-10.4.0.zip
 install_capabilities: true
-capabilities_file: capabilites.zip
+capabilities_file: capabilities.zip
 unziped_capabilities_name: capabilites
 
 #Do Not Change Below
