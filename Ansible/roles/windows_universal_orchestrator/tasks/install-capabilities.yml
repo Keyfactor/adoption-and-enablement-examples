@@ -14,4 +14,4 @@
       win_service:
         name: "{{ orchestrator_service }}"
         state: restarted
-  when install_capabilities: true
+  when: install_capabilities == true
