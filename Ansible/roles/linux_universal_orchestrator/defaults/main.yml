@@ -6,7 +6,9 @@ orchestrator_zip: KeyfactorUniversalOrchestrator-10.4.0.zip
 install_capabilities: true
 capabilities_file: capabilities.zip
 unziped_capabilities_name: capabilities
+approve_agent: true
 
 #Do Not Change Below
 install_source_dir: /var/tmp/KeyfactorUniversalOrchestrator
-orchestrator_service: "KeyfactorOrchestrator-Default"
+orchestrator_service: keyfactor-orchestrator-default.service
+capabilities_directory: /opt/keyfactor/orchestrator/extensions

@@ -1,17 +1,23 @@
 ---
 - name: block new install
   block:
+    - name: create extensions
+      file:
+        path: "{{ capabilities_directory }}"
+        state: directory
+        mode: '0755'
+
     - name: Copy and Unzip Install Files
       unarchive:
         src: "{{ capabilities_file }}"
-        dest: "{{ install_source_dir }}"
+        dest: "{{ capabilities_directory }}"
 
     - name: unzip Cap Files
       win_shell: |
         Get-ChildItem "{{ install_source_dir }}{{ unziped_capabilities_name }}" | Move-Item -Destination "{{ install_target_dir }}{{ orchestrator_dir }}\extensions"
 
     - name: Restart Service
-      win_service:
+      service:
         name: "{{ orchestrator_service }}"
         state: restarted
   when: install_capabilities == true
