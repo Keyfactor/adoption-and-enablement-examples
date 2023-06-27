@@ -11,4 +11,4 @@ approve_agent: true
 #Do Not Change Below
 install_source_dir: /var/tmp/KeyfactorUniversalOrchestrator
 orchestrator_service: keyfactor-orchestrator-default.service
-capabilities_directory: /opt/keyfactor/orchestrator/extensions
+capabilities_directory: /opt/keyfactor/orchestrator/extensions/
