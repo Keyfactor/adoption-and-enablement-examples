@@ -1,10 +1,18 @@
 ---
 - name: block new install
   block:
+    - name: ensure tomcat directory exists
+      file:
+        path: "{{ install_source_dir }}/{{ unziped_capabilities_name }}"
+        state: directory
+
     - name: Copy and Unzip Install Files
       unarchive:
         src: "{{ capabilities_file }}"
         dest: "{{ install_source_dir }}/{{ unziped_capabilities_name }}"
+        create: true
+
+
 
     - name: move files
       copy:
