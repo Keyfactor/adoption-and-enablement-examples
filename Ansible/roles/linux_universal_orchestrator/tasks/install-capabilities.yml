@@ -13,8 +13,8 @@
 
     - name: move files
       copy:
-        src: "{{ capabilities_directory }}/{{ unziped_capabilities_name }}/"
-        dest: "{{ capabilities_directory }}/"
+        src: "{{ capabilities_directory }}{{ unziped_capabilities_name }}/"
+        dest: "{{ capabilities_directory }}"
 
     - name: Restart Service
       service:
