@@ -96,6 +96,14 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 
 - `orchestrator_service: 'KeyfactorOrchestrator-Default` Name of the Orchestrator Service. DO NOT CHANGE
 
-## Installing Orchestrator Capabilites
-
+## Installing Orchestrator Capabilites 
+To add additional capabilities to the orchestrator, complete the following steps.
+- Download the capability releases you desire from https://github.com/Keyfactor
+- unzip all the files
+- create a new directory called "capabilities"
+- create a sub-folder for each capability (some capability folder names are outlined as requirements in the GitHub Repository)
+- place the files from the unzipped capability in the new sub-folder for each capability.
+- zip the capabilities directory with the same name
+- move the capabilities zip file in the "file" directory of the playbook role.
+- set the "install_capabilities" variable to "true"
 ***
