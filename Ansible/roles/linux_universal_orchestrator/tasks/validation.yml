@@ -27,6 +27,7 @@
           x-keyfactor-requested-with: XMLHttpRequest
           content_type: application/json
         force_basic_auth: true
+        body_format: json
         status_code: 204
         return_content: false
   when: approve_agent == true
