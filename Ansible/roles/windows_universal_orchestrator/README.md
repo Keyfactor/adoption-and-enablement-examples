@@ -94,7 +94,9 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 
 - `min_dotnet_version`: `3.1.29` Requirement for Universal Orchestrator and can change as newer versions of the Orchestrator are released. DO NOT CHANGE.
 
-- `orchestrator_service: 'KeyfactorOrchestrator-Default` Name of the Orchestrator Service. DO NOT CHANGE
+- `orchestrator_service': 'KeyfactorOrchestrator-Default` Name of the Orchestrator Service. DO NOT CHANGE
+
+- `approve_agent`: `true` set to true is you want the job to approve the new orchestrator (keyfactor user needs auto-approve rights in Command)
 
 ## Installing Orchestrator Capabilites 
 To add additional capabilities to the orchestrator, complete the following steps.

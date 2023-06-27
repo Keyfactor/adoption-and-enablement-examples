@@ -10,20 +10,23 @@
   register: result
   failed_when: result.xtotalcount != "1"
 
-- name: set_var
-  set_fact:
-    agentid: "{{ result.json[0].AgentId }}"
+- name: approve agent
+  Block:
+    - name: set_var
+      set_fact:
+        agentid: "{{ result.json[0].AgentId }}"
 
-- name: Approve
-  win_uri:
-    url: "{{ command_url }}/KeyfactorAPI/Agents/Approve"
-    url_username: "{{keyfactorUser}}"
-    url_password: "{{keyfactorPassword}}"
-    method: POST
-    body: '["{{ agentid }}"]'
-    content_type: application/json
-    headers:
-      x-keyfactor-requested-with: XMLHttpRequest
-    force_basic_auth: true
-    status_code: 204
-    return_content: false
+    - name: Approve
+      win_uri:
+        url: "{{ command_url }}/KeyfactorAPI/Agents/Approve"
+        url_username: "{{keyfactorUser}}"
+        url_password: "{{keyfactorPassword}}"
+        method: POST
+        body: '["{{ agentid }}"]'
+        content_type: application/json
+        headers:
+          x-keyfactor-requested-with: XMLHttpRequest
+        force_basic_auth: true
+        status_code: 204
+        return_content: false
+  when: approve_agent == true
