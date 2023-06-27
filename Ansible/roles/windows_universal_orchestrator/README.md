@@ -106,4 +106,5 @@ To add additional capabilities to the orchestrator, complete the following steps
 - zip the capabilities directory with the same name
 - move the capabilities zip file in the "file" directory of the playbook role.
 - set the "install_capabilities" variable to "true"
+- NOTE be sure to create the "Certificate StoreType" before running this playbook with capabilities.
 ***
