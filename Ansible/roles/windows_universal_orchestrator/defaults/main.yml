@@ -1,7 +1,7 @@
 command_url: https://jhowland104.kfdelivery.com
 keyfactorPassword: "Wh5G2Tc6VBYjSMpC"
 keyfactorUser: "command\\kfadmin"
-orchestrator_name: "iis7.command.local"
+orchestrator_name: "iis8.command.local"
 orchestrator_zip: KeyfactorUniversalOrchestrator-10.4.0.zip
 install_capabilities: true
 capabilities_file: capabilities.zip
