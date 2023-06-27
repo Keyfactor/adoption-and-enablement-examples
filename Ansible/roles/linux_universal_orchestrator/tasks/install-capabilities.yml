@@ -15,6 +15,7 @@
       copy:
         src: "{{ capabilities_directory }}{{ unziped_capabilities_name }}/"
         dest: "{{ capabilities_directory }}"
+        remote_src: true
 
     - name: Restart Service
       service:
