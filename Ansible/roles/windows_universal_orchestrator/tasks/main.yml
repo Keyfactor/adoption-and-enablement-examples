@@ -10,9 +10,9 @@
 - import_tasks: install-capabilities.yml
   tags:
   - install
-#- import_tasks: install_files_cleanup.yml
-#  tags:
-#  - cleanup
-#- import_tasks: validation.yml
-#  tags:
-#  - validation
+- import_tasks: install_files_cleanup.yml
+  tags:
+  - cleanup
+- import_tasks: validation.yml
+  tags:
+  - validation
