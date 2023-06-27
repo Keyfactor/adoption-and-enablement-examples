@@ -12,7 +12,7 @@
 
 - name: set_var
   set_fact:
-    agentid: {{ result.json[0].AgentId }}
+    agentid: "{{ result.json[0].AgentId }}"
 
 - debug:
     msg: "{{ agentid }}"
