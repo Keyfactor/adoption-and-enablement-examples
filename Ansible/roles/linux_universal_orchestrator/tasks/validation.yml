@@ -9,3 +9,24 @@
     return_content: true
   register: result
   failed_when: result.x_total_count != "1"
+
+- name: approve agent
+  block:
+    - name: set_var
+      set_fact:
+        agentid: "{{ result.json[0].AgentId }}"
+
+    - name: Approve
+      win_uri:
+        url: "{{ command_url }}/KeyfactorAPI/Agents/Approve"
+        url_username: "{{keyfactorUser}}"
+        url_password: "{{keyfactorPassword}}"
+        method: POST
+        body: '["{{ agentid }}"]'
+        content_type: application/json
+        headers:
+          x-keyfactor-requested-with: XMLHttpRequest
+        force_basic_auth: true
+        status_code: 204
+        return_content: false
+  when: approve_agent == true

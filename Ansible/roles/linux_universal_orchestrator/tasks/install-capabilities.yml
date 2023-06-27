@@ -1,6 +1,17 @@
 ---
 - name: block new install
   block:
+    - name: Create a directory if it does not exist
+      file:
+        path: "{{ install_source_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy and Unzip Install Files
+      unarchive:
+        src: "{{ orchestrator_zip }}"
+        dest: "{{ install_source_dir }}"
+
     - name: Copy Cap Zip Files
       win_copy:
         src: "{{ capabilities_file }}"
@@ -10,9 +21,9 @@
       win_shell: |
         Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_source_dir }}"
 
-    - name: move Cap Files
+    - name: unzip Cap Files
       win_shell: |
-        Get-ChildItem "{{ install_source_dir }}{{ unziped_capabilities_name }}" | Move-Item -Destination "{{ install_target_dir }}{{ orchestrator_dir }}extensions"
+        Get-ChildItem "{{ install_source_dir }}{{ unziped_capabilities_name }}" | Move-Item -Destination "{{ install_target_dir }}{{ orchestrator_dir }}\extensions"
 
     - name: Restart Service
       win_service:
