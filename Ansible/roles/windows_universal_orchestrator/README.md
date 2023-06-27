@@ -22,7 +22,7 @@ Note: This role is still in active development.  There may be unidentified issue
 
 * [Windows Server 2019](https://www.microsoft.com/en-us/windows-server) - Minimum Version Requirement for Target Host OS.
 * [Ansible AWX 22.2.0](https://github.com/ansible/awx/releases) - Latest Version used.
-* [Keyfactor Command 10.2.1.0](https://software.keyfactor.com/Guides/InstallingAgents/InstallingKeyfactorOrchestrators.pdf) - Latest Version used.
+* [Keyfactor Command 10.4.](https://software.keyfactor.com/Guides/InstallingAgents/InstallingKeyfactorOrchestrators.pdf) - Latest Version used.
 
 ## Requirements
 
