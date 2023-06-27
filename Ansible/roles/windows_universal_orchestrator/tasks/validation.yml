@@ -14,16 +14,13 @@
   set_fact:
     agentid: "{{ result.json[0].AgentId }}"
 
-- debug:
-    msg: "{{ agentid }}"
-
-#- name: Approve
-#  win_uri:
-#    url: "{{ command_url }}/KeyfactorAPI/Agents/Approve"
-#    url_username: "{{keyfactorUser}}"
-#    url_password: "{{keyfactorPassword}}"
-#    method: POST
-#    body: '["{{ agentid }}"]'
-#    force_basic_auth: true
-#    status_code: 204
-#    return_content: false
+- name: Approve
+  win_uri:
+    url: "{{ command_url }}/KeyfactorAPI/Agents/Approve"
+    url_username: "{{keyfactorUser}}"
+    url_password: "{{keyfactorPassword}}"
+    method: POST
+    body: '["{{ agentid }}"]'
+    force_basic_auth: true
+    status_code: 204
+    return_content: false
