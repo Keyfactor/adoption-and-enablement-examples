@@ -95,4 +95,7 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 - `min_dotnet_version`: `3.1.29` Requirement for Universal Orchestrator and can change as newer versions of the Orchestrator are released. DO NOT CHANGE.
 
 - `orchestrator_service: 'KeyfactorOrchestrator-Default` Name of the Orchestrator Service. DO NOT CHANGE
+
+## Installing Orchestrator Capabilites
+
 ***

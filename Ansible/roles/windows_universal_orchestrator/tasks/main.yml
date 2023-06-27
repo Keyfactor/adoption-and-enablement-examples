@@ -4,15 +4,15 @@
 - import_tasks: copy-files.yml
   tags:
   - copy
-- import_tasks: install-orchestrator.yml
-  tags:
-  - install
-- import_tasks: install-capabilities.yml
-  tags:
-  - install
-- import_tasks: install_files_cleanup.yml
-  tags:
-  - cleanup
-- import_tasks: validation.yml
-  tags:
-  - validation
+#- import_tasks: install-orchestrator.yml
+#  tags:
+#  - install
+#- import_tasks: install-capabilities.yml
+#  tags:
+#  - install
+#- import_tasks: install_files_cleanup.yml
+#  tags:
+#  - cleanup
+#- import_tasks: validation.yml
+#  tags:
+#  - validation

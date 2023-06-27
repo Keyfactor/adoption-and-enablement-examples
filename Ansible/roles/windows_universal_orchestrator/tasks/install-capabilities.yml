@@ -8,6 +8,11 @@
 
     - name: unzip Cap Files
       win_shell: |
+        Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_source_dir }}"
+
+    - name: unzip Cap Files
+      win_shell: |
+        get-childitem
         Expand-Archive -LiteralPath "{{ install_source_dir }}{{ capabilities_file }}" -DestinationPath "{{ install_target_dir }}{{ orchestrator_dir }}\extensions"
 
     - name: Restart Service
