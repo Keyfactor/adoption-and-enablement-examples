@@ -12,10 +12,6 @@
         src: "{{ capabilities_file }}"
         dest: "{{ capabilities_directory }}"
 
-    - name: unzip Cap Files
-      win_shell: |
-        Get-ChildItem "{{ install_source_dir }}{{ unziped_capabilities_name }}" | Move-Item -Destination "{{ install_target_dir }}{{ orchestrator_dir }}\extensions"
-
     - name: Restart Service
       service:
         name: "{{ orchestrator_service }}"
