@@ -12,7 +12,7 @@
 
     - name: move Cap Files
       win_shell: |
-        Get-ChildItem "{{ install_source_dir }}{{ unziped_capabilities_name }}" | Move-Item -Destination "{{ install_target_dir }}{{ orchestrator_dir }}extensions"
+        Get-ChildItem "{{ install_source_dir }}{{ unzipped_capabilities_name }}" | Move-Item -Destination "{{ install_target_dir }}{{ orchestrator_dir }}extensions"
 
     - name: Restart Service
       win_service:

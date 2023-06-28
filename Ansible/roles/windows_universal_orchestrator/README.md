@@ -29,6 +29,7 @@ Note: This role is still in active development.  There may be unidentified issue
 * See Keyfactor Orchestrator Installation and Configuration Guide for Orchestrator Prerequisite details
 * Windows Server 2019 (Minimum Version Requirement)
 * Ansible AWX 22.2.0 (Tested with 22.2.0)
+* user account this will connect as needs to be a local administrator.
 * Add Orchestrator MSI zip file and Capabilities zip file to a directory called "files"
 * update variables.
 

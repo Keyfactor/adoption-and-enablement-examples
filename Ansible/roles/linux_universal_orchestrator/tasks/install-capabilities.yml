@@ -9,14 +9,14 @@
 
     - name: move files
       copy:
-        src: "{{ capabilities_directory }}{{ unziped_capabilities_name }}/"
+        src: "{{ capabilities_directory }}{{ unzipped_capabilities_name }}/"
         dest: "{{ capabilities_directory }}"
         remote_src: true
       become: true
 
     - name: move files
       file:
-        path: "{{ capabilities_directory }}{{ unziped_capabilities_name }}/"
+        path: "{{ capabilities_directory }}{{ unzipped_capabilities_name }}/"
         state: absent
 
     - name: Restart Service

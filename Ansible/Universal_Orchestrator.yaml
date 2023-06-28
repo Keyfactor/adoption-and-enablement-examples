@@ -2,7 +2,6 @@
 - name: Universal_Orchestrator.yaml
   hosts: linux
   gather_facts: no
-  become: yes
   tasks:
   - name: include role
     include_role:
