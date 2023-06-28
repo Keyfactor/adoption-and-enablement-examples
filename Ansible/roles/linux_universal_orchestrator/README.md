@@ -72,12 +72,12 @@ Here are the definitions for the variables within the `Defaults` > `main.yml` fi
 - `orchestrator_zip`: `KeyfactorUniversalOrchestrator-10.2.0.zip` Name of the zipped installation files.  this is expected in the files' directory.
 - `install_capabilities`: `true` used to tell the script to install capabilities in the "capabilities" file.
 - `capabilities_file`: `capabilites.zip` Name of the zipfile with all the capabilities.
-- `unziped_capabilities_name`: `capabilities` Name of the capability zip file when it is unziped.
+- `unzipped_capabilities_name`: `capabilities` Name of the capability zip file when it is unzipped.
 - `approve_agent`: `true`  Boolean Value to approve agent after deployment.
 - `orchestrator_service`: `keyfactor-orchestrator-default.service` Name of the Keyfactor Orchestrator service.
 - `capabilities_directory`: `/opt/keyfactor/orchestrator/extensions/` Location of where to place the capabilities.
 
-## Installing Orchestrator Capabilites 
+## Installing Orchestrator Capabilities 
 To add additional capabilities to the orchestrator, complete the following steps.
 - Download the capability releases you desire from https://github.com/Keyfactor
 - unzip all the files
