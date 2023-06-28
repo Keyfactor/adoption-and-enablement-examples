@@ -1,0 +1,26 @@
+---
+- name: block new install
+  block:
+    - name: Copy and Unzip Install Files
+      unarchive:
+        src: "{{ capabilities_file }}"
+        dest: "{{ capabilities_directory }}"
+      become: true
+
+    - name: move files
+      copy:
+        src: "{{ capabilities_directory }}{{ unzipped_capabilities_name }}/"
+        dest: "{{ capabilities_directory }}"
+        remote_src: true
+      become: true
+
+    - name: move files
+      file:
+        path: "{{ capabilities_directory }}{{ unzipped_capabilities_name }}/"
+        state: absent
+
+    - name: Restart Service
+      service:
+        name: "{{ orchestrator_service }}"
+        state: restarted
+  when: install_capabilities == true
