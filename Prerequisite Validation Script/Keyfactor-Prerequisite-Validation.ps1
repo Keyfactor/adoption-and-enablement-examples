@@ -120,6 +120,13 @@ $Helper_ADWS_Connection = '
     The Cloud Gateway Sync Services needs network connectivity to Active Directory Web Services (TCP 9389).
     This script tests connectivity to the domain that this server is joined to.
 '
+# RPC/DCOM Firewall rules
+$Helper_RPC_DCOM = '
+    The Cloud Gateway service receives certificate enrollment requests from workstations within your environment,
+    similarly to a Microsoft Certificate Authority. Inbound network traffic for RPC (TCP 135) and
+    DCOM (TCP 49152-65535) must be allowed FROM clients TO this server, by network firewalls and Windows Server.
+    This script only validates an appropriate rule exist for the Windows Firewall.
+'
 # Entrust CRL Connectivity
 $Helper_Entrust_CRL = '
     Deployed Keyfactor services (CEGW,Orchestrator) that connect to your Keyfactor-hosted environment
@@ -741,6 +748,90 @@ param(
     return $result
 }
 
+# Function to confirm if a Windows Firewall rule exist to allow an inbount port.
+function Confirm-InboundPort-Allowed{
+
+    param(
+        [string][parameter(Mandatory,HelpMessage='Local port (inbound) that firewall rule allows. TCP Port number or Name of protocol (e.g. "RPC")')]$LocalPort,
+        [string][parameter(Mandatory,HelpMessage='Local port (inbound) that firewall rule allows. TCP Port number or Name of protocol (e.g. "RPC")')]$RemotePort
+    )
+
+    $ports = $null
+    $enabled_rules = $null
+    $rull = $null
+
+    # Get firewall ports where the re
+    $ports = (Get-NetFirewallPortFilter -Protocol TCP | where {$_.RemotePort -eq $local_port_in -or $_.RemotePort -eq "Any" -or $_.RemotePort -like "*-*"})
+    $enabled_rules = Get-NetFirewallRule -Enabled True -Action Allow -Direction Inbound
+
+    foreach($p in $ports)
+    {
+        $remote_valid_port = $true
+        $local_valid_port = $true
+
+        # Check Remote Port of the rule includes a range
+        IF($p.RemotePort -like "*-*")
+        {
+
+            $remote_start_range = $p.RemotePort.Split("-")[0]
+            $remote_end_range = $p.RemotePort.Split("-")[1]
+
+            # If a range exist and the provided port is outside of the range
+            IF($RemotePort -lt $remote_start_range -or $RemotePort -gt $remote_end_range)
+            {
+                $remote_valid_port = $false
+            }
+        # Else, if the port is not what was provided nor is "ANY"
+        }
+        ELSEIF($p.RemotePort -ne $RemotePort -and $p.RemotePort -ne "Any")
+        {
+            $remote_valid_port = $false 
+        }
+        ELSE
+        {
+            $remote_valid_port = $true
+        }
+
+        # Check Local Port of the rule includes a range
+        IF($p.LocalPort -like "*-*")
+        {
+            $local_start_range = $p.LocalPort.Split("-")[0]
+            $local_end_range = $p.LocalPort.Split("-")[1]
+
+            # If a range exist and the provided port is outside of the range
+            IF($LocalPort -lt $local_start_range -or $LocalPort -gt $local_end_range)
+            {
+                $local_valid_port = $false    
+            }
+        # Else, if the port is not what was provided nor is "ANY"
+        }
+        ELSEIF($p.LocalPort -ne $LocalPort  -and $p.LocalPort -ne "Any")
+        {
+            $local_valid_port = $false
+        }
+        ELSE
+        {
+            $local_valid_port = $true
+        }
+        # If the port is not valid, continue to evaluate valid rules, considering programs.
+        IF($local_valid_port -ne $false -and $remote_valid_port -ne $false)
+        {
+            $rule = ($enabled_rules | where {$_.Name -eq $p.InstanceID -and $_.Action -eq "Allow" -and $_.Direction -eq "Inbound"})
+            IF($rule)
+            {
+                $app = $Rule | Get-NetFirewallApplicationFilter
+                IF($app.AppPath -like "*Keyfactor*" -or $app.AppPath -eq "Any" -or $app.AppPath -eq "System" -or $app.AppPath -eq "%systemroot%\system32\svchost.exe")
+                {
+                    Write-host ("["+$p.RemotePort+"]") $rule.Direction $rule.Enabled $rule.Profile $rule.DisplayName
+                    Write-Host ("Application: "+$app.Program)
+                    return $true                    
+                }
+            }
+        }
+    }
+    return $false
+}
+
 function Test-OutboundPort
 {
     [CmdletBinding()]
@@ -1356,6 +1447,16 @@ IF($Validate_CloudGateway -eq $true)
         }        
     }
 
+    # Check for DCOM/RPC inbound, if the CEGW will run the Keyfactor Gateway service
+    IF($CEGW_SyncOnly -eq $false)
+    {
+        Write-Host -ForegroundColor Cyan -BackgroundColor Black "`nChecking local firewall rules for RPC/DCOM"
+        # RPC
+        $RPC_Inbound = (Confirm-InboundPort-Allowed -LocalPort 135 -RemotePort Any)
+        $hashtable.Add("Cloud Gateway - Allowed inbound RPC",$RPC_Inbound[0])
+        $DCOM_Inbound = (Confirm-InboundPort-Allowed -LocalPort RPC -RemotePort 50000) # Check for a port in the middle of the default DCOM range (49152-65535)
+        $hashtable.Add("Cloud Gateway - Allowed inbound DCOM",$DCOM_Inbound[0])
+    }
     # User Logon As Service
     Write-Host -ForegroundColor Cyan -BackgroundColor Black "`nChecking service account for Logon-As-Service permission"
     IF($CEGW_ServiceAccount)
@@ -1476,6 +1577,16 @@ IF($hashtable.Values -contains $false)
     {
         Write-Host -ForegroundColor Yellow "`nHelper Text for Entrust CRL Connection"
         Write-Host $Helper_Entrust_CRL
+    }
+    # Cloud Gateway - RPC/DCOM Firewall Rules
+    foreach($rule in $hashtable.Keys.Where({$_ -like "Cloud Gateway - Allowed Inbound*"}))
+    {
+        IF($hashtable[$rule] -eq $false)
+        {
+            Write-Host -ForegroundColor Yellow "`nHelper Text for RPC/DCOM failure"
+            Write-Host $Helper_RPC_DCOM
+            continue
+        }
     }
     # Cloud Gateway - dotNet Installed
     IF($hashtable["Cloud Gateway - dotNet Installed"] -eq $false)
