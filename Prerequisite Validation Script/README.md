@@ -16,6 +16,7 @@ If certain prerequisites have failed to be met, the script displays some additio
 Disclaimer: This script does not configure or remediate missing prerequisites on a server. Keyfactor is not responsible for instructing customers on how
 to remediate failed prerequisites outside of reasonable suggestions for remediation.
 
+![](images/Keyfactor-Prerequisite-Validation-Results.jpg)
 
 # Execution #
 
