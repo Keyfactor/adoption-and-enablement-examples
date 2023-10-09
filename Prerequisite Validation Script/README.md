@@ -8,8 +8,8 @@
 
 The Keyfactor Prerequisite Validation script will validate server, application, and network prerequisites for the following Keyfactor services:
 
-1. Keyfactor Cloud Enrollment Gateway
-2. Keyfactor Universal Orchestrator
+1. Keyfactor Cloud Enrollment Gateway (v22.2.0+)
+2. Keyfactor Universal Orchestrator (v10.0.0+)
 
 If certain prerequisites have failed to be met, the script displays some additional information that seeks to help remediate the problem.
 

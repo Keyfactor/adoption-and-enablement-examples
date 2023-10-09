@@ -6,8 +6,8 @@
 #   This script has been developed by Keyfactor to assist customers with validating a server's
 #   readiness for installing the following:
 #   
-#     - Keyfactor Cloud Enrollment Gateway
-#     - Keyfactor Universal Orchestrator
+#     - Keyfactor Cloud Enrollment Gateway (v22.0.0+)
+#     - Keyfactor Universal Orchestrator (v10.0.0+)
 #
 #   This script does not configure or install any prerequisite or settings on the server.
 #   Doing so is the sole responsibility of the customer executing this script.
