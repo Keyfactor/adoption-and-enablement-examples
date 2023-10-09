@@ -760,7 +760,7 @@ function Confirm-InboundPort-Allowed{
     $enabled_rules = $null
     $rull = $null
 
-    # Get firewall ports where the re
+    # Get firewall ports that either match the provided ports or which include them.
     $ports = (Get-NetFirewallPortFilter -Protocol TCP | where {$_.RemotePort -eq $local_port_in -or $_.RemotePort -eq "Any" -or $_.RemotePort -like "*-*"})
     $enabled_rules = Get-NetFirewallRule -Enabled True -Action Allow -Direction Inbound
 
