@@ -1,4 +1,5 @@
 # Full Extract Script
+- tested on V10.5 but should work on newer versions that have basic auth enabled.
 ## Varibles Definittion
 - [int]$pageLimit = Number of certificates to retrieve per page
 - $certificateCollectionId = collectionId (use 0 if no ID is needed)
