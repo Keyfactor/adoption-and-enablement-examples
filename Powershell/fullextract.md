@@ -8,7 +8,7 @@
 - $apipassword = password of the user or service account
 - $exportpath = location of where you want to export the csv file (example: "c:\temp\export.csv")
 
-## Discription
+## Description
 This script will call the Keyfactor Command APi and pull all certificate data for the certificate defined in the CollectionID.  the data will be placed in a CSV file and exported to your local file system.  The format of the CSV is similar to the full extract report found in Keyfactor Command Reports.
 
 ## Pulling Metadata
