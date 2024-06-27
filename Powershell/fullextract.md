@@ -12,7 +12,7 @@
 This script will call the Keyfactor Command APi and pull all certificate data for the certificate defined in the CollectionID.  the data will be placed in a CSV file and exported to your local file system.  The format of the CSV is similar to the full extract report found in Keyfactor Command Reports.
 
 ## Pulling Metadata
-editing or adding this line will add metadata to your csv.  the "Metadata1" can be what ever you want o name the column in the csv, and Contact at the end of the $certitem.Metadata.Contact needs to be the name of the metadta field as Keyfactor COmmand knows it.
+editing or adding this line will add metadata to your csv.  the "Metadata1" can be whatever you want to name the column in the csv and Contact at the end of the $certitem.Metadata.Contact needs to be the name of the metadata field as Keyfactor Command knows it.
 - $certificates | Add-Member -NotePropertyName "Metadata1" -NotePropertyValue $certitem.Metadata.Contact
 
 > Note: These resources are not officially supported by Keyfactor and are meant to serve only as examples. 
