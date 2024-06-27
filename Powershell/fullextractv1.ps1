@@ -1,4 +1,4 @@
-[int]$pageLimit = 1 # Number of certificates to retrieve per page
+[int]$pageLimit = 1000 # Number of certificates to retrieve per page
 $certificateCollectionId = 0 #collectionId (use 0 if no ID is needed)
 $apiEndpoint = "<command dns>/KeyfactorAPI" #no https://
 
