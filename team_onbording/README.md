@@ -133,6 +133,6 @@ This script is licensed under the [MIT License](https://opensource.org/licenses/
 ---
 
 ## Links
-- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md))
+- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md)
 - [PowerShell Documentation](https://learn.microsoft.com/en-us/powershell/)
 - [ValidateSet Attribute](https://learn.microsoft.com/en-us/powershell/scripting/samples/validateset)
