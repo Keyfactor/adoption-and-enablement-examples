@@ -1,37 +1,71 @@
 <#
 .SYNOPSIS
-    A script to automaticlly create Keyfactor Collection, role and set the permissions for the collection in the role.
-    Optionally, you can define a claim to be added to the role and specify addition roles for the claim to be added 
-    to in the Variables section of the script.
+    A script to automatically create Keyfactor collections, roles, and set permissions for the collections in the roles.
+    Optionally, you can define a claim to be added to the role and specify additional roles for the claim.
 
 .DESCRIPTION
-    This script allows you to set up environments, specify team details, and manage claims. 
-    It supports both 'Production' and 'Non-Production' environments and offers options for debugging, 
-    team customization, and OAuth-related claims.
+    This script allows you to set up environments, specify role details, and manage claims. 
+    It supports multiple environments ('Production', 'NonProduction', 'Lab', 'FromFile') and offers options for debugging, 
+    role customization, and OAuth-related claims.
 
-.PARAMETER enviroment
-    Specify the environment where the script will execute. 
-    Allowed values are 'Production' or 'Non-Production'. This is a mandatory parameter.
+.PARAMETER environment_variables
+    Specify the environment where the variables will be pulled from. 
+    Allowed values are 'Production', 'NonProduction', 'Lab', or 'FromFile'. This is a mandatory parameter.
 
-.PARAMETER DebugPreference
-    Specify the level of debug output during the script's execution. 
-    Allowed values are 'Continue' or 'SilentlyContinue'. Defaults to 'SilentlyContinue'.
+.PARAMETER role_name
+    Specify the name of the role and collection to be created. This is a mandatory parameter.
 
-.PARAMETER team_name
-    The name of the team for which the configuration or operation is performed. This is a mandatory parameter.
-
-.PARAMETER team_email
-    Email address associated with the team. This is an optional parameter.
+.PARAMETER role_email
+    Specify the email address associated with the role. This is an optional parameter.
 
 .PARAMETER Claim
-    Specify additional claims if required. This is an optional parameter.
+    Specify the claim value to be added to the role. This is an optional parameter.
 
 .PARAMETER Claim_Type
-    Define the claim type. Allowed values are 'OAuthRole' and 'OAuthSubject'. 
+    Specify the type of the claim. Allowed values are 'OAuthRole' and 'OAuthSubject'. 
+    This parameter is required if a claim is specified.
+
+.PARAMETER Force
+    Force the script to continue even if certain validations fail, such as missing email addresses. 
+    This is an optional switch parameter.
+
+.PARAMETER loglevel
+    Specify the logging level for the script. Allowed values are 'Info', 'Debug', or 'Verbose'. 
+    Defaults to 'Info'.
+
+.PARAMETER RoleOnly
+    Specify this switch to create only the role without creating collections or claims. This is an optional switch parameter.
+
+.PARAMETER variableFile
+    Specify the path to a variable file in Hashtable format to load additional variables. This is an optional parameter.
 
 .EXAMPLE
-    ./script.ps1 -enviroment Production -team_name "ExampleTeam" -Claim_Type OAuthRole
-    Runs the script in the 'Production' environment for the team 'ExampleTeam' with the specified claim type.
+    \keyfactor_onboarding.ps1 -environment Production -role_name a1 -role_email a1@domain.com -Claim a1group -Claim_Type OAuthRole
+    Runs the script in the 'Production' environment for the role 'a1' and will create a collection and role with the specified claim and type.
+
+.EXAMPLE
+    .\keyfactor_onboarding.ps1 -environment Production -role_name a2 -role_email a2@domain.com -Claim a2group -Claim_Type OAuthRole -loglevel Debug
+    Runs the script in the 'Production' environment for the role 'a2' and will create a collection and role with the specified claim and type and 
+    have more log output with a log level of Debug.
+
+.EXAMPLE
+    .\keyfactor_onboarding.ps1 -environment Production -role_name a4 -role_email a4@domain.com
+    Runs the script in the 'Production' environment for the role 'a4' and will create a collection and role only.
+
+.EXAMPLE
+    .\keyfactor_onboarding.ps1 -environment Production -role_name a5
+    Runs the script in the 'Production' environment for the role 'a5' and will create a collection and role only. Because no email was provided, 
+    it will ask you if you want to proceed.
+
+.EXAMPLE
+    .\keyfactor_onboarding.ps1 -environment Production -role_name a6 -Force
+    Runs the script in the 'Production' environment for the role 'a6' and will create a collection and role only. Because no email was provided, 
+    but the force switch was used, it will not ask you if you want to proceed.
+
+.EXAMPLE
+    .\keyfactor_onboarding.ps1 -environment FromFile -role_name a8 -Force -variableFile "C:\Users\jhowland\OneDrive - Keyfactor\Documents\github\adoption-and-enablement-examples\role_onbording\Variables.ps1"
+    Runs the script in the 'Production' environment for the role 'a8' and will create a collection and role only. Because no email was provided, 
+    but the force switch was used, it will not ask you if you want to proceed. The variables will be pulled from the file provided in the variableFile parameter.
 
 .NOTES
     Author: Jeremy Howland
@@ -40,37 +74,60 @@
     This script follows PowerShell best practices for modularity, logging, and debugging.
 #>
 
-[CmdletBinding(PositionalBinding=$false)]
 param(
-    [Parameter(Mandatory, HelpMessage = "Specify the environment where the script will run. Possible values are 'Production', 'Non-Production'.")]
-    [ValidateSet("Production", "Non-Production")]
-    $enviroment,
+    [Parameter(Mandatory, Position = 0, HelpMessage = "Specify which environment the variables will be pulled from. Possible values are 'Production', 'NonProduction', 'Lab', 'FromFile'.")]
+    [ValidateSet("Production", "NonProduction", "Lab", "FromFile")]
+    [string]$environment_variables = $null,
 
-    [Parameter(HelpMessage = "Set the debug preference. Possible values: 'Continue', 'SilentlyContinue'.")]
-    [ValidateSet("Continue", "SilentlyContinue")]
-    $DebugPreference = "SilentlyContinue",
+    [Parameter(Mandatory, Position = 1, HelpMessage = "Specify the name of the role and collection.")]
+    $role_name,
 
-    [Parameter(Mandatory, HelpMessage = "Specify the name of the team.")]
-    $team_name,
+    [Parameter(HelpMessage = "Specify the role email address (optional).")]
+    $role_email = $null,
 
-    [Parameter(HelpMessage = "Specify the team email address (optional).")]
-    $team_email = $null,
-
-    [Parameter(HelpMessage = "Specify additional claim information (optional).")]
+    [Parameter(HelpMessage = "Specify the claim information (optional).")]
     $Claim = $null,
 
-    [Parameter(HelpMessage = "Specify the claim type. Possible values: 'OAuthRole', 'OAuthSubject'.")]
+    [Parameter(HelpMessage = "Specify the claim type. Allowed values are 'OAuthRole' and 'OAuthSubject'.")]
     [ValidateSet("OAuthRole", "OAuthSubject")]
-    $Claim_Type
+    [string]$Claim_Type = $null,
+
+    [Parameter(HelpMessage = "Specify if the email validation check should suspend the script or continue.")]
+    [switch]$Force = $false,
+
+    [Parameter(HelpMessage = "This switch will output logs to the console at various levels. Possible values are 'Info', 'Debug', 'Verbose'. Default is 'Info'.")]
+    [ValidateSet("Info", "Debug", "Verbose")]
+    [string]$loglevel = 'Info',
+
+    [Parameter(HelpMessage = "This switch will create the role only.")]
+    [switch]$RoleOnly = $false,
+
+    [Parameter(HelpMessage = "Specify if you want to use a variable file. The input is a path and file name of the variable file in Hashtable format.")]
+    [string]$variableFile
 )
 
 function load_variables
 {
     param(
-        $enviroment = $enviroment
+        $environment_variables = $environment_variables
     )
-    write-message -Message "Entering function load_variables with enviroment=$enviroment" -type Debug
-    switch($enviroment)
+    write-message -Message "Entering function load_variables for $environment_variables environment" -type Debug
+    $script:staticVariables = @{
+        COLLECTION_DESCRIPTION   = ""
+        ROLE_DESCRIPTION         = ""
+        CLAIM_SCHEME             = ""
+        CLAIM_DESCRIPTION        = ""
+        INCLUDE_EMAIL_IN_ROLE   = $false
+        ROLE_PERMISSIONS = @{
+            1 = "/portal/read/"
+            2 = "/certificates/collections/revoke/"
+            3 = "/certificates/collections/private_key/read/"
+            4 = "/certificates/collections/metadata/modify/"
+            5 = "/certificates/collections/change_owner/"
+            6 = "/certificates/collections/read/"
+        }
+    }
+    switch($environment_variables)
     {
         'Production'
         {
@@ -81,13 +138,13 @@ function load_variables
                 SCOPE           = ''
                 KEYFACTORAPI    = ''
                 ADDITIONAL_COLLECTIONS = @{
-                    1 = "My Certificates"
-                    2 = "My Team Owned Certificates"
-                    3 = "My Owned Expiring Certificates"
+                    1 = ""
+                    2 = ""
+                    3 = ""
                 }
                 ADDITIONAL_ROLES = @{
-                    1 = "template-1YearTestWebServer"
-                    2 = "template-2YearTestWebServer"
+                    1 = ""
+                    2 = ""
                 }
             }
         }
@@ -100,30 +157,34 @@ function load_variables
                 SCOPE           = ''
                 KEYFACTORAPI    = ''
                 ADDITIONAL_COLLECTIONS = @{
-                    1 = "My Certificates"
-                    2 = "My Team Owned Certificates"
-                    3 = "My Owned Expiring Certificates"
+                    1 = ""
+                    2 = ""
+                    3 = ""
                 }
                 ADDITIONAL_ROLES = @{
-                    1 = "template-1YearTestWebServer"
-                    2 = "template-2YearTestWebServer"
+                    1 = ""
+                    2 = ""
                 }
             }
         }
-    }
-    $script:staticVariables = @{
-        COLLECTION_DESCRIPTION   = "This is a Collection of Certificates for the named team where they are the Certificate Owner"
-        ROLE_DESCRIPTION         = "This is a group of permissions for the named team where that defines permissions granted on Keyfactor Command"
-        CLAIM_SCHEME             = "ping"
-        CLAIM_DESCRIPTION        = "This claim is for: "
-        INCLUDE_EMAIL_IN_ROLE   = $true
-        ROLE_PERMISSIONS = @{
-            1 = "/portal/read/"
-            2 = "/certificates/collections/revoke/"
-            3 = "/certificates/collections/private_key/read/"
-            4 = "/certificates/collections/metadata/modify/"
-            5 = "/certificates/collections/change_owner/"
-            6 = "/certificates/collections/read/"
+        'Lab'
+        {
+            $script:envVariables = @{
+                CLIENT_ID       = ''
+                CLIENT_SECRET   = ''
+                TOKEN_URL       = ''
+                SCOPE           = ''
+                KEYFACTORAPI    = ''
+                ADDITIONAL_COLLECTIONS = @{
+                    1 = ""
+                    2 = ""
+                    3 = ""
+                }
+                ADDITIONAL_ROLES = @{
+                    1 = ""
+                    2 = ""
+                }
+            }
         }
     }
     return $envVariables + $staticVariables
@@ -143,10 +204,10 @@ function Invoke-HttpGet
     )
     Try
     {
-        write-message -Message "Sending HTTP GET request to URL=$url with HeaderVersion=$HeaderVersion" -type Debug
+        write-message -Message "Sending HTTP GET request to URL=$url with HeaderVersion=$HeaderVersion" -type Verbose
         $headers = create_auth -HeaderVersion $HeaderVersion
         $Response = Invoke-WebRequest -Method Get -Uri $url -Headers $headers -UseBasicParsing
-        write-message -Message "Received response from URL=$url with status code $($Response.StatusCode)" -type Debug
+        write-message -Message "Received response from URL=$url with status code $($Response.StatusCode)" -type Verbose
         return $Response
     }
     Catch
@@ -162,33 +223,32 @@ function Fetch_AllPages {
         [hashtable]$Variables = $Variables,
         [string]$HeaderVersion
     )
-    write-message -Message "Initiating paginated fetch from URL=$Url with PageUrl=$PageUrl" -type Debug
+    write-message -Message "Initiating paginated fetch from URL=$Url with PageUrl=$PageUrl" -type Verbose
     $TotalResults = @()
     $InitialResponse = Invoke-HttpGet -Url "$Url`1" -HeaderVersion $HeaderVersion
     $TotalCount = $InitialResponse.Headers["x-total-count"]
     if ($TotalCount -lt 50) {
-        write-message -Message "Total count is less than page size limit. Returning initial response." -type Debug
+        write-message -Message "Total count is less than page size limit. Returning initial response." -type Verbose
         return $InitialResponse
     }
     else 
     {
-        write-message -Message "Total pages to fetch: $TotalPages" -type Debug
+        write-message -Message "Total pages to fetch: $TotalPages" -type Verbose
     }
 
     $TotalPages = [math]::Ceiling($TotalCount / 50)
 
-    write-message -Message "Initiating paginated fetch from URL=$Url with PageUrl=$PageUrl" -type Debug
+    write-message -Message "Initiating paginated fetch from URL=$Url with PageUrl=$PageUrl" -type Verbose
 
     for ($CurrentPage = 1; $CurrentPage -le $TotalPages; $CurrentPage++) {
-        write-message -Message "Fetching page $CurrentPage/$TotalPages from URL=$PageUrl" -type Debug
+        write-message -Message "Fetching page $CurrentPage/$TotalPages from URL=$PageUrl" -type Verbose
         $FullUrl = "$PageUrl$CurrentPage"
         $Response = (Invoke-HttpGet -Url $FullUrl -HeaderVersion $HeaderVersion)
         $TotalResults += $Response.Content | ConvertFrom-Json
     }
-    write-message -Message "Finished fetching all pages. Total results: $($TotalResults.Count)" -type Debug
+    write-message -Message "Finished fetching all pages. Total results: $($TotalResults.Count)" -type Verbose
     return $TotalResults
 }
-
 function Invoke-HttpPost
 {
     [CmdletBinding()]
@@ -224,7 +284,7 @@ function write-message
         [Parameter(Mandatory = $true)]
         [array]$Message,
         [Parameter(Mandatory = $true)]
-        [ValidateSet("Info", "Error", "Warning", "Debug")]
+        [ValidateSet("Info", "Error", "Warning", "Debug", "Verbose")]
         $type
     )
 
@@ -233,13 +293,13 @@ function write-message
     $Message = $Message -join " "
     switch($Type)
     {
-        "Info" { Write-Information -MessageData "[$currentDate $currentTime] $Message" -InformationAction Continue }
+        "Info" { Write-Information -MessageData "[$currentDate $currentTime] $Message"}
         "Error" { Write-Warning -Message "[$currentDate $currentTime] $Message" -WarningAction  Stop}
         "Warning" {Write-Warning -Message "[$currentDate $currentTime] $Message" -WarningAction Continue}
         "Debug" {Write-debug -Message "[$currentDate $currentTime] $Message"}
+        "Verbose" {Write-Verbose -Message "[$currentDate $currentTime] $Message"}
     }
 }
-
 function Check_KeyfactorStatus
 {
     param (
@@ -271,8 +331,16 @@ function create_auth
     }
     if ($variables.scope){$body['scope'] = $variables.scope}
     if ($variables.audience){$body['audience'] = $variables.audience}
-    $access_token = (Invoke-RestMethod -Method Post -Uri $Variables.TOKEN_URL -Headers $headers -Body $body).access_token
-    write-message -Message "Sucessfully recieved Access Token from $($Variables.TOKEN_URL)" -type Debug
+
+    try
+    {
+        $access_token = (Invoke-RestMethod -Method Post -Uri $Variables.TOKEN_URL -Headers $headers -Body $body).access_token
+        write-message -Message "Sucessfully recieved Access Token from $($Variables.TOKEN_URL)" -type Verbose
+    }
+    catch
+    {
+        write-message -Message "Error in create_auth: $($_.Exception.Message)" -type Error
+    }
     return @{
         "content-type"                  = "application/json"
         "accept"                        = "text/plain"
@@ -289,16 +357,16 @@ function process_collections
         [Parameter(Mandatory = $false)]
         [hashtable]$Variables = $Variables,
         [Parameter(Mandatory = $true)]
-        [string]$team_name,
+        [string]$role_name,
         [Parameter(Mandatory = $false)]
-        [string]$team_email = $null
+        [string]$role_email = $null
     )
 
-    write-message -Message "checking if collection exists for team: $team_name" -type Info
+    write-message -Message "checking if collection exists for role: $role_name" -type Info
 
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append('Name -eq "')
-    [void]$sb.Append($team_name)
+    [void]$sb.Append($role_name)
     [void]$sb.Append('"')
     $query = $sb.ToString()
 
@@ -308,14 +376,15 @@ function process_collections
 
     if ($Collectionid)
     {
-        write-message -Message "collection for $team_name exists with ID: $CollectionId." -type Info
+        write-message -Message "collection for $role_name exists with ID: $CollectionId." -type Info
     }
-    else {
-        write-message -Message "collection for $team_name does not exists, creating ..." -type Info
+    else 
+    {
+        write-message -Message "collection for $role_name does not exists, creating ..." -type Info
 
-        $CollectionId = (New_Collection -team_name $team_name -team_email $team_email).Id
+        $CollectionId = (New_Collection -role_name $role_name -role_email $role_email).Id
 
-        write-message -Message "collection for $team_name was created with collection id: $CollectionId." -type Info
+        write-message -Message "collection for $role_name was created with collection id: $CollectionId." -type Info
     }
     return $Collectionid
 }
@@ -354,26 +423,26 @@ function New_Collection
     (
         [hashtable]$Variables = $Variables,
         [Parameter(Mandatory = $true)]
-        $team_name,
-        $team_email = $null
+        $role_name,
+        $role_email = $null
     )
 
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append('OwnerRoleName -eq "')
-    [void]$sb.Append($team_name)
+    [void]$sb.Append($role_name)
     if ($Variables.Include_email_in_role)
     {
         [void]$sb.Append(' (')
-        [void]$sb.Append($team_email)
+        [void]$sb.Append($role_email)
         [void]$sb.Append(')')
     }
     [void]$sb.Append('"')
     $query = $sb.ToString()
 
-    write-message -Message "Creating Collection with Query: $Query and Name: $team_name" -type Debug
+    write-message -Message "Creating Collection with Query: $Query and Name: $role_name" -type Debug
 
     $Body = @{
-        Name = $team_name
+        Name = $role_name
         Description = $Variables.COLLECTION_DESCRIPTION
         Query = $Query
         Favorite = $true
@@ -389,19 +458,19 @@ function process_roles
     param
     (
         [hashtable]$Variables = $Variables,
-        [string]$team_name = $null,
+        [string]$role_name = $null,
         $collection = $null,
-        $team_email = $null
+        $role_email = $null
     )
 
-    write-message -Message "checking if a role exists for $team_name" -type Info
+    write-message -Message "checking if a role exists for $role_name" -type Info
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append('Name -eq "')
-    [void]$sb.Append($team_name)
+    [void]$sb.Append($role_name)
     if ($Variables.Include_email_in_role)
     {
         [void]$sb.Append(' (')
-        [void]$sb.Append($team_email)
+        [void]$sb.Append($role_email)
         [void]$sb.Append(')')
     }
     [void]$sb.Append('"')
@@ -413,13 +482,13 @@ function process_roles
 
     if ($roleid)
     {
-        write-message -Message "role for $team_name exists with RoleId: $roleid." -type Info
+        write-message -Message "role for $role_name exists with RoleId: $roleid." -type Info
     }
     else
     {
-        write-message -Message "role for $team_name does not exists, creating." -type Info
-        $roleid = (New-Role -team_name $team_name -collection $collectionid -team_email $team_email).Id
-        write-message -Message "role for $team_name was created with RoleID: $roleid." -type Info
+        write-message -Message "role for $role_name does not exists, creating." -type Info
+        $roleid = (New-Role -role_name $role_name -collection $collectionid -role_email $role_email).Id
+        write-message -Message "role for $role_name was created with RoleID: $roleid." -type Info
     }
     return $roleid
 }
@@ -456,11 +525,11 @@ function New-Role
     (
         [hashtable]$Variables = $Variables,
         [Parameter(Mandatory = $true)]
-        $team_name,
+        $role_name,
         [Parameter(Mandatory = $false)]
         [INT]$collectionid = $null,
         [Parameter(Mandatory = $false)]
-        $team_email = $null,
+        $role_email = $null,
         [Parameter(Mandatory = $false)]
         $permissionset = $null
     )
@@ -512,11 +581,11 @@ function New-Role
     }
 
     $sb = New-Object System.Text.StringBuilder
-    [void]$sb.Append($team_name)
+    [void]$sb.Append($role_name)
     if ($Variables.Include_email_in_role)
     {
         [void]$sb.Append(' (')
-        [void]$sb.Append($team_email)
+        [void]$sb.Append($role_email)
         [void]$sb.Append(')')
     }
     $name = $sb.ToString()
@@ -526,7 +595,7 @@ function New-Role
     $Body = @{
         Name = $name
         Description = $variables.ROLE_DESCRIPTION
-        EmailAddress = $team_email
+        EmailAddress = $role_email
         PermissionSetId = $permissionset
         Permissions = $permissions
     }
@@ -726,63 +795,163 @@ function process_additional_roles
     }
 }
 
+# Main script execution starts here
 try {
     $WarningPreference = 'Stop'
     $InformationPreference = 'Continue'
-    write-message -Message "Script execution started with parameters enviroment=$enviroment, team_name=$team_name" -type Debug
-    write-message -Message "Received parameters: enviroment=$enviroment, DebugPreference=$DebugPreference, team_name=$team_name, team_email=$team_email, Claim=$Claim, Claim_Type=$Claim_Type" -type Debug
-    $Script:Variables = load_variables
-    if (load_variables)
+
+    if ($loglevel -eq 'Debug') 
     {
-        write-message -message  "Loaded Variables for $enviroment" -type Info
+        $DebugPreference = 'Continue'
+        $VerbosePreference = 'SilentlyContinue'
+    } 
+    elseif ($loglevel -eq 'Verbose') 
+    {
+        $VerbosePreference = 'Continue'
+        $DebugPreference = 'Continue'
+    } 
+    else
+    {
+        $DebugPreference = 'SilentlyContinue'
+        $VerbosePreference = 'SilentlyContinue'
+    }
+
+    if (-not $environment_variables) 
+    {
+        throw "environment is a required parameter. Allowed values are 'Production', 'NonProduction', 'Lab', 'FromFile."
+    }
+
+    if (-not $role_name) 
+    {
+        throw "role_name is a required parameter."
+    }
+
+    if ($Claim -and -not $Claim_Type) 
+    {
+        throw "Claim_Type is required when Claim is specified. Allowed values are 'OAuthRole' and 'OAuthSubject'."
+    }
+
+    write-message -Message "Script execution started with parameters environment=$environment_variables, role_name=$role_name" -type Info
+    write-message -Message "Received parameters: environment=$environment_variables, role_name=$role_name, role_email=$role_email, Claim=$Claim, Claim_Type=$Claim_Type" -type Debug
+    
+    if ($variableFile)
+    {
+        . $variableFile
+        write-message -Message "Loaded variables from $variableFile" -type Debug
+    }
+    else 
+    {
+        $Script:Variables = load_variables
+    }
+    
+    if (!$Variables.CLIENT_SECRET)
+    {
+        if ($force)
+        {
+            write-message -Message "Can not use 'Force' paramater when client_Secret is not in the environment Varibles or the Variables File" -type Error
+        }
+        $CLIENT_SECRET = Read-Host "Please enter your IDP Applications Client Secret"
+        $Variables.CLIENT_SECRET = $CLIENT_SECRET
+        write-message -Message "Saved Client_Secret in Memory Only" -type Info
+    }
+    if ($Variables.CLIENT_ID)
+    {
+        write-message -message  "Loaded Variables for $environment_variables environment" -type Debug
     }
     else
     {
-        write-message -message  "Could not load Variables for $enviroment" -type Error
+        write-message -message  "Could not load Variables for $environment_variables" -type Error
     }
+
     if (Check_KeyfactorStatus)
     {
-        write-message -message  "Validated connection to Keyfactor Command" -type Info
+        write-message -message  "Validated connection to Keyfactor Command" -type Debug
     }
     else
     {
         write-message -message  "Could not validate connection to Keyfactor Command" -type Error
     }
-    if ($team_name)
+
+    if ($CollectionOnly) { $RoleOnly = $false; $claimOnly = $false }
+    if ($RoleOnly) { $CollectionOnly = $false; $claimOnly = $false }
+    if ($claimOnly) { $CollectionOnly = $false; $RoleOnly = $false }
+
+    if ($RoleOnly)
     {
-        if ($Variables.Include_email_in_role)
+        write-message -Message "RoleOnly is set to true, skipping collection creation" -type Debug
+        if ($role_name)
         {
-            if (!$team_email)
+            if ($Variables.Include_email_in_role)
             {
-                write-message -Message "'Include_email_in_role' variable is set to true but no email was provided" -type Error
+                if (!$role_email)
+                {
+                    write-message -Message "'Include_email_in_role' variable is set to true but no email was provided" -type Error
+                }
+            }
+            elseif (!$role_email)
+            {
+                    if ($force)
+                    {
+                        write-message -Message "'Include_email_in_role' variable is set to false and no email was provided" -type Debug
+                    }
+                    else
+                    {
+                        Write-Warning -Message "No Email Given, The Keyfactor Security Role will not have an email associated with it" -WarningAction Inquire
+                    }
+            }
+    
+            write-message -message  "Processing Role for: $role_name" -type Info
+            if ((process_roles -role_name $role_name -role_email $role_email -collection $collectionid).id)
+            {
+                write-message -message  "Role for $role_name was created" -type Info
+            }
+        }
+    }
+    else 
+    {
+        if ($role_name)
+        {
+            if ($Variables.Include_email_in_role)
+            {
+                if (!$role_email)
+                {
+                    write-message -Message "'Include_email_in_role' variable is set to true but no email was provided" -type Error
+                }
+            }
+            elseif (!$role_email)
+            {
+                if ($force)
+                {
+                    write-message -Message "'Include_email_in_role' variable is set to false and no email was provided" -type Debug
+                }
+                else
+                {
+                    Write-Warning -Message "No Email Given, The Keyfactor Security Role will not have an email associated with it" -WarningAction Inquire
+                }
+            }
+
+            write-message -message  "Processing role: $role_name" -type Info
+
+            $collectionid = process_collections -role_name $role_name -role_email $role_email
+            $roleid = process_roles -role_name $role_name -role_email $role_email -collection $collectionid
+            if ($claim)
+            {
+                $claimid = process_claims -claim $claim -roleid $roleid -claimtype $Claim_Type
+                $roleupdate = Update-RoleClaim -Roleid $roleid -Claimid $claimid
+                if ($roleupdate.id)
+                {
+                    write-message -message  "Role updated with role: $role_name" -type Info
+                }
+                foreach ($role in $Variables.additional_roles.values)
+                {
+                    process_additional_roles -ClaimId $claimid -role $role
+                }
             }
         }
         else
         {
-            Write-Warning -Message "No Email Given, The Keyfactor Security Role will not have an email associated with it" -WarningAction Inquire
+            write-message -message  "Process Stopped, No role_name given" -type Error
         }
-
-        write-message -message  "Processing Team: $team_name" -type Info
-
-        $collectionid = process_collections -team_name $team_name -team_email $team_email
-        $roleid = process_roles -team_name $team_name -team_email $team_email -collection $collectionid
-        if ($claim)
-        {
-            $claimid = process_claims -claim $claim -roleid $roleid -claimtype $Claim_Type
-            $roleupdate = Update-RoleClaim -Roleid $roleid -Claimid $claimid
-            if ($roleupdate.id)
-            {
-                write-message -message  "Role updated with Team: $team_name" -type Info
-            }
-            foreach ($role in $Variables.additional_roles.values)
-            {
-                process_additional_roles -ClaimId $claimid -role $role
-            }
-        }
-    }
-    else
-    {
-        write-message -message  "Process Stopped, No Team_Name given" -type Error
     }
     write-message -Message "Script execution completed successfully" -type Info
 }
