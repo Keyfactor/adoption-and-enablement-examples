@@ -9,6 +9,7 @@ $script:Variables = @{
     CLIENT_SECRET   = ''
     TOKEN_URL       = ''
     SCOPE           = ''
+    AUDIENCE        = ''
     KEYFACTORAPI    = ''
     ADDITIONAL_COLLECTIONS = @{
         1 = ""
