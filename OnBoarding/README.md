@@ -38,7 +38,7 @@ The script uses the following parameters:
 | `Claim`                 | Optional parameter to define additional claims for operations.                | `null`                  | Custom string                                     | ❌ No          |
 | `Claim_Type`            | Type of claim to be added.                                                    | None                    | `OAuthRole`, `OAuthSubject`                       | ❌ No          |
 | `RoleOnly`              | Only create roles without associated claims or collections.                   | None                    | (Switch)                                          | ❌ No          |
-| `variableFile`          | Path to a variable file in Hashtable format for loading additional variables. | None                    | (Full path to varible file)                       | ❌ No          |
+| `variableFile`          | Path to a variable file in Hashtable format for loading additional variables. | None                    | (Full path to variable file)                      | ❌ No          |
 | `Force`                 | Allows the script to proceed despite validation failures.                     | None                    | (Switch)                                          | ❌ No          |
 
 ---
@@ -166,5 +166,5 @@ This script is licensed under the [MIT License](https://opensource.org/licenses/
 ---
 
 ## Links
-- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md)
+- [Explanation of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md)
 - [Keyfactor Command Documentation](https://software.keyfactor.com)
