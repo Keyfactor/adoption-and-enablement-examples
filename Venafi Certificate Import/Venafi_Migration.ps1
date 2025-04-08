@@ -316,18 +316,50 @@ function Check_VenafiStatus
 
         $EncodedString = [uri]::EscapeDataString($Variables.PARENTDN)
 
-        $response = Invoke-WebRequest -Uri "$($Variables.VAPI)/vedsdk/certificates/?parentdnrecursive=$EncodedString&ValidToGreater=$($currentDate)T00:00:00.0000000Z" -Headers $Headers -Method Get -UseBasicParsing
+        $url = "$($Variables.VAPI)/vedsdk/certificates/?parentdnrecursive=$EncodedString&ValidToGreater=$($currentDate)T00:00:00.0000000Z&offset=0"
 
-        if ($response) 
-        {
-
-            return ($response.Content | ConvertFrom-Json).Certificates
-        } 
-        else 
+        $InitialResponse = Invoke-WebRequest -Uri $url -Headers $Headers -Method Get -UseBasicParsing
+        if (!$InitialResponse) 
         {
             Write-Error "Failed to retrieve certificate list from $($Variables.PARENTDN)"
+            return $null
         }
-        return $null
+        else 
+        {
+            $totalcount = ($InitialResponse.Content | ConvertFrom-Json).TotalCount
+        }
+        
+        if ($totalcount -lt 100)
+        {
+            return ($response.Content | ConvertFrom-Json).Certificates
+        }
+        else
+        {
+            $page = 1
+            $pageSize = 100
+            $allCertificates = @()
+            $certificates = ($InitialResponse.Content | ConvertFrom-Json).Certificates
+            $allCertificates += $certificates
+            do 
+            {
+                $url = "$($Variables.VAPI)/vedsdk/certificates/?parentdnrecursive=$EncodedString&ValidToGreater=$($currentDate)T00:00:00.0000000Z&offset=$page"
+                $response = Invoke-WebRequest -Uri $url -Headers $Headers -Method Get -UseBasicParsing
+
+                if ($response) 
+                {
+                    $certificates = ($response.Content | ConvertFrom-Json).Certificates
+                    $allCertificates += $certificates
+                    $page++
+                } 
+                else 
+                {
+                    Write-Error "Failed to retrieve certificate list from $($Variables.PARENTDN)"
+                    return $null
+                }
+            } while ($certificates.Count -eq $pageSize)
+
+            return $allCertificates
+        }
     }
 
     function Import-KFCertificate {
