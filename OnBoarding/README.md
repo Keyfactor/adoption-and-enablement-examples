@@ -96,7 +96,7 @@ Allows execution without email validation and proceeds with role creation.
 Loads variables from the specified file and creates a role in the `FromFile` environment.
 
 ## Run as a Batch
-See [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Batching.ps1)
+See [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Batching.ps1)
 
 
 ## Workflow
@@ -160,5 +160,5 @@ This script is licensed under the [MIT License](https://opensource.org/licenses/
 
 ## Links
 - [Explanation of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md)
-- [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Batching.ps1)
+- [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Batching.ps1)
 - [Keyfactor Command Documentation](https://software.keyfactor.com)
