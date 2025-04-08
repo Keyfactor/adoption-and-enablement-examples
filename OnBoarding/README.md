@@ -95,16 +95,9 @@ Allows execution without email validation and proceeds with role creation.
 ```
 Loads variables from the specified file and creates a role in the `FromFile` environment.
 
-### 6. Run as a Batch:
-```powershell
-# Description: This script is used to onboard multiple teams in Keyfactor using a CSV file.
-# It reads the team names, emails, claims, and claim types from the CSV file and calls the Keyfactor onboarding script for each team.
-foreach ($line in Import-Csv -Path $CSV_PATH) {
-.\keyfactor_onboarding.ps1 -environment_variables Production -role_name $line.name -role_email $line.email -Claim $line.claim -Claim_Type $line.claimType
-}
-```
+## Run as a Batch
+See [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Batching.ps1)
 
----
 
 ## Workflow
 
@@ -167,4 +160,5 @@ This script is licensed under the [MIT License](https://opensource.org/licenses/
 
 ## Links
 - [Explanation of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md)
+- [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Batching.ps1)
 - [Keyfactor Command Documentation](https://software.keyfactor.com)
