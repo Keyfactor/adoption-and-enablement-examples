@@ -117,8 +117,6 @@ Provides detailed logs for key operations. Levels include:
 - `Debug`: In-depth logging for developers.
 - `Verbose`: Highly detailed output for troubleshooting.
 
----
-
 ## Help
 The script includes comment-based help documentation. To access it, use the following commands:
 
@@ -137,28 +135,25 @@ The script includes comment-based help documentation. To access it, use the foll
   Get-Help ./YourScript.ps1 -Examples
   ```
 
----
 
 ## Requirements
 
 - **PowerShell Version**: The script works with modern PowerShell standards.  
 - **Keyfactor Environment**: Ensure valid Keyfactor Command API credentials and URLs are configured in the variables.
 
----
-
 ## Troubleshooting
 
 - **Missing Parameters**: Ensure all required parameters are passed. Use `-Force` to suppress validation checks.
 - **API Connection Issues**: Verify that the Keyfactor Command API credentials and URLs are accessible.
 - **Debugging**: Utilize the `-loglevel Debug` option to view detailed logs and track issues.
----
 
 ## License
 This script is licensed under the [MIT License](https://opensource.org/licenses/MIT). You are free to use, modify, and distribute it.
 
----
-
 ## Links
-- [Explanation of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/team_onbording/Code.md)
+- [Explination of Batch Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/BatchCode.md)
+- [Explination of Onboarding Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Code.md)
 - [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Batching.ps1)
+- [OnBoarding Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/keyfactor_onboarding.ps1)
+- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Variables.ps1)
 - [Keyfactor Command Documentation](https://software.keyfactor.com)

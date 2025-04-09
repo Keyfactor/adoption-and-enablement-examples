@@ -170,3 +170,11 @@ The script uses reusable **functions** (like `process_roles`, `process_claims`) 
 ## **Conclusion**
 
 This script is a powerful and flexible tool for automating Keyfactor onboarding processes, including creating roles, collections, and managing claims for OAuth-based integrations. It supports diverse environments, dynamic configurations, and modularity to simplify large-scale deployments.
+
+## Links
+- [Explination of Batch Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/BatchCode.md)
+- [Explination of Onboarding Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Code.md)
+- [Batching Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Batching.ps1)
+- [OnBoarding Script](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/keyfactor_onboarding.ps1)
+- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/Team-Onboarding/OnBoarding/Variables.ps1)
+- [Keyfactor Command Documentation](https://software.keyfactor.com)

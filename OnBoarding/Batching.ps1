@@ -1,73 +1,172 @@
 <#
 .SYNOPSIS
-This script processes a CSV file and executes a PowerShell script (`keyfactor_onboarding.ps1`) in parallel using runspaces.
+Processes a CSV file to execute a PowerShell script in parallel using runspaces.
 
 .DESCRIPTION
-The script reads data from a CSV file and uses a runspace pool to execute the `keyfactor_onboarding.ps1` script for each row in the CSV. 
-The number of concurrent threads is controlled by the `$script:maxThreads` variable. Each runspace is assigned a set of parameters 
-from the CSV file and executed in parallel.
+This script reads a CSV file containing user data and processes each line in parallel using runspaces. 
+It validates the input, creates necessary directories, and logs the output of each runspace execution. 
+The script is designed to onboard users by invoking a specified PowerShell script with parameters derived from the CSV data.
 
-.PARAMETER CSV_PATH
-The file path to the CSV file containing the data to be processed. Each row in the CSV should include the columns `name`, `email`, 
-`claim`, and `claimType`.
+.PARAMETER csvPath
+The path to the CSV file containing the data to be processed. The CSV must include the following columns: 
+'name', 'email', 'claim', and 'claimType'.
 
 .PARAMETER maxThreads
-The maximum number of threads to use for the runspace pool. This controls the level of concurrency.
+The maximum number of threads to use for the runspace pool.
 
-.NOTES
-- The script assumes that the `keyfactor_onboarding.ps1` script is located in the same directory as this script.
-- The `keyfactor_onboarding.ps1` script is executed with the following parameters:
-    - `-environment_variables` set to `Production`
-    - `-role_name`, `-role_email`, `-Claim`, and `-Claim_Type` populated from the CSV file.
-- -environment_variables is a placeholder and should be replaced with the actual environment variable if needed.
-- The script uses the `Import-Csv` cmdlet to read the CSV file and the `AddScript` method to add the script block to each runspace.
+.PARAMETER roleonly
+A switch parameter that, when specified, prevents the creation of collections. Default is $false.
+
+.PARAMETER variableFile
+The path to a hashtable file containing variables required for the onboarding process.
+
+.FUNCTION CreateLogDirectory
+Creates a directory for storing log files if it does not already exist.
+
+.FUNCTION ValidateScriptFile
+Validates the existence of the required script file ('keyfactor_onboarding.ps1') in the specified script path.
+
+.FUNCTION ProcessCsvLine
+Processes a single line from the CSV file by creating a runspace to execute the onboarding script with the provided parameters.
 
 .EXAMPLE
-# Example usage:
-$script:CSV_PATH = 'C:\path\to\data.csv'
-$script:maxThreads = 5
-.\Batching.ps1
+.\Batching.ps1 -csvPath "C:\data\users.csv" -maxThreads 5 -variableFile "C:\config\variables.ps1"
 
-# This will process the `data.csv` file using a maximum of 5 concurrent threads.
+This example processes the 'users.csv' file with a maximum of 5 threads and uses the variables defined in 'variables.ps1'.
+
+.NOTES
+- The script logs the output of each runspace execution to a file in the 'RunspaceLogs' directory.
+- The script measures and displays the total elapsed time for processing all CSV lines.
+- Ensure that the 'keyfactor_onboarding.ps1' script exists in the current working directory.
 
 #>
 
-$script:CSV_PATH     = '' # Path to the CSV file containing the data
-$script:maxThreads = '' # Maximum number of threads to use for runspaces
+param (
+    [Parameter(Mandatory, Position = 0, HelpMessage = "Path to the CSV file containing the data")]
+    [string]$csvPath,
+    [Parameter(Mandatory, Position = 1, HelpMessage = "Maximum number of threads to use for runspaces.")]
+    [int]$maxThreads,
+    [Parameter(Position = 2, HelpMessage = "Will not create collections. Default is false.")]
+    [Switch]$roleonly = $false,
+    [Parameter(Mandatory, Position = 3, HelpMessage = "Hashtable files containing needed variables.")]
+    $variableFile
+)
 
-# Import the CSV file
-$csvData = Import-Csv -Path $CSV_PATH
-
-# Create a runspace pool with maximum threading
-$runspacePool = [runspacefactory]::CreateRunspacePool(1, $maxThreads)
-$runspacePool.Open()
-
-# Create a collection to hold the runspaces
-$runspaces = @()
-
-foreach ($line in $csvData) {
-    # Create a new runspace
-    $runspace = [powershell]::Create().AddScript({
-        param ($name, $email, $claim, $claimType)
-        .\keyfactor_onboarding.ps1 -environment_variables Production -role_name $name -role_email $email -Claim $claim -Claim_Type $claimType
-    }).AddArgument($line.name).AddArgument($line.email).AddArgument($line.claim).AddArgument($line.claimType)
-
-    # Assign the runspace pool to the runspace
-    $runspace.RunspacePool = $runspacePool
-
-    # Start the runspace and add it to the collection
-    $runspaces += [PSCustomObject]@{
-        Pipe = $runspace
-        Status = $runspace.BeginInvoke()
+function CreateLogDirectory($logPath) {
+    if (-not (Test-Path -Path $logPath)) {
+        New-Item -Path $logPath -ItemType Directory | Out-Null
+        Write-Host "Log directory created at: $logPath" -ForegroundColor Green
     }
 }
 
-# Wait for all runspaces to complete
-foreach ($runspace in $runspaces) {
-    $runspace.Pipe.EndInvoke($runspace.Status)
-    $runspace.Pipe.Dispose()
+function ValidateScriptFile($scriptPath) {
+    if (-not (Test-Path -Path (Join-Path $scriptPath "keyfactor_onboarding.ps1"))) {
+        Write-Host "Script file does not exist in $scriptPath." -ForegroundColor Red
+        exit 1
+    }
 }
 
-# Close the runspace pool
-$runspacePool.Close()
-$runspacePool.Dispose()
+function ProcessCsvLine($line, $scriptPath, $variableFile, $runspacePool, $runspaces) {
+    if (-not ($line.PSObject.Properties.Match('name') -and
+              $line.PSObject.Properties.Match('email') -and
+              $line.PSObject.Properties.Match('claim') -and
+              $line.PSObject.Properties.Match('claimType'))) {
+        Write-Host "Skipping malformed or missing data in CSV: $($line | Out-String)" -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host "Processing: $($line.name) with email: $($line.email) and claim: $($line.claim) of type: $($line.claimType)"
+
+    $runspace = [powershell]::Create().AddScript({
+        param (
+            $name,
+            $email,
+            $claim,
+            $claimType,
+            $scriptPath,
+            $variableFile,
+            $roleonly = $false
+        )
+
+        $tokenParams = @{
+            environment_variables   = "FromFile"
+            role_name               = $name
+            role_email              = $email
+            Claim                   = $claim
+            Claim_Type              = $claimType
+            loglevel                = "Debug"
+            variableFile            = $variableFile
+        }
+
+        if ($roleonly){$tokenParams["roleonly"] = $true}
+
+        $output = & {
+            Set-Location $scriptPath
+            . .\keyfactor_onboarding.ps1 @tokenParams
+        } *>&1 | Out-String
+        
+        $timestamp = (Get-Date -Format "yyyyMMddHHmmssfff")
+        $logFilePath = "$($scriptPath)\RunspaceLogs\$($name)_$($timestamp).log"
+        $output | out-file -FilePath $logFilePath -Append -Encoding UTF8
+        
+        # $output | Out-File -FilePath "$($scriptPath)\RunspaceLogs\$($name)_runspace_$timestamp.log" -Append
+    }).AddArgument($line.name).AddArgument($line.email).AddArgument($line.claim).AddArgument($line.claimType).AddArgument($scriptPath).AddArgument($variableFile).AddArgument($roleonly)
+
+    $runspace.RunspacePool = $runspacePool
+    $runspaces.Add([PSCustomObject]@{
+        Pipe = $runspace
+        Status = $runspace.BeginInvoke()
+    }) | Out-Null
+}
+
+try {
+    # Create a new Stopwatch object
+    $stopwatch = New-Object System.Diagnostics.Stopwatch
+
+    # Start the stopwatch
+    $stopwatch.Start()
+
+    # Import the CSV file
+    $csvData = Import-Csv -Path $csvPath
+
+    # Set the script path and log path
+    $scriptPath = (Get-Location).Path
+    $logPath = Join-Path -Path $scriptPath -ChildPath "RunspaceLogs"
+
+    # Create the log directory and validate the script file
+    CreateLogDirectory -logPath $logPath
+    ValidateScriptFile -scriptPath $scriptPath
+
+    # Initialize runspace pool and process CSV lines
+    $runspacePool = [runspacefactory]::CreateRunspacePool(1, $maxThreads)
+    $runspacePool.Open()
+    $runspaces = [System.Collections.ArrayList]@()
+
+    foreach ($line in $csvData) {
+        ProcessCsvLine -line $line -scriptPath $scriptPath -variableFile $variableFile -runspacePool $runspacePool -runspaces $runspaces
+    }
+
+    # Finalize runspaces
+    foreach ($runspace in $runspaces) {
+        $runspace.Pipe.EndInvoke($runspace.Status)
+        $runspace.Pipe.Dispose()
+    }
+
+    $runspacePool.Close()
+    $runspacePool.Dispose()
+    # Stop the stopwatch
+    $stopwatch.Stop()
+
+    # Get the elapsed time
+    $elapsedTime = $stopwatch.Elapsed
+
+    # Display the elapsed time
+    Write-Host "$elapsedTime"
+
+    # Reset the stopwatch
+    $stopwatch.Reset()
+
+} catch {
+    Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Stack Trace: $($_.Exception.StackTrace)" -ForegroundColor Yellow
+}

@@ -113,11 +113,10 @@ function load_variables
     )
     write-message -Message "Entering function load_variables for $environment_variables environment" -type Debug
     $script:staticVariables = @{
-        COLLECTION_DESCRIPTION   = ""
-        ROLE_DESCRIPTION         = ""
-        CLAIM_SCHEME             = ""
-        CLAIM_DESCRIPTION        = ""
-        INCLUDE_EMAIL_IN_ROLE   = $false
+        COLLECTION_DESCRIPTION  = ""
+        ROLE_DESCRIPTION        = ""
+        CLAIM_DESCRIPTION       = ""
+        INCLUDE_EMAIL_IN_ROLE   = $False
         ROLE_PERMISSIONS = @{
             1 = "/portal/read/"
             2 = "/certificates/collections/revoke/"
@@ -904,9 +903,23 @@ try {
             }
     
             write-message -message  "Processing Role for: $role_name" -type Info
-            if ((process_roles -role_name $role_name -role_email $role_email -collection $collectionid).id)
+            $roleid = process_roles -role_name $role_name -role_email $role_email -collection $collectionid
+            if ($roleid)
             {
                 write-message -message  "Role for $role_name was created" -type Info
+            }
+            if ($claim)
+            {
+                $claimid = process_claims -claim $claim -roleid $roleid -claimtype $Claim_Type
+                $roleupdate = Update-RoleClaim -Roleid $roleid -Claimid $claimid
+                if ($roleupdate.id)
+                {
+                    write-message -message  "Role updated with role: $role_name" -type Info
+                }
+                foreach ($role in $Variables.additional_roles.values)
+                {
+                    process_additional_roles -ClaimId $claimid -role $role
+                }
             }
         }
     }
