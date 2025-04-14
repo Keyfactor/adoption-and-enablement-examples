@@ -1,346 +1,356 @@
-
 import os
-import json
-import csv
 import requests
-from functools import partial
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-import time
+import argparse
+import csv
+import json
 import urllib.parse
+import threading
+import importlib.util
 
 
-
-# Function to create the log directory
-def create_log_directory(log_path):
+def dynamic_import(module_path: str, function_name: str):
     """
-    Creates a log directory if it does not already exist.
+    Dynamically import a function from a specified file.
 
-    This function checks whether the specified log directory path exists.
-    If it does not exist, the directory is created. The function ensures
-    that appropriate directories are in place for logging purposes in
-    applications.
-
-    :param log_path: The full path of the directory to create if it does
-        not exist.
-    :type log_path: str
-    :return: None
+    :param module_path: The path to the Python file containing the function to import.
+    :param function_name: The name of the function to import from the file.
+    :return: The imported function.
     """
-    if not os.path.exists(log_path):
-        os.makedirs(log_path)
+    spec = importlib.util.spec_from_file_location("dynamic_module", module_path)
+    dynamic_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dynamic_module)
+    return getattr(dynamic_module, function_name)
 
 
-# Function to write log entries
-def new_log_entry(message, log_path, serial):
+class LogManager:
     """
-    Appends a new log entry to a log file. The log file is named in the format `log_<serial>.log`
-    and is stored in the specified directory. Each log entry includes the current date, time,
-    and the provided message.
+    Handles logging functionality, including the creation of a log directory and
+    adding new log entries with timestamps. This class is designed to ensure smooth
+    and organized logging operations for applications.
 
-    :param message: The message to log in the file.
-    :type message: str
-    :param log_path: The directory where the log file is stored.
-    :type log_path: str
-    :param serial: A unique identifier used to name the log file.
-    :type serial: str
-    :return: None
+    :ivar log_dir: The directory path where log files will be stored.
+    :type log_dir: str
     """
-    log_file = os.path.join(log_path, f"log_{serial}.log")
-    current_date = datetime.now().strftime("%d-%m-%Y")
-    current_time = datetime.now().strftime("%H:%M:%S")
-    full_message = f"[{current_date} {current_time}] {message}"
-    with open(log_file, "a", encoding="utf-8") as file:
-        file.write(full_message + "\n")
+    def __init__(self, cm_config: dict):
+        self.log_dir = cm_config['log_dir']
 
+    def create_log_directory(self):
+        """Creates a log directory if it doesn't exist."""
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
 
-# Function to generate authentication headers
-def create_auth(header_version, variables):
+    def new_log_entry(self, entry: str):
+        """Adds a new log entry with a timestamp."""
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        log_entry = f"[{timestamp}] {entry}\n"
+        log_file_path = os.path.join(self.log_dir, "application.log")
+        with open(log_file_path, "a") as log_file:
+            log_file.write(log_entry)
+
+class Authenticator:
     """
-    Creates an authorization header for API requests by exchanging client credentials
-    for an access token.
+    Authenticator is responsible for obtaining OAuth2.0 bearer tokens using client credentials.
 
-    This function builds the POST request payload with client credentials and
-    sends the request to the specified token URL. If the authentication is
-    successful, it returns the headers required for subsequent API requests.
+    This class is designed to help in authentication workflows that require fetching an access
+    token from an authorization server's token endpoint using the client credentials grant type.
+    It provides flexibility to include additional options such as scope and audience in the token
+    request.
 
-    :param header_version: The version of the API to be used in the request headers.
-    :type header_version: str
-    :param variables: A dictionary containing authentication and configuration details
-                      required for the token exchange and logging.
-    :type variables: dict
-    :return: A dictionary containing the authorization headers for making API requests.
-    :rtype: dict
+    :ivar token_url: The URL of the token endpoint provided by the authorization server.
+    :type token_url: str
+    :ivar client_id: The client identifier issued by the authorization server.
+    :type client_id: str
+    :ivar client_secret: The client secret issued by the authorization server.
+    :type client_secret: str
+    :ivar scope: Optional scope parameter for limiting the access token's permissions.
+    :type scope: str | None
+    :ivar audience: Optional audience parameter to specify the intended recipient of the token.
+    :type audience: str | None
     """
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    body = {
-        'grant_type': 'client_credentials',
-        'client_id': variables.get('client_id'),
-        'client_secret': variables.get('client_secret')
-    }
-    if 'scope' in variables:
-        body['scope'] = variables.get('scope')
-    if 'audience' in variables:
-        body['audience'] = variables.get('audience')
+    def __init__(
+            self,
+            token_url: str,
+            client_id: str,
+            client_secret: str,
+            scope: str = None,
+            audience: str = None):
 
-    try:
-        response = requests.post(variables['TOKEN_URL'], headers=headers, data=body)
-        response.raise_for_status()
-        access_token = response.json()['access_token']
-        new_log_entry(f"Successfully received Access Token from {variables['TOKEN_URL']}", variables['log_path'],
-                      "auth")
-    except Exception as e:
-        raise Exception(f"Error in create_auth: {str(e)}")
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token_url = token_url
+        self.scope = scope
+        self.audience = audience
 
-    return {
-        "content-type": "application/json",
-        "accept": "text/plain",
-        "x-keyfactor-requested-with": "APIClient",
-        "x-keyfactor-api-version": f"{header_version}.0",
-        "Authorization": f"Bearer {access_token}"
-    }
+    def get_bearer_token(self, scope: str) -> str:
+        data = {
+            "grant_type": "client_credentials",
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        if scope:
+            data["scope"] = scope
+        if self.audience:
+            data["audience"] = self.audience
+        try:
+            response = requests.post(self.token_url, data=data)
+            response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to fetch bearer token: {e}")
+        token_data = response.json()
+        if "access_token" not in token_data:
+            raise Exception(f"Failed to retrieve access token: {token_data.get('error_description', 'Unknown error')}")
+        return token_data["access_token"]
 
-
-# Function to send HTTP PUT requests
-def invoke_http_put(url, header_version, variables, data):
+class CertificateManager:
     """
-    Sends an HTTP PUT request to the specified URL with the provided headers, variables, and data. Logs the request and
-    response details, ensuring that all activities are traceable.
+    Manages interactions with a certificate management system through API calls.
 
-    :param url: The target URL for the HTTP PUT request.
-    :type url: str
-    :param header_version: The version of the header to be used for the request.
-    :type header_version: Any
-    :param variables: A dictionary containing metadata and configurations required for the request, such as `log_path`.
-    :type variables: dict
-    :param data: The JSON-compatible data payload to be sent in the PUT request.
-    :type data: dict
-    :return: The HTTP response object received after making the PUT request.
-    :rtype: requests.Response
-    :raises Exception: If there is an error while creating headers, sending the request, or processing the response.
+    The class provides methods to perform actions such as fetching certificate information, checking the health
+    of the Keyfactor system, retrieving role data, and updating certificate ownership. It utilizes a logging
+    mechanism to record events and errors during its operations.
+
+    :ivar log_manager: A LogManager instance for creating new log entries.
+    :type log_manager: LogManager
+    :ivar base_url: The base URL of the certificate management API.
+    :type base_url: str
+    :ivar token: Access token used for authenticating API requests.
+    :type token: str
+    :ivar serial: Serial number of the certificate (optional).
+    :type serial: str, optional
+    :ivar role: Name of the role associated with the instance (default is None).
+    :type role: str, optional
     """
-    try:
-        headers = create_auth(header_version, variables)
-        new_log_entry(f"Sending HTTP PUT request to URL={url} with HeaderVersion={header_version}",
-                      variables['log_path'], "put")
-        response = requests.put(url, headers=headers, json=data)
-        response.raise_for_status()
-        new_log_entry(f"Received response from URL={url} with status code {response.status_code}",
-                      variables['log_path'], "put")
-        return response
-    except Exception as e:
-        raise Exception(f"Error in invoke_http_put for URL={url}. Error: {str(e)}")
+    def __init__(self, log_manager: LogManager, cm_config: dict, serial: str=None):
+        self.log_manager = log_manager
+        self.base_url = cm_config['base_url']
+        self.token = cm_config['token']
+        self.serial = serial
+        self.role = None
 
+    def get_certificates(self, serial: str):
+        try:
+            encoded_query = urllib.parse.quote(f'SerialNumber -eq "{serial}"')
+            response = requests.get(f"{self.base_url}/Certificates?QueryString={encoded_query}",
+                                    headers=KeyfactorHeaders(header_version='1', access_token=self.token).to_dict())
+            return json.loads(response.text)[0]["Id"]
+        except Exception as e:
+            self.log_manager.new_log_entry(f"Error fetching certificates: {str(e)}")
+            return False
 
-# Function to send HTTP GET requests
-def invoke_http_get(url, header_version, variables):
+    def check_keyfactor_status(self):
+        try:
+            response = requests.get(f"{self.base_url}/status/healthcheck",
+                                    headers=KeyfactorHeaders(header_version='1', access_token=self.token).to_dict())
+            return response.status_code == 204
+        except Exception as e:
+            self.log_manager.new_log_entry(f"Error checking Keyfactor status: {str(e)}")
+            return False
+
+    def get_roles(self, role: str):
+        try:
+            encoded_query = urllib.parse.quote(f'name -eq "{role}"')
+            response = requests.get(f"{self.base_url}/Security/Roles?QueryString={encoded_query}",
+                                    headers=KeyfactorHeaders(header_version='2', access_token=self.token).to_dict())
+            return json.loads(response.text)[0]["Id"]
+        except Exception as e:
+            self.log_manager.new_log_entry(f"Error fetching roles: {str(e)}")
+            return False
+
+    def update_certificate_owner(self, certificate_id: str, owner_id: int):
+        try:
+            self.log_manager.new_log_entry(f"Updating certificate with id {certificate_id} with owner id {owner_id}")
+            response = requests.put(
+                f"{self.base_url}/Certificates/{certificate_id}/Owner",
+                headers=KeyfactorHeaders(header_version='1', access_token=self.token).to_dict(),
+                json={"NewRoleId": owner_id}
+            )
+            return response.status_code == 204
+        except Exception as e:
+            self.log_manager.new_log_entry(f"Error updating certificate: {str(e)}")
+            return False
+
+class FileProcessor:
     """
-    Sends an HTTP GET request to a specified URL with dynamically created headers and logging of operations.
-    This function utilizes authentication headers created based on the provided version and variables.
-    Logs both the request initiation and response status to a log file defined in the variables.
+    Handles file processing operations, including validation, file processing using multithreading,
+    and line-by-line processing for specific operations. This class is designed to work with a
+    configuration that includes CSV file paths and LogManager for logging operations.
 
-    :param url: The target endpoint URL for the HTTP GET request.
-    :type url: str
-    :param header_version: The version of the authentication header scheme to be used.
-    :type header_version: str
-    :param variables: A dictionary containing additional configurations and parameters
-        required for constructing the headers and logging. Must include 'log_path'.
-    :type variables: dict
-    :return: The HTTP response object received from the GET request.
-    :rtype: requests.models.Response
-    :raises Exception: If the request encounters any issues or fails.
+    :ivar csv_path: Path to the CSV file that needs to be processed.
+    :type csv_path: str
+    :ivar log_manager: Instance of LogManager to handle logging operations.
+    :type log_manager: LogManager
     """
-    try:
-        headers = create_auth(header_version, variables)
-        new_log_entry(f"Sending HTTP GET request to URL={url} with HeaderVersion={header_version}",
-                      variables['log_path'], "get")
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        new_log_entry(f"Received response from URL={url} with status code {response.status_code}",
-                      variables['log_path'], "get")
-        return response
-    except Exception as e:
-        raise Exception(f"Error in invoke_http_get for URL={url}. Error: {str(e)}")
+    def __init__(self, cm_config: dict):
+        self.csv_path = cm_config['csv_path']
+        self.log_manager = LogManager(cm_config=cm_config)
 
+    def validate_csv_file(self):
+        required_headers = {'serial', 'role'}
+        try:
+            with open(self.csv_path, mode='r', encoding='utf-8-sig') as csv_file:
+                reader = csv.DictReader(csv_file)
+                if not required_headers.issubset(reader.fieldnames):
+                    return False
+            return True
+        except Exception as e:
+            self.log_manager.new_log_entry(f"Error validating CSV file: {str(e)}")
+            return False
 
-# Function to get certificate ID
-def get_certificates(variables, serial):
-    """
-    Fetches the certificate ID from the API based on the provided serial number.
+    def process_file_multithreaded(self):
+        threads = []
+        with open(self.csv_path, 'r') as file:
+            for line in file:
+                thread = threading.Thread(target=self.process_line, args=(line,))
+                threads.append(thread)
+                thread.start()
 
-    This function constructs a query for a certificate's serial number, URL-encodes
-    it, and sends an HTTP GET request to retrieve the certificate details from the
-    API. After parsing the response, it extracts and returns the certificate ID.
+                # Optional: Limit the number of active threads
+                if len(threads) >= 10:  # Example: Max 10 threads
+                    for t in threads:
+                        t.join()
+                    threads = []
+        for t in threads:
+            t.join()
 
-    :param variables: A dictionary containing configuration settings including
-        'KEYFACTORAPI' which represents the base URL of the API as a string.
-    :param serial: The serial number of the certificate to be fetched.
-    :return: The ID of the certificate as retrieved from the API.
-    :rtype: Any
-    """
-    query = f'SerialNumber -eq "{serial}"'
-    encoded_query = urllib.parse.quote(query)
-    url = f"{variables['KEYFACTORAPI']}/Certificates?QueryString={encoded_query}"
-    response = invoke_http_get(url, 1, variables)
-    return json.loads(response.text)["Id"]
-
-
-# Function to check Keyfactor status
-def check_keyfactor_status(variables):
-    """
-    Checks the health status of the Keyfactor API.
-
-    This function sends a GET request to the Keyfactor API's health check URL
-    to verify if the service is operational. It invokes the HTTP GET request
-    using the provided URL and timeout values obtained from the input
-    variables. The function returns ``True`` if the response status code is
-    204, indicating the service is healthy.
-
-    :param variables: A dictionary containing the necessary configuration
-        values, including the Keyfactor API URL under the 'KEYFACTORAPI' key.
-    :type variables: dict
-
-    :return: ``True`` if the health check endpoint returns a 204 status code,
-        otherwise ``False``.
-    :rtype: bool
-    """
-    url = f"{variables['KEYFACTORAPI']}/status/healthcheck"
-    response = invoke_http_get(url, 1, variables)
-    return response.status_code == 204
-
-
-# Function to get role ID
-def get_role_id(variables, line):
-    """
-    Fetches the role ID for a given role name by constructing a query, sending an HTTP GET request to
-    the appropriate endpoint, and decoding the response.
-
-    :param variables: A dictionary containing configuration details such as the API endpoint.
-    :type variables: dict
-    :param line: A dictionary containing role-related data where the key "role" specifies the role
-        name for which the ID is to be retrieved.
-    :type line: dict
-    :return: The ID of the role that matches the given role name.
-    :rtype: int
-    """
-    query = f'name -eq "{line["role"]}"'
-    encoded_query = urllib.parse.quote(query)
-    url = f"{variables['KEYFACTORAPI']}/Security/Roles?QueryString={encoded_query}"
-    response = invoke_http_get(url, 2, variables)
-    return json.loads(response.text)["Id"]
-
-
-# Function to update certificate owner
-def update_certificate_owner(variables, certificate_id, role_id):
-    """
-    Updates the owner of a certificate by making an HTTP PUT request to the specified endpoint.
-
-    This function utilizes the provided variables dictionary to construct the API endpoint
-    URL for updating the certificate owner. It sends the new role information in the
-    request body and returns the status code from the server response.
-
-    :param variables: Dictionary containing API configuration details and other relevant
-        parameters, including the 'KEYFACTORAPI' entry used to construct the API URL.
-    :type variables: dict
-    :param certificate_id: Unique identifier of the certificate whose owner is to be updated.
-    :type certificate_id: str
-    :param role_id: Unique identifier of the new role to be assigned as the owner of the
-        certificate.
-    :type role_id: str
-    :return: HTTP status code of the server response indicating the outcome of the request.
-    :rtype: int
-    """
-    url = f"{variables['KEYFACTORAPI']}/Certificates/{certificate_id}/Owner"
-    body = {"NewRoleId": role_id}
-    response = invoke_http_put(url, 1, variables, body)
-    return response.status_code
-
-
-def process_line(line, variables):
-    """
-    Processes a single line of input and updates the certificate ownership by associating
-    it with the specified role. Validates the connection to Keyfactor Command, fetches
-    certificate and role data, and performs the update operation appropriately. Results
-    and errors are logged to the specified log path.
-
-    :param line: A dictionary containing data for processing, specifically:
-                 - line['serial']: The serial number of the certificate.
-                 - line['role']: The new role to be associated with the certificate.
-    :type line: dict
-    :param variables: A dictionary containing configuration and runtime variables, such as:
-                      - variables['log_path']: Path to log file for storing operation logs.
-    :type variables: dict
-    :return: None
-    :raises Exception: If the connection to Keyfactor Command fails or if any process-specific
-                       error occurs. All raised errors are logged.
-    """
-    try:
-        if check_keyfactor_status(variables):
-            new_log_entry("Validated connection to Keyfactor Command", variables['log_path'], line['serial'])
-        else:
-            raise Exception("Failed to validate connection to Keyfactor Command")
-
-        serial = line['serial']
-        new_log_entry(f"Getting certificate ID for: {serial}", variables['log_path'], serial)
-        certificate_id = get_certificates(variables, serial)
-
-        if certificate_id:
-            new_log_entry(f"Certificate ID: {certificate_id}", variables['log_path'], serial)
-            new_log_entry(f"Getting role ID for: {line['role']}", variables['log_path'], serial)
-            role_id = get_role_id(variables, line)
-
-            if role_id:
-                new_log_entry(f"Role ID: {role_id}", variables['log_path'], serial)
-                new_log_entry(f"Updating certificate with New Role owner: {line['role']}", variables['log_path'],
-                              serial)
-                result = update_certificate_owner(variables, certificate_id, role_id)
-
-                if result == 204:
-                    new_log_entry(f"Owner updated: {line['role']}", variables['log_path'], serial)
-                else:
-                    new_log_entry(f"[ERROR] Owner failed to update: {line['role']}", variables['log_path'], serial)
+    def process_line(self, line: str, certificate_manager: CertificateManager):
+        certificate_id = certificate_manager.get_certificates(serial=line.split(',')[0].strip())
+        role_id = certificate_manager.get_roles(role=line.split(',')[1].strip())
+        if certificate_id and role_id:
+            if certificate_manager.update_certificate_owner(certificate_id=certificate_id, owner_id=role_id):
+                self.log_manager.new_log_entry(f"Certificate with serial {line.split(',')[0]} updated with role {line.split(',')[1]}")
             else:
-                new_log_entry(f"[ERROR] Role not found: {line['role']}", variables['log_path'], serial)
+                self.log_manager.new_log_entry(f"[ERROR]Error updating certificate with serial {line.split(',')[0]} and role {line.split(',')[1]}")
         else:
-            new_log_entry(f"[ERROR] Certificate not found: {serial}", variables['log_path'], serial)
-    except Exception as e:
-        new_log_entry(f"Error processing item {line['serial']}: {str(e)}", variables['log_path'], line['serial'])
+            self.log_manager.new_log_entry(f"[ERROR]Error updating certificate with serial {line.split(',')[0]} and role {line.split(',')[1]}")
 
-
-def main(csv_path, max_threads, variable_file):
+class KeyfactorHeaders:
     """
-    Executes a multithreaded process based on parameters from a CSV file and a variable file.
+    Represents headers required for connecting to the Keyfactor API.
 
-    This function reads a CSV file and a Python script (variable file) to define the scope
-    and context of a multithreaded task. It manages tasks with a specified maximum number
-    of threads simultaneously, logs the process execution, and prints the elapsed time
-    upon completion.
+    This class encapsulates the standard headers used for API requests to
+    the Keyfactor system. It is designed to streamline the construction of
+    HTTP headers by predefining static values and dynamically generating
+    others based on input parameters.
 
-    :param str csv_path: The path to the CSV file containing the task data.
-    :param int max_threads: The maximum number of threads to use for concurrent execution.
-    :param str variable_file: The path to the Python script file defining variables and
-        configurations for the processing.
+    :ivar content_type: Specifies the content type for the request payloads.
+    :type content_type: str
+    :ivar accept: Denotes the type of response format expected from the API.
+    :type accept: str
+    :ivar x_keyfactor_requested_with: Indicates the client making the
+        request (fixed to "APIClient").
+    :type x_keyfactor_requested_with: str
+    :ivar x_keyfactor_api_version: Represents the Keyfactor API version to
+        be used in the request.
+    :type x_keyfactor_api_version: str
+    :ivar authorization: Contains the Bearer token for authorizing API
+        requests.
+    :type authorization: str
+    """
+    def __init__(self, header_version: str, access_token: str):
+        self.content_type = "application/json"
+        self.accept = "text/plain"
+        self.x_keyfactor_requested_with = "APIClient"
+        self.x_keyfactor_api_version = f"{header_version}.0"
+        self.authorization = f"Bearer {access_token}"
+
+    def to_dict(self) -> dict:
+        return {
+            "content-type": self.content_type,
+            "accept": self.accept,
+            "x-keyfactor-requested-with": self.x_keyfactor_requested_with,
+            "x-keyfactor-api-version": self.x_keyfactor_api_version,
+            "Authorization": self.authorization
+        }
+
+class MainApplication:
+    """
+    Represents the main application for managing and processing files, handling logs, and
+    certificates validation. It facilitates file validation, logs creation, and data processing
+    workflows.
+
+    :ivar log_manager: Instance of LogManager to handle logging operations.
+    :type log_manager: LogManager
+    :ivar certificate_manager: Handles certificate-related operations using log_manager and
+        configuration.
+    :type certificate_manager: CertificateManager
+    :ivar file_processor: Manages file processing, including validation and line processing
+        functionalities.
+    :type file_processor: FileProcessor
+    """
+    def __init__(self, cm_config: dict):
+        self.log_manager = LogManager(cm_config=cm_config)
+        self.certificate_manager = CertificateManager(self.log_manager, cm_config=cm_config)
+        self.file_processor = FileProcessor(cm_config=cm_config)
+
+    def run(self):
+        print("Creating Log Directory...")
+        self.log_manager.create_log_directory()
+        print("Validating CSV File...")
+        if not self.file_processor.validate_csv_file():
+            self.log_manager.new_log_entry("Invalid file format.")
+            return
+        else:
+            self.log_manager.new_log_entry("CSV File validation successful.")
+        with open(self.file_processor.csv_path, 'r') as file:
+            csv_reader = csv.reader(file)
+            next(csv_reader)
+            print("Processing CSV File...")
+            for line in file:
+                self.file_processor.process_line(line, self.certificate_manager)
+
+def main():
+    """
+    Main entry point for the script/application. This function parses command-line
+    arguments, validates configurations, initializes necessary components, and
+    launches the main application logic.
+
+    :raises SystemExit: Exits the program in case of invalid or unavailable resources.
+
+    :param: None
+
     :return: None
     """
-    start_time = time.time()
-    variables = {}
-    with open(variable_file, "r") as file:
-        exec(file.read(), variables)
+    parser = argparse.ArgumentParser(
+        description="A description of what your script/application does."
+    )
 
-    script_path = os.getcwd()
-    log_path = os.path.join(script_path, "RunspaceLogs")
-    variables['log_path'] = log_path
-    create_log_directory(log_path)
+    parser.add_argument(
+        '-c','--config',
+        type=str,
+        help='Path to the configuration file',
+        required=True
+    )
+    parser.add_argument(
+        '-e','--env',
+        type=str,
+        help='prod or dev',
+        required=True
+    )
 
-    with open(csv_path, newline='', encoding='utf-8') as csv_file:
-        csv_reader = csv.DictReader(csv_file)
-        rows = list(csv_reader)
+    args = parser.parse_args()
 
-    with ThreadPoolExecutor(max_threads) as executor:
-        executor.map(partial(process_line, variables=variables), rows)
+    print(f"Config file: {args.config}")
+    if args.env:
+        print(f"Environment: {args.env}")
 
-    elapsed_time = time.time() - start_time
-    print(f"Elapsed time: {elapsed_time:.2f} seconds")
-    print(f"All tasks completed using multithreading. Logs created in {log_path}.")
+    get_config = dynamic_import(args.config, 'get_config')
+
+    config = get_config(env=args.env)
+
+    authenticator = Authenticator(token_url=config['token_url'], client_id=config['client_id'], client_secret=config['client_secret'], scope=config['scope'], audience=config['audience'])
+    config['token'] = authenticator.get_bearer_token(scope=config['scope'])
+
+    certificate_manager = CertificateManager(cm_config=config,log_manager=LogManager(cm_config=config))
+    if not (certificate_manager.check_keyfactor_status()):
+        print("Keyfactor is not available")
+        exit()
+    else:
+        print("Validated Connection to Keyfactor")
+    app = MainApplication(config)
+    app.run()
+    print("Completed Successfully")
 
 if __name__ == "__main__":
     main()
+

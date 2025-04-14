@@ -1,148 +1,135 @@
-# Code Explanation: Key Functions in Python Script
+### Explanation of the Python Code
 
-The provided Python script contains a series of utility functions for managing API communication, logging activities, and updating certificate ownership in a multi-threaded environment. Below are detailed explanations of the main components:
-
----
-
-## **1. `create_log_directory(log_path)`**
-- **Purpose**: Ensures the specified log directory exists by creating it if necessary.
-- **Details**:
-  - It uses `os.makedirs()` to create the directory path.
-- **Parameters**:
-  - `log_path` (string): Path where logs should be saved.
-- **Output**: None. Creates a directory as a side effect.
+This Python script provides functionality to manage and process certificates, perform authentication using OAuth2.0, log events, and process files. Below are the key components explained:
 
 ---
 
-## **2. `new_log_entry(message, log_path, serial)`**
-- **Purpose**: Appends a log entry to a file named `log_<serial>.log` within the specified directory.
-- **Details**:
-  - Formats a timestamp using the current date and time.
-  - Concatenates the message into a log entry and writes it to the file.
-- **Parameters**:
-  - `message` (str): Text to log.
-  - `log_path` (str): Directory for storing the log file.
-  - `serial` (str): Identifier used in the log filename.
-- **Output**: None. Writes to the log file.
+#### **1. `dynamic_import` Function**
+- **Purpose:** Dynamically import and retrieve a function by name from a specified Python file.
+- It uses the `importlib.util` module for loading and executing modules.
+- **Parameters:**
+  - `module_path`: Path to the script where the function is located.
+  - `function_name`: Name of the target function to import.
+
+Example:
+```python
+function = dynamic_import("functions.py", "example_function")
+```
 
 ---
 
-## **3. `create_auth(header_version, variables)`**
-- **Purpose**: Builds an API authentication header by exchanging client credentials for an access token.
-- **Details**:
-  - Sends a POST request to a `TOKEN_URL` endpoint with `client_id` and `client_secret`.
-  - If successful, logs the success and returns the headers with a `Bearer` access token.
-- **Parameters**:
-  - `header_version` (str): API version.
-  - `variables` (dict): Includes token endpoint, credentials, and log path.
-- **Output**: A dictionary containing the authentication headers.
+#### **2. `LogManager` Class**
+- Handles the creation of log directories and writing logs with timestamps.
+- **Key Methods:**
+  - `__init__`: Initializes the log directory based on configuration.
+  - `create_log_directory`: Creates the log directory if it does not exist.
+  - `new_log_entry`: Writes log entries with timestamps to a file.
+
+Example Usage:
+```python
+log_manager = LogManager({"log_dir": "/logs"})
+log_manager.create_log_directory()
+log_manager.new_log_entry("This is a sample log entry.")
+```
 
 ---
 
-## **4. `invoke_http_put(url, header_version, variables, data)`**
-- **Purpose**: Sends an HTTP PUT request to update resources in an API.
-- **Details**:
-  - Creates authentication headers using `create_auth()`.
-  - Sends the PUT request with a JSON payload.
-  - Logs the request details and its result.
-- **Parameters**:
-  - `url` (str): Target API URL.
-  - `header_version` (str): API version.
-  - `variables` (dict): Configuration details.
-  - `data` (dict): JSON payload to send.
-- **Output**: The resulting `requests.Response` object.
+#### **3. `Authenticator` Class**
+- Manages OAuth2.0 authentication to retrieve bearer tokens using the client credentials grant type.
+- **Constructor Parameters:**
+  - `token_url`: URL for the token endpoint.
+  - `client_id` and `client_secret`: Authorization credentials.
+  - `scope` and `audience`: Optional fields to define the token's permissions and audience.
+- **Key Method:**
+  - `get_bearer_token`: Sends a POST request to retrieve the access token. Raises exceptions if the request fails.
+
+Example Usage:
+```python
+auth = Authenticator("https://example.com/token", "client_id", "client_secret")
+token = auth.get_bearer_token("scope_value")
+```
 
 ---
 
-## **5. `invoke_http_get(url, header_version, variables)`**
-- **Purpose**: Sends an HTTP GET request to retrieve data.
-- **Details**:
-  - Uses `create_auth()` for authentication headers and logs activities.
-  - Returns the API response if successful.
-- **Parameters**:
-  - `url` (str): API URL to query.
-  - `header_version` (str): API version.
-  - `variables` (dict): Configuration details.
-- **Output**: The `requests.Response` object received.
+#### **4. `CertificateManager` Class**
+Handles interactions with a certificate management API (e.g., Keyfactor).
+
+- **Attributes:**
+  - `log_manager`: Logs messages and errors.
+  - `base_url` and `token`: Base API URL and access token for authentication.
+  - `serial` and `role`: Optional certificate attributes.
+- **Key Methods:**
+  - `get_certificates`: Fetches certificate details by serial number.
+  - `check_keyfactor_status`: Checks the API's health (e.g., Keyfactor's status).
+  - `get_roles`: Fetches role information by role name.
+  - `update_certificate_owner`: Updates the certificate owner based on certificate and role IDs.
+
+Example:
+```python
+cert_manager = CertificateManager(log_manager, {"base_url": "https://api.example.com", "token": "auth_token"})
+cert_id = cert_manager.get_certificates("serial123")
+```
 
 ---
 
-## **6. `get_certificates(variables, serial)`**
-- **Purpose**: Retrieves a certificate ID based on its serial number.
-- **Details**:
-  - Constructs and URL-encodes a query string.
-  - Calls `invoke_http_get()` to send an HTTP GET request.
-  - Parses the JSON response to return the certificate ID.
-- **Parameters**:
-  - `variables` (dict): API settings containing the base URL.
-  - `serial` (str): The certificate's serial number.
-- **Output**: The certificate's unique ID.
+#### **5. `FileProcessor` Class**
+- Responsible for validating and processing a CSV file, using multithreading to improve speed.
+- **Attributes:**
+  - `csv_path`: Path to the CSV file.
+  - `log_manager`: Used for logging events.
+- **Key Methods:**
+  - `validate_csv_file`: Ensures the CSV contains required headers (`serial` and `role`).
+  - `process_file_multithreaded`: Processes each row in the file using threads.
+  - `process_line`: Handles a single CSV line to fetch certificates, roles, and update their association.
+
+Example Usage:
+```python
+file_processor = FileProcessor({"csv_path": "data.csv", "log_dir": "/logs"})
+if file_processor.validate_csv_file():
+    file_processor.process_file_multithreaded()
+```
 
 ---
 
-## **7. `check_keyfactor_status(variables)`**
-- **Purpose**: Checks the Keyfactor API health status.
-- **Details**:
-  - Sends an HTTP GET request to the `/status/healthcheck` endpoint.
-  - Returns `True` if the API returns HTTP 204; otherwise, `False`.
-- **Parameters**:
-  - `variables` (dict): Contains the API's base URL.
-- **Output**: Boolean indicating service health.
+#### **6. `KeyfactorHeaders` Class**
+- A utility class for constructing HTTP headers specific to the Keyfactor API.
+- **Key Attributes:**
+  - `content_type`: Defines the format of request payloads.
+  - `accept`: Specifies the accepted response format.
+  - `authorization`: Adds the `Bearer` token for authentication.
+- **Key Method:**
+  - `to_dict`: Returns all headers in dictionary format for use in requests.
+
+Example:
+```python
+headers = KeyfactorHeaders("1", "access_token").to_dict()
+```
 
 ---
 
-## **8. `get_role_id(variables, line)`**
-- **Purpose**: Retrieves the ID of a role based on its name.
-- **Details**:
-  - Constructs a query for the role’s name.
-  - Sends a GET request via `invoke_http_get()` and returns the role's ID.
-- **Parameters**:
-  - `variables` (dict): API configurations.
-  - `line` (dict): Includes the role's name under the key `role`.
-- **Output**: The role ID.
+#### **7. `MainApplication` Class**
+Acts as the top-level application to coordinate all other components.
+
+- **Attributes:**
+  - `log_manager`, `certificate_manager`, and `file_processor`.
+- **Key Method:**
+  - `run`: Validates input, creates logs, and processes CSV files for certificate updates.
+
+Example Usage:
+```python
+app = MainApplication({"csv_path": "data.csv", "log_dir": "/logs", "base_url": "https://api.example.com"})
+app.run()
+```
 
 ---
 
-## **9. `update_certificate_owner(variables, certificate_id, role_id)`**
-- **Purpose**: Updates the owner of a certificate to a new role.
-- **Details**:
-  - Sends an HTTP PUT request to update the certificate's `owner` field with the new `role_id`.
-  - Logs success or failure.
-- **Parameters**:
-  - `variables` (dict): API details.
-  - `certificate_id` (str): Unique identifier for the certificate.
-  - `role_id` (str): Role ID of the new owner.
-- **Output**: HTTP status code.
+#### **8. `main` Function**
+- Entry point for the script.
+- Parses command-line arguments for config file paths and environment settings (e.g., `dev` or `prod`).
+- Dynamically imports a function to read the configuration and initializes the application components.
+- Verifies API availability and runs the application.
 
----
-
-## **10. `process_line(line, variables)`**
-- **Purpose**: Processes a single CSV line to associate a certificate with a new owner.
-- **Details**:
-  - Validates the API connection using `check_keyfactor_status`.
-  - Retrieves the certificate and role IDs using `get_certificates` and `get_role_id`.
-  - Updates the certificate ownership via `update_certificate_owner`.
-  - Logs errors if any step fails.
-- **Parameters**:
-  - `line` (dict): Contains `serial` (certificate) and `role` (new owner).
-  - `variables` (dict): Configuration and log details.
-- **Output**: None. Logs results.
-
----
-
-## **11. `main(csv_path, max_threads, variable_file)`**
-- **Purpose**: Manages multi-threaded processing of tasks from a CSV file.
-- **Details**:
-  - Reads the configuration file (`variable_file`) and the task file (`csv_path`).
-  - Creates a log directory.
-  - Uses `ThreadPoolExecutor` to process lines from the CSV concurrently.
-- **Parameters**:
-  - `csv_path` (str): Path to the CSV file containing task data.
-  - `max_threads` (int): Maximum threads for concurrent tasks.
-  - `variable_file` (str): Path for the Python file defining API variables.
-- **Output**: None. Processes all tasks and logs results.
-
----
-
-## **Execution:**
-The script iterates over rows of a CSV file, updating certificate ownership using the provided API. It utilizes multithreading for efficiency.
+Example:
+```bash
+python script.py --config config.py --env dev
+```

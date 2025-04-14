@@ -1,5 +1,5 @@
 /OnBoarding/demo.ps1
-/OnBoarding/RunspaceLogs
-/OwnerUpdate/demo.ps1
-/OwnerUpdate/test.ps1
-/OwnerUpdate/demo.py
+/OnBoarding/powershell/RunspaceLogs
+/OwnerUpdate/powershell/demo.ps1
+/OnBoarding/python/RunspaceLogs
+/OwnerUpdate/python/demo.py

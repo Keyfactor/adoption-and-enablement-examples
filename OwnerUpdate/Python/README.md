@@ -1,171 +1,162 @@
-# Certificate Ownership Updater
+# Certificate Management System
 
-This project provides a multithreaded Python script to update the owners of certificates in a Keyfactor API-based solution. It reads input data from a CSV file, connects to the API, retrieves certificate and role data, and updates ownership information accordingly. Logs are created for all operations.
+This Python-based application is designed to handle certificate management tasks, file processing, and logging. It integrates with external APIs for authentication and certificate actions, supporting multithreaded file processing.
 
 ---
 
 ## Features
 
-- **Multithreading**: Efficient processing of large data using a configurable number of threads.
-- **Dynamic Role Assignment**: Updates certificate roles based on the provided CSV input.
-- **Logging**: Detailed logging for each operation, including API interactions and potential errors.
-- **API Integration**: Supports secure interaction with APIs using authentication headers.
+- **Dynamic Function Import**: Import Python functions dynamically from files.
+- **Logging**: Handles organized logging with timestamps.
+- **OAuth 2.0 Authentication**: Fetches bearer tokens using the client credentials grant type.
+- **Certificate Management**: Integrates with a certificate management API to:
+  - Check system status.
+  - Fetch certificate and role details.
+  - Update certificate ownership.
+- **File Processing**: Processes CSV files:
+  - Validates file structure.
+  - Processes data in multithreaded mode.
 
 ---
 
-## Prerequisites
+## Requirements
 
-- **Python 3.8 or later**
-- Required Python libraries:
+- Python 3.8 or higher
+- Installed Python libraries:
   - `requests`
-  - `csv`
+  - `argparse`
   - `json`
-  - `concurrent.futures` (built-in module)
-  - `datetime`
-  - `functools`
   - `urllib.parse`
-  
-To install any missing packages, run:
-
-```bash
-pip install requests
-```
+  - `csv`
+  - `threading`
+  - `importlib`
 
 ---
 
-## File Overview
-
-### Script Files:
-- **`owner_update.py`**: The main script for updating certificate ownership.
-  
-### Input Files:
-- **`CSV File`**: Contains data to be processed (e.g., serial numbers and roles).
-  - Example:
-    ```csv
-    serial,role
-    ABC12345,AdminRole
-    XYZ67890,UserRole
-    ```
-- **`Variable File`**: A Python file defining additional configuration:
-  - Example (`variables.py`):
-    ```python
-    TOKEN_URL = "https://your-keyfactor-domain/api/auth/token"
-    KEYFACTORAPI = "https://your-keyfactor-domain/api"
-    client_id = "YOUR_CLIENT_ID"
-    client_secret = "YOUR_CLIENT_SECRET"
-    ```
-
----
-
-## How to Use
+## Installation
 
 1. **Clone the Repository**:
-    ```bash
-    git clone https://your-repository-link.git
-    cd your-repository
-    ```
+   ```bash
+   git clone <repository_url>
+   cd <repository_directory>
+   ```
 
-2. **Prepare Configuration Files**:
-   - Create a CSV file (e.g., `input.csv`) with certificate serial numbers and the target roles.
-   - Create a Python script (e.g., `variables.py`) with API configurations.
-
-3. **Run the Script**:
-   - Syntax:
-     ```bash
-     python owner_update.py <path_to_csv> <max_threads> <path_to_variable_file>
-     ```
-   - Example:
-     ```bash
-     python owner_update.py input.csv 5 variables.py
-     ```
+2. **Install Dependencies**:
+   Ensure you have the required Python packages installed:
+   ```bash
+   pip install requests
+   ```
 
 ---
 
-## Functions
+## Configuration
 
-The script consists of the following key functions:
+The application relies on a configuration file to manage environment-specific settings. The configuration must provide:
+- **Base URL** of the certificate management API.
+- **OAuth 2.0 Credentials** (client ID, secret, token URL, and scope).
+- **Log Directory** and **CSV File Path**.
 
-1. **Logging**:
-   - `create_log_directory`: Ensures the required log directory exists.
-   - `new_log_entry`: Writes logs for each operation.
+An example configuration structure:
+```json
+{
+  "token_url": "<OAuth_Token_Endpoint>",
+  "client_id": "<Client_ID>",
+  "client_secret": "<Client_Secret>",
+  "scope": "<Access_Scope>",
+  "audience": "<Audience>",
+  "log_dir": "./logs",
+  "csv_path": "./data.csv",
+  "base_url": "<Certificate_Management_Base_URL>"
+}
+```
 
-2. **API Interaction**:
-   - `create_auth`: Generates authentication headers for API requests.
-   - `invoke_http_get`: Sends GET requests with appropriate headers.
-   - `invoke_http_put`: Sends PUT requests with authentication.
-
-3. **Certificate and Role Management**:
-   - `get_certificates`: Fetches certificate details based on serial numbers.
-   - `get_role_id`: Retrieves role IDs for given roles.
-   - `update_certificate_owner`: Updates the owner of a specified certificate.
-
-4. **Orchestration**:
-   - `process_line`: Processes a single line from the input CSV file.
-   - `main`: Configures multithreading, reads input, and initiates processing.
+Ensure this configuration file is passed when running the application with the `--config` flag.
 
 ---
 
-## Logs
+## Usage
 
-Logs are stored in a folder named `RunspaceLogs` (created in the current working directory). Each log file's naming format is `log_<serial>.log`.
+Run the application using the following command:
+```bash
+python <script_name>.py --config <config_file_path> --env <environment>
+```
+
+- **Arguments**:
+  - `--config` (`-c`): Path to the configuration file.
+  - `--env` (`-e`): Target environment (`prod` or `dev`).
+
+---
+
+## Project Structure
+
+### Main Components
+
+1. **LogManager**:
+   - Handles log directory creation and log entry writing.
+   - Ensures smooth logging functionality.
+
+2. **Authenticator**:
+   - Handles OAuth 2.0 authentication workflows.
+   - Obtains bearer tokens using client credentials.
+
+3. **CertificateManager**:
+   - Facilitates interactions with a certificate management system.
+   - Performs certificate and role-related operations.
+
+4. **FileProcessor**:
+   - Processes CSV files for certificate updates.
+   - Utilizes multithreading for efficient processing.
+
+5. **MainApplication**:
+   - Integrates all components for end-to-end execution.
+   - Handles file validation, logging, and processing workflows.
+
+### Key Functions
+
+- `dynamic_import`: Dynamically imports and executes functions from other Python modules.
+
+---
+
+## Workflow
+
+1. **Authentication**: Obtain a bearer token from the OAuth 2.0 service.
+2. **Logging**: Create log directories and log application events.
+3. **File Validation**: Validate the structure of the specified CSV file.
+4. **Multithreaded Processing**: Process each CSV line to update certificates in parallel.
+5. **API Integration**: Interact with the certificate management API to:
+   - Retrieve certificate and role details.
+   - Update ownership information.
+
+---
+
+## Example CSV Structure
+
+The input CSV file must contain the following headers:
+- `serial`: Certificate serial number.
+- `role`: Role to assign as the owner.
+
+Example:
+```csv
+serial,role
+12345,Admin
+67890,Operator
+```
 
 ---
 
 ## Error Handling
 
-- If the Keyfactor API is unreachable, a validation error is logged.
-- Errors in API requests (e.g., invalid credentials or IDs) are recorded in the logs.
+- **Logging**: All errors and processing events are logged in the specified log directory.
+- **API Communication**: Handles exceptions related to API requests and logs failures with details.
 
 ---
 
-## Example Run
+## Contributing
 
-1. **Input CSV (`input.csv`)**:
-   ```csv
-   serial,role
-   ABC12345,AdminRole
-   XYZ67890,UserRole
-   ```
-
-2. **Variable Configuration (`variables.py`)**:
-   ```python
-   TOKEN_URL = "https://example.com/api/auth/token"
-   KEYFACTORAPI = "https://example.com/api"
-   client_id = "example_client_id"
-   client_secret = "example_client_secret"
-   ```
-
-3. **Command**:
-   ```bash
-   python owner_update.py input.csv 5 variables.py
-   ```
-
-4. **Output**:
-   ```
-   Elapsed time: 10.50 seconds
-   All tasks completed using multithreading. Logs created in RunspaceLogs.
-   ```
+Contributions are welcome! Please fork the repository and create a pull request for any bug fixes or feature enhancements.
 
 ---
 
-## Notes and Limitations
-
-- Ensure Keyfactor API and credentials are correctly configured.
-- CSV file headers must include `serial` and `role`.
-- Multi-threaded processing is configurable via the `max_threads` parameter.
-- Logs include timestamps, API call details, and error messages.
-
----
-
-## Links
-- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/Owner_Update/Code.md)
-- [Example CSV](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/Owner_Update/Sample.CSV)
-- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/Owner_Update/Variables.ps1)
-- [Keyfactor Command Documentation](https://software.keyfactor.com)
 ## License
-This script is licensed under the MIT License.
 
----
-
-### Author
-© 2025 Keyfactor
+This project is licensed under the MIT License.
