@@ -133,3 +133,12 @@ Example:
 ```bash
 python script.py --config config.py --env dev
 ```
+
+### Author
+© 2025 Keyfactor
+
+## Links
+- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Python/Code.md)
+- [Example CSV](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Python/Sample.CSV)
+- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Python/Variables.ps1)
+- [Keyfactor Command Documentation](https://software.keyfactor.com)

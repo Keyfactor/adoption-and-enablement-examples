@@ -88,3 +88,9 @@ Write-Host "Total execution time: $($stopwatch.Elapsed)"
 ### **Script Output**
 - **Logs**: Created for each certificate in the `RunspaceLogs` directory.
 - **Execution Time**: Displayed when the script completes.
+
+## Links
+- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Powershell/Code.md)
+- [Example CSV](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Powershell/Sample.CSV)
+- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Powershell/Variables.ps1)
+- [Keyfactor Command Documentation](https://software.keyfactor.com)

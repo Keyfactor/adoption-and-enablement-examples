@@ -151,12 +151,16 @@ serial,role
 
 ---
 
-## Contributing
+## Links
+- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Python/Code.md)
+- [Example CSV](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Python/Sample.CSV)
+- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Python/Variables.ps1)
+- [Keyfactor Command Documentation](https://software.keyfactor.com)
 
-Contributions are welcome! Please fork the repository and create a pull request for any bug fixes or feature enhancements.
-
----
 
 ## License
 
 This project is licensed under the MIT License.
+
+### Author
+© 2025 Keyfactor

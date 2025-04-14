@@ -74,9 +74,9 @@ Key Functions in the Script:
 - Logs are created for each certificate, making it easier to debug individual operations.
 
 ## Links
-- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/Owner_Update/Code.md)
-- [Example CSV](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/Owner_Update/Sample.CSV)
-- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/Owner_Update/Variables.ps1)
+- [Explination of Code](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Powershell/Code.md)
+- [Example CSV](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Powershell/Sample.CSV)
+- [Variable File](https://github.com/Keyfactor/adoption-and-enablement-examples/blob/OwnerUpdate/OwnerUpdate/Powershell/Variables.ps1)
 - [Keyfactor Command Documentation](https://software.keyfactor.com)
 ## License
 This script is licensed under the MIT License.
