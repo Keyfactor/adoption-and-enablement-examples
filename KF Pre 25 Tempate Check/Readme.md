@@ -1,4 +1,4 @@
-# Keyfactor Certificate Template Analyzer
+# Keyfactor Certificate Template Analyzer for Pre V25
 
 ## Overview
 
