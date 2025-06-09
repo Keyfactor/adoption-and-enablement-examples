@@ -30,7 +30,7 @@
       "ExtensionName": "Email",
       "Enabled": true,
       "ConfigurationParameters": {
-        "Subject": "A certificate was Renewed",
+        "Subject": "A certificate was Renewed!",
         "Message": "<html>\n<body>\n<h1>A certificate was renewed by Keyfactor Command Demo!</h1>\n<p>Keyfactor command Demo has renewed the below certificate for you and deployed it to your application.  Please a the time to review that your application is running without error.</p>\n<p>the Original certificate has has the matadata \"Retired\" updated to true to stop any furthure actions or notifications.If the certificate is not needed, please update the \"Retired\" metadata of the new certificate at \n<a href=\"https://jhowlanddemo.kfdelivery.com/KeyfactorPortal\">Keyfactor Command Demo</a>\nto stop all future notifications/automations.</p>\n<b>Certificate Details:</b><br>\n<b>Common Name:</b> $(cn)<br>\n<b>Expiration Date:</b> $(expdate)<br>\n<b>Issue Date:</b> $(issuancedate)<br>\n<p>If you have any questions please contact the PKI Management Team.</p>\n</body>\n</html>",
         "Recipients": [
           "$(ownerroleemail)"
