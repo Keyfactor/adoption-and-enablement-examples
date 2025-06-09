@@ -1,0 +1,173 @@
+{
+  "Id": "0a35b06d-e69a-4751-b718-27417fa2e5bb",
+  "DisplayName": "30 Day Expiration",
+  "Description": "30 Day Expiration",
+  "Key": "3",
+  "KeyDisplayName": "30 Day Expiration",
+  "IsPublished": true,
+  "WorkflowType": "Expiration",
+  "Steps": [
+    {
+      "Id": "a4e248e4-11e6-4835-bcff-1c1c2c7a6e3d",
+      "DisplayName": "Entra get User ID",
+      "UniqueName": "EntragetUserID",
+      "ExtensionName": "OAuthRESTRequest",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Headers": {},
+        "DataBucketProperty": "Requester_Entra_ID",
+        "Verb": "GET",
+        "client_id": "016c4917-bdf5-48b7-9573-7bd8ebc905d7",
+        "client_secret": null,
+        "TokenEndpoint": null,
+        "scope": "https://graph.microsoft.com/.default",
+        "audience": "",
+        "URL": "https://graph.microsoft.com/v1.0/users?$filter=othermails/any(p:p eq '$(RequesterName)')&$select=id",
+        "ContentType": "application/json",
+        "RequestContent": "$(RequesterName)"
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EntraUserObjectID"
+      }
+    },
+    {
+      "Id": "8c3f644b-8bb6-46ff-b4a5-82aabb703d37",
+      "DisplayName": "30 Day Expiration Notification",
+      "UniqueName": "30DayExpirationNotification",
+      "ExtensionName": "Email",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Subject": "A certificate is about to expire in 30 days!",
+        "Message": "<html>\n<body>\n<h1>A certificate is about to expire in 30 days!</h1>\n<p>Because of the potential for an application failure and the short time left in the certificate lifecycle, we have added the requesters manager \"$(MgrEmail.mail)\" to this notification.</p>\n<p>If you have replaced or the certificate is not needed, please update the \"Retired\" metadata of the certificate at \n<a href=\"https://jhowlanddemo.kfdelivery.com/KeyfactorPortal\">Keyfactor Command Demo</a>\nto stop all future notifications.</p>\n<b>Certificate Details:</b><br>\n<b>Common Name:</b> $(cn)<br>\n<b>Expiration Date:</b> $(expdate)<br>\n<b>Issue Date:</b> $(issuancedate)<br>\n<p>If you have any questions please contact the PKI Management Team.</p>\n</body>\n</html>",
+        "Recipients": [
+          "$(ownerroleemail)",
+          "$(MgrEmail.mail)"
+        ]
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EndNOOP"
+      }
+    },
+    {
+      "Id": "77ecea74-670b-448c-8535-980dab850c15",
+      "DisplayName": "KF Get Original Certificate Data",
+      "UniqueName": "KFGetOriginalCertificateData",
+      "ExtensionName": "OAuthRESTRequest",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Headers": {
+          "x-keyfactor-requested-with": [
+            "APIClient"
+          ]
+        },
+        "DataBucketProperty": "OriginalCertificate",
+        "Verb": "GET",
+        "client_id": "016c4917-bdf5-48b7-9573-7bd8ebc905d7",
+        "client_secret": null,
+        "TokenEndpoint": null,
+        "scope": null,
+        "audience": null,
+        "URL": "https://jhowlanddemo.kfdelivery.com/KeyfactorAPI/Certificates/$(certid)",
+        "ContentType": "application/json",
+        "RequestContent": ""
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "requester"
+      }
+    },
+    {
+      "Id": "bf615112-19c9-47c0-9d6c-ac7b7205c522",
+      "DisplayName": "Get Manager Email",
+      "UniqueName": "GetManagerEmail",
+      "ExtensionName": "OAuthRESTRequest",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Headers": {},
+        "DataBucketProperty": "MgrEmail",
+        "Verb": "GET",
+        "client_id": "016c4917-bdf5-48b7-9573-7bd8ebc905d7",
+        "client_secret": null,
+        "TokenEndpoint": null,
+        "scope": "https://graph.microsoft.com/.default",
+        "audience": "",
+        "URL": "https://graph.microsoft.com/V1.0/users/$(RequesterAzureObject)/manager?$select=mail",
+        "ContentType": "application/json",
+        "RequestContent": ""
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "30DayExpirationNotification"
+      }
+    },
+    {
+      "Id": "d01958e3-5a95-4964-8f06-ebf3f93c8c0d",
+      "DisplayName": "Entra User Object ID",
+      "UniqueName": "EntraUserObjectID",
+      "ExtensionName": "PowerShell",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "ScriptParameters": {
+          "id": "$(Requester_Entra_ID.value)"
+        },
+        "ScriptContent": "param(\n    $id\n)\n\n$json = $id | ConvertFrom-Json\n\n\n$result = @{\"RequesterAzureObject\" = $json[0].id}\nreturn $result\n\n"
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "GetManagerEmail"
+      }
+    },
+    {
+      "Id": "b656e069-7541-4bce-bf8c-f122f229af7d",
+      "DisplayName": "End-NOOP",
+      "UniqueName": "EndNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {}
+    },
+    {
+      "Id": "15f0c2e8-6cfc-4093-bb0d-fa31d20e7c8c",
+      "DisplayName": "Start-NOOP",
+      "UniqueName": "StartNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "KFGetOriginalCertificateData"
+      }
+    },
+    {
+      "Id": "0f1bc2c6-5635-4092-b576-fe7e78e4af2c",
+      "DisplayName": "requester",
+      "UniqueName": "requester",
+      "ExtensionName": "PowerShell",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "ScriptParameters": {
+          "certificate": "$(OriginalCertificate)"
+        },
+        "ScriptContent": "param(\n    $certificate\n)\n\n$certificate = $certificate | convertfrom-json\n\n$result = @{\"RequesterName\" = $certificate.RequesterName}\nreturn $result\n"
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EntragetUserID"
+      }
+    }
+  ],
+  "DraftVersion": 71,
+  "PublishedVersion": 71,
+  "Enabled": true
+}
