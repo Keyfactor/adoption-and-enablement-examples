@@ -1,0 +1,57 @@
+{
+  "Id": "223a39da-3c21-4bf8-89d8-b0888494949e",
+  "DisplayName": "90 Day Expiration",
+  "Description": "90 Day Expiration",
+  "Key": "1",
+  "KeyDisplayName": "90 Day Expiration",
+  "IsPublished": true,
+  "WorkflowType": "Expiration",
+  "Steps": [
+    {
+      "Id": "f3bc6e58-5e60-447c-a3b1-5e7f5f5a6512",
+      "DisplayName": "Start-NOOP",
+      "UniqueName": "StartNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "90DayExpirationNotification"
+      }
+    },
+    {
+      "Id": "98bfaab8-9326-4a50-8edc-fbc357a49184",
+      "DisplayName": "End-NOOP",
+      "UniqueName": "EndNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {}
+    },
+    {
+      "Id": "3d9698e2-f73a-4c1c-87f0-fe08015edb26",
+      "DisplayName": "90 Day Expiration Notification",
+      "UniqueName": "90DayExpirationNotification",
+      "ExtensionName": "Email",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Subject": "A certificate is about to expire!",
+        "Message": "<html>\n<body>\n<h1>A certificate is about to expire in 90 days!</h1>\n<p>Please take any necessary actions to replace the certificate on your application.</p>\n<p>If you have replaced or the certificate is not needed, please update the \"Retired\" metadata of the certificate at \n<a href=\"https://jhowlanddemo.kfdelivery.com/KeyfactorPortal\">Keyfactor Command Demo</a>\nto stop all future notifications.</p>\n<b>Certificate Details:</b><br>\n<b>Common Name:</b> $(cn)<br>\n<b>Expiration Date:</b> $(expdate)<br>\n<b>Issue Date:</b> $(issuancedate)<br>\n<p>If you have any questions please contact the PKI Management Team.</p>\n</body>\n</html>",
+        "Recipients": [
+          "$(ownerroleemail)"
+        ]
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EndNOOP"
+      }
+    }
+  ],
+  "DraftVersion": 2,
+  "PublishedVersion": 2,
+  "Enabled": true
+}
