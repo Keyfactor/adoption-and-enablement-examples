@@ -1,0 +1,57 @@
+{
+  "Id": "0e03e68c-4ab0-4352-98d0-500e3e223913",
+  "DisplayName": "Auto Renew Failure",
+  "Description": "Auto Renew Failure",
+  "Key": "5",
+  "KeyDisplayName": "Auto Renew Failure",
+  "IsPublished": false,
+  "WorkflowType": "Expiration",
+  "Steps": [
+    {
+      "Id": "790e2742-f93c-4808-8f33-85c0b7492e91",
+      "DisplayName": "Start-NOOP",
+      "UniqueName": "StartNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "AutoRenewFailure"
+      }
+    },
+    {
+      "Id": "e6e46e3e-35a0-4a11-9a1b-96e6a48bb943",
+      "DisplayName": "Auto Renew Failure",
+      "UniqueName": "AutoRenewFailure",
+      "ExtensionName": "Email",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Subject": "A certificate Renewal Failed",
+        "Message": "<html>\n<body>\n<h1>A auto renew certificate has failed!</h1>\n<p>Please take any necessary actions review why the job failed.</p>\n<p>If the certificate has been replaced or the certificate is not needed, please update the \"Retired\" metadata of the certificate at \n<a href=\"https://jhowlanddemo.kfdelivery.com/KeyfactorPortal\">Keyfactor Command Demo</a>\nto stop all future notifications.</p>\n<b>Certificate Details:</b><br>\n<b>Common Name:</b> $(cn)<br>\n<b>Expiration Date:</b> $(expdate)<br>\n<b>Issue Date:</b> $(issuancedate)<br>\n<b>Thumbprint:</b> $(thumbprint)<br>\n<p>If you have any questions please contact the PKI Management Team.</p>\n</body>\n</html>",
+        "Recipients": [
+          "Jeremy.howland@keyfactor.com"
+        ]
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EndNOOP"
+      }
+    },
+    {
+      "Id": "d8d2fcda-24aa-405c-9a00-bd240108478d",
+      "DisplayName": "End-NOOP",
+      "UniqueName": "EndNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {}
+    }
+  ],
+  "DraftVersion": 1,
+  "PublishedVersion": null,
+  "Enabled": true
+}
