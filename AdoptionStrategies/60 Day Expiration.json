@@ -1,0 +1,57 @@
+{
+  "Id": "29840de2-d47e-4a36-a20f-487fc8a6f0b7",
+  "DisplayName": "60 Day Expiration",
+  "Description": "60 Day Expiration",
+  "Key": "2",
+  "KeyDisplayName": "60 Day Expiration",
+  "IsPublished": true,
+  "WorkflowType": "Expiration",
+  "Steps": [
+    {
+      "Id": "b9da48de-c769-4055-99a9-05e4d6703ba7",
+      "DisplayName": "60 Day Expiration Notification",
+      "UniqueName": "60DayExpirationNotification",
+      "ExtensionName": "Email",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Subject": "A certificate is about to expire in 60 days!",
+        "Message": "<html>\n<body>\n<h1>A certificate is about to expire in 60 days!</h1>\n<p>Please take any necessary actions to replace the certificate on your application.</p>\n<p>If you have replaced or the certificate is not needed, please update the \"Retired\" metadata of the certificate at \n<a href=\"https://jhowlanddemo.kfdelivery.com/KeyfactorPortal\">Keyfactor Command Demo</a>\nto stop all future notifications.</p>\n<b>Certificate Details:</b><br>\n<b>Common Name:</b> $(cn)<br>\n<b>Expiration Date:</b> $(expdate)<br>\n<b>Issue Date:</b> $(issuancedate)<br>\n<p>If you have any questions please contact the PKI Management Team.</p>\n</body>\n</html>",
+        "Recipients": [
+          "$(ownerroleemail)"
+        ]
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EndNOOP"
+      }
+    },
+    {
+      "Id": "246fb038-ccf7-4e63-bdc0-2aef4826fbd8",
+      "DisplayName": "Start-NOOP",
+      "UniqueName": "StartNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "60DayExpirationNotification"
+      }
+    },
+    {
+      "Id": "d172aaff-fa20-4e90-a857-7d7802442ff9",
+      "DisplayName": "End-NOOP",
+      "UniqueName": "EndNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {}
+    }
+  ],
+  "DraftVersion": 2,
+  "PublishedVersion": 2,
+  "Enabled": true
+}
