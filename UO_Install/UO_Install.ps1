@@ -14,6 +14,7 @@ try
 
         #if trubleshooting you can run in debug mode bt changing the Debug variable to $true
         Debug               = $false
+
         # Directory where installation scripts are located
         install_directory   = "<installfiles>/InstallationScripts"
 
@@ -22,6 +23,9 @@ try
 
         # Authentication method (Basic or OAuth)
         Auth_Method         = "oauth"
+        
+        # Update Current Orchestrator
+        InPlace             = $true
 
         # Service account credentials if service_account variable is set to $true
         serviceUser         = "username"
@@ -51,22 +55,20 @@ $GlobalHeaders = @{
 }
 
 function Get-HttpHeaders {
-    param ([hashtable]$Config)
-
-    if ($Config.Auth_Method -eq "oauth") {
+    if ($Variables.Auth_Method -eq "oauth") {
         $authHeaders = @{
             'Content-Type' = 'application/x-www-form-urlencoded'
         }
         $authBody = @{
             'grant_type' = 'client_credentials'
-            'client_id'  = $Config.client_id
-            'client_secret' = $Config.client_secret
+            'client_id'  = $Variables.client_id
+            'client_secret' = $Variables.client_secret
         }
-        if ($Config.scope) { $authBody['scope'] = $Config.scope }
-        if ($Config.audience) { $authBody['audience'] = $Config.audience }
+        if ($Variables.scope) { $authBody['scope'] = $Variables.scope }
+        if ($Variables.audience) { $authBody['audience'] = $Variables.audience }
 
         try {
-            $token = (Invoke-RestMethod -Method Post -Uri $Config.token_url -Headers $authHeaders -Body $authBody).access_token
+            $token = (Invoke-RestMethod -Method Post -Uri $Variables.token_url -Headers $authHeaders -Body $authBody).access_token
             Write-Information -MessageData "Access Token received successfully." -InformationAction Continue
             $headers = $GlobalHeaders.Clone()
             $headers["Authorization"] = "Bearer $token"
@@ -76,7 +78,7 @@ function Get-HttpHeaders {
         }
         return $headers
     } else {
-        $authInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($Config.keyfactorUser):$($Config.keyfactorPassword)"))
+        $authInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($Variables.keyfactorUser):$($Variables.keyfactorPassword)"))
         $headers = $GlobalHeaders.Clone()
         $headers["Authorization"] = "Basic $authInfo"
         return $headers
@@ -85,13 +87,9 @@ function Get-HttpHeaders {
 
 
 function get-keyfactor{
-    param (
-        [hashtable]$Variables
-    )
-    $headers = Get-HttpHeaders -Config $Variables
     # Check if the Keyfactor API is reachable
     try {
-        $response = Invoke-WebRequest -Uri "https://$($Variables.KEYFACTOR_DNS)/keyfactorapi/status/endpoints" -UseBasicParsing -Headers $headers -Method Get
+        $response = Invoke-WebRequest -Uri "https://$($Variables.KEYFACTOR_DNS)/keyfactorapi/status/endpoints" -UseBasicParsing -Headers (Get-HttpHeaders) -Method Get
         if ($response.StatusCode -eq 200) {
             return $true
         }
@@ -103,16 +101,12 @@ function get-keyfactor{
 # Retrieve Agent Id
 function Get-AgentId
 {
-    param (
-        [hashtable]$Variables
-    )
-    
     Write-Information -MessageData "Retrieving Orchestrator ID..." -InformationAction Continue
     $queryString = "ClientMachine%20-eq%20%22$($Variables.Orchestratorname)%22%20AND%20Status%20-eq%201"
     $url = "https://$($Variables.KEYFACTOR_DNS)/keyfactorapi/Agents?QueryString=$queryString"
 
     try {
-        $response = Invoke-RestMethod -Method Get -Uri $url -Headers $headers
+        $response = Invoke-RestMethod -Method Get -Uri $url -Headers (Get-HttpHeaders)
         return $response.AgentId
     } catch {
         Write-Error -Message "Error in Get-AgentId: $($_.Exception.Message)"
@@ -124,31 +118,23 @@ function Get-AgentId
 # Function: Approve Agent
 function ApproveAgent 
 {
-    param (
-        [hashtable]$Variables
-    )
-    $headers = Get-HttpHeaders -Config $Variables
-    $AgentId = Get-AgentId -Variables $Variables
-    if ($AgentId)
+    try
     {
-        try
+        Write-Information -MessageData "Approving Orchestrator" -InformationAction Continue
+        $Body = '["' + $(Get-AgentId) + '"]'
+        $FullPostUrl = "https://$($Variables.KEYFACTOR_DNS)/keyfactorapi/agents/approve"
+        $Results = Invoke-WebRequest -Uri $FullPostUrl -Headers (Get-HttpHeaders) -Method Post -Body $Body
+        if ($Results.StatusCode -eq 204)
         {
-            Write-Information -MessageData "Approving Orchestrator" -InformationAction Continue
-            $Body = '["' + $AgentId + '"]'
-            $FullPostUrl = "https://$($Variables.KEYFACTOR_DNS)/keyfactorapi/agents/approve"
-            $Results = Invoke-WebRequest -Uri $FullPostUrl -Headers $headers -Method Post -Body $Body
-            if ($Results.StatusCode -eq 204)
-            {
-                Write-Information -MessageData "Orchestrator approved successfully." -InformationAction Continue
-            }
-            else
-            {
-                Write-Warning -Message "Failed to approve Orchestrator. Status code: $($Results.StatusCode)" -WarningAction Stop
-            }
-        } catch {
-            Write-Error -Message "Error in ApproveAgent: $($_.Exception.Message)"
-            throw
+            Write-Information -MessageData "Orchestrator approved successfully." -InformationAction Continue
         }
+        else
+        {
+            Write-Warning -Message "Failed to approve Orchestrator. Status code: $($Results.StatusCode)" -WarningAction Stop
+        }
+    } catch {
+        Write-Error -Message "Error in ApproveAgent: $($_.Exception.Message)"
+        throw
     }
     return $true
 }
@@ -156,37 +142,21 @@ function ApproveAgent
 # Function to securely generate service credentials
 function Get-ServiceCredential
 {
-    param (
-        # Input username for the credential
-        [string]$Username,
-        # Input password for the credential
-        [PSCredential]$Password
-    )
-
     # Convert the plain text password into a SecureString for security
-    $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+    $SecurePassword = ConvertTo-SecureString $Variables.servicePassword -AsPlainText -Force
 
     # Return a PSCredential object using the username and secure password
-    return New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+    return New-Object System.Management.Automation.PSCredential ($Variables.serviceUser, $SecurePassword)
 }
 
 # Function to streamline and execute the install process
 function Run_InstallScript
 {
-    param (
-        # Hashtable containing necessary script variables
-        [hashtable]$Variables = $Variables,
-        # Authentication method (e.g., basic or OAuth)
-        [string]$AuthMethod = $Variables.Auth_Method,
-        # Boolean to determine if a service account will be used
-        [bool]$UseServiceAccount = $Variables.use_service_account
-    )
-
     # Construct the base URL for the Keyfactor API
     $BaseUrl = "https://$($Variables.KEYFACTOR_DNS)/KeyfactorAgents"
 
     # Branch logic based on the authentication method
-    if ($AuthMethod -eq "oauth")
+    if ($Variables.Auth_Method -eq "oauth")
     {
         # Define parameters for OAuth authentication
         $TokenParams = @{
@@ -208,11 +178,14 @@ function Run_InstallScript
         {
             $TokenParams.Scope = $Variables.scope        # Add scope if specified
         }
-
-        # Add service account credentials if they are used
-        if ($UseServiceAccount)
+        if ($Variables.inplace)
         {
-            $TokenParams.ServiceCredential = Get-ServiceCredential -Username $Variables.serviceUser -Password $Variables.servicePassword
+            $TokenParams.InPlace = $Variables.InPlace
+        }
+        # Add service account credentials if they are used
+        if ($Variables.use_service_account)
+        {
+            $TokenParams.ServiceCredential = Get-ServiceCredential
         }
 
         # Execute the installation script with OAuth parameters
@@ -244,7 +217,11 @@ function Run_InstallScript
         # Add service account credentials if they are used
         if ($UseServiceAccount)
         {
-            $BasicParams.ServiceCredential = Get-ServiceCredential -Username $Variables.serviceUser -Password $Variables.servicePassword
+            $BasicParams.ServiceCredential = Get-ServiceCredential
+        }
+        if ($Variables.inplace)
+        {
+            $TokenParams.InPlace = $Variables.InPlace
         }
 
         # Execute the installation script with basic authentication parameters
@@ -255,7 +232,7 @@ function Run_InstallScript
 Write-Information -MessageData "Starting Orchestrator Installation" -InformationAction Continue
 write-Information -MessageData "Checking Connection to Keyfactor" -InformationAction Continue
 #test connection to keyfactor
-if (get-keyfactor -Variables $Variables)
+if (get-keyfactor)
 {
     Write-Information -MessageData "Connection to Keyfactor API successful." -InformationAction Continue
 }
@@ -282,17 +259,8 @@ if ($Variables.AutoApprove -eq $true)
 {
     # If AutoApprove is true, approve the agent in Keyfactor Command
     Write-Information -MessageData "Auto Approving Orchestrator" -InformationAction Continue
-    $Headers = @{}
-    if ($Variables.Auth_Method -eq "oauth")
-    {
-        $Headers.Add("Authorization", "Bearer $($Variables.token)")
-    }
-    else
-    {
-        $Headers.Add("Authorization", "Basic $(ConvertTo-Base64String -InputObject "$($Variables.keyfactorUser):$($Variables.keyfactorPassword)")")
-    }
 
-    if (ApproveAgent -Variables $Variables)
+    if (ApproveAgent)
     {
         Write-Information -MessageData "Agent approved successfully." -InformationAction Continue
     }
