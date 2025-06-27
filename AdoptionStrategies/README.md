@@ -9,7 +9,7 @@ A basic Notification typically consists of a simple email sent to an individual 
 
 Regardless of the chosen delivery method, it's considered best practice to notify a group rather than a single user—particularly when addressing issues or pending problems—to ensure visibility and accountability. An effective notification strategy should also incorporate an escalation methodology to ensure timely resolution when initial alerts go unacknowledged.
 #### Escalating Alerts Methodology
-An escalated alert methodology incorperates a stratagy to send out a notification alert at specific intervals to a group.  this requires multible alerts to be create. (Workflow Examples)
+An escalated alert methodology incorperates a stratagy to send out a notification alert at specific intervals to a group.  this requires multible alerts to be create. ([Workflow Examples](/AdoptionStrategies/Workflows/))
 ##### Certificate Expiration Alerting and Escalation Strategy
 When a certificate is set to expire within 90 days, it is critical to initiate timely communication with the responsible application team to prevent service interruptions or potential outages.
 1. Initial Notification (90 Days Prior to Expiry):
