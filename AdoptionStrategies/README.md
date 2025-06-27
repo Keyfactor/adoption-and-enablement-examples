@@ -1,42 +1,97 @@
-# Adoption Stratagies
+# Adoption Strategies
+
 ## Summary
-There are two primary alerting methodologies: Notification and Automation. The Notification method utilizes a communication channel to inform a user or group of users about an event or a potential issue. In contrast, an Automation alert indicates that the system has completed a specific task on behalf of the user or user group. This document outlines both methodologies and provides practical examples of how they can be implemented across any enterprise environment.
+
+There are two primary alerting methodologies: Notification and Automation. Notification leverages communication channels to inform users or groups about events or potential issues. In contrast, Automation alerts indicate that the system has completed a specific task on behalf of the user or group. This document outlines both methodologies and provides practical examples for implementation across enterprise environments.
 
 ## Notification
-Notification can be pretty basic, but can include some automation that can make them more complex.
+
+Notifications can range from basic to advanced, often incorporating automation for greater complexity.
+
 ### Basic Notification
-A basic Notification typically consists of a simple email sent to an individual user or a group. In Keyfactor Command, this can be achieved through a standard alert configuration. Alternatively, a more advanced workflow can be implemented to deliver notifications to users via third-party applications, such as an IT Service Management (ITSM) platform or collaboration tools like Microsoft Teams.
 
-Regardless of the chosen delivery method, it's considered best practice to notify a group rather than a single user—particularly when addressing issues or pending problems—to ensure visibility and accountability. An effective notification strategy should also incorporate an escalation methodology to ensure timely resolution when initial alerts go unacknowledged.
+A basic notification typically involves sending an email to an individual or group. In Keyfactor Command, this can be achieved through standard alert configurations. Alternatively, advanced workflows can deliver notifications via third-party applications, such as IT Service Management (ITSM) platforms or collaboration tools like Microsoft Teams.
+
+Best practice recommends notifying groups rather than individuals—especially for issues or pending problems—to ensure visibility and accountability. An effective notification strategy should also include an escalation process to guarantee timely resolution if initial alerts go unacknowledged.
+
 #### Escalating Alerts Methodology
-An escalated alert methodology incorperates a stratagy to send out a notification alert at specific intervals to a group.  this requires multible alerts to be create. ([Workflow Examples](/AdoptionStrategies/Workflows/))
+
+An escalation methodology sends notifications at defined intervals to a group, requiring multiple alerts to be configured. ([Workflow Examples](/AdoptionStrategies/Workflows/))
+
 ##### Certificate Expiration Alerting and Escalation Strategy
-When a certificate is set to expire within 90 days, it is critical to initiate timely communication with the responsible application team to prevent service interruptions or potential outages.
-1. Initial Notification (90 Days Prior to Expiry):
-An automated email alert is sent to the application team, notifying them of the upcoming certificate expiration and providing instructions for renewal.
-2. Follow-Up Notification (60 Days Prior):
-If the renewal action is not completed within 30 days, a secondary alert is triggered. This message reiterates the urgency of the task and includes the same instructions to ensure visibility and continuity.
-3.  Escalated Notification (30 Days Prior):
-Should the certificate remain unrenewed, a final alert is sent. This communication is escalated to include not only the application team but also their management, emphasizing the criticality of the issue and potential business impact.
 
-This progressive alerting model ensures accountability and visibility at appropriate organizational levels. To support this approach, an automated retirement mechanism should be implemented—allowing the application team to acknowledge task completion and suppress future alerts once the certificate has been successfully renewed. (See [Retirement Methodology](#retirement-methodology) for details.)
+When a certificate is set to expire within 90 days, it is critical to initiate timely communication with the responsible application team to prevent service interruptions.
+
+1. **Initial Notification (90 Days Prior):**  
+   An automated email is sent to the application team, notifying them of the upcoming certificate expiration and providing renewal instructions.
+
+2. **Follow-Up Notification (60 Days Prior):**  
+   If renewal is not completed within 30 days, a secondary alert reiterates the urgency and provides the same instructions.
+
+3. **Escalated Notification (30 Days Prior):**  
+   If the certificate remains unrenewed, a final alert is sent to both the application team and their management, emphasizing the criticality and potential business impact.
+
+This progressive alerting model ensures accountability and visibility at appropriate organizational levels. To support this approach, an automated retirement mechanism should be implemented, allowing the application team to acknowledge task completion and suppress future alerts once the certificate has been renewed. (See [Retirement Methodology](#retirement-methodology) for details.)
+
 #### Retirement Methodology
-A Retirement Methodology defines the process for ceasing all notifications and automated actions related to a certificate once it has been renewed or decommissioned. In Keyfactor Command, this can be implemented by leveraging metadata—allowing for intelligent recognition that the certificate no longer requires monitoring. By tagging or flagging certificates as retired through metadata, the system can suppress further alerts and automate the closure of related tasks, ensuring operational efficiency and preventing unnecessary communications.
 
-Once the retirement methodology is implemented, metadata can be used to dynamically filter out retired certificates from ongoing alerts. In practice, this can be achieved by applying a condition such as "Retired -ne True" within the alert collection query. This ensures that certificates marked as retired are excluded from the alert collection, streamlining notification workflows and reducing unnecessary communications
+A Retirement Methodology defines the process for ceasing all notifications and automated actions related to a certificate once it has been renewed or decommissioned. In Keyfactor Command, this can be implemented by leveraging metadata to intelligently recognize certificates that no longer require monitoring. By tagging certificates as retired, the system can suppress further alerts and automate task closure, ensuring operational efficiency and preventing unnecessary communications.
 
-##### How to Impliment
-1. From the Keyfactor Command Platform go to the Settings gear and select "Certificate Metadata."
-2. Select the "ADD" button to add a new Metadata to certificates.
-3. Give the Metadata a meaningful name such as (Retired, Retired Certificate, Unmonitored, Unmoritored Certificate)
-4. give a brief description of the field in the "Description" field.
-5. under "Enrollment Options" choose the radio button "Hidden" which will remove it from the enrollment pages.
-6. under "Hint" it is recomened to put a warning such as "Stop all Automation and Notifications."
-7. Selet Boolean in the "Data Type" dropdown.
-8. Set the "Default Value" to "False" to ensure that all new certificates have a not retired status. 
-9. Select Save.
-10. Update all current certificates with True or False based on if you want automation and\or Notifications to be processed.
+Once implemented, metadata can be used to dynamically filter out retired certificates from ongoing alerts. For example, applying a condition such as `Retired -ne True` within the alert collection query ensures that retired certificates are excluded, streamlining workflows and reducing unnecessary notifications.
+
+##### Implementation Steps
+
+1. In Keyfactor Command, navigate to **Settings** and select **Certificate Metadata**.
+2. Click **Add** to create new metadata for certificates.
+3. Assign a meaningful name (e.g., Retired, Retired Certificate, Unmonitored).
+4. Provide a brief description.
+5. Under **Enrollment Options**, select **Hidden** to remove it from enrollment pages.
+6. In **Hint**, add a warning such as "Stop all Automation and Notifications."
+7. Choose **Boolean** as the data type.
+8. Set the default value to **False** to ensure new certificates are not retired by default.
+9. Save the metadata.
+10. Update existing certificates with the appropriate value based on whether automation and notifications should be processed.
+
 ## Automating Alerts and Renewals
+
+Automating alerts and certificate renewals can be accomplished using Keyfactor Command Alerts and Workflows. The following prerequisites must be met:
+
+- **Universal Orchestrator Deployment:**  
+  Deploy a Universal Orchestrator with a Certificate Store Type capability matching the certificate store environment (e.g., IISU for IIS websites).
+
+- **Certificate Store Registration:**  
+  Add the relevant certificate store to Certificate Store Locations in Keyfactor Command and perform a full inventory scan.
+
+- **Collection for Expiration Evaluation:**  
+  Create a collection specifically for evaluating certificates nearing expiration. This collection should include only certificates with inventoried locations.
+
+- **Alert Configuration with Workflow Integration:**  
+  Define an alert that utilizes workflows based on a predefined threshold (e.g., days until expiration) to trigger automated actions.
+
+- **Expiration Workflow:**  
+  - Include a "Renew Expired Certificates" step to renew the certificate and schedule the Certificate Management job.
+  - Add a "Send Email" step to notify the application team of the action.
+  - Update metadata (if using the [Retirement Methodology](#retirement-methodology)) to stop further automation and notifications for the old certificate.
+
+### Implementation Steps
+
+Assuming the Orchestrator and certificate store inventory are complete:
+
+#### Create the Collection
+
+1. In Keyfactor Command, select the **Certificate Collections** tab.
+2. Click **Advanced** to build your collection query.
+3. From the **Field** dropdown, select `CertStoreFQDN`, choose **Is not null** from the comparison dropdown, and insert.
+4. If using the [Retirement Methodology](#retirement-methodology), select `Retired` under Metadata, choose **Is not equal to**, select **True**, and insert.
+5. Save the collection with a meaningful name.
+
+#### Create the Alert
+
+(Instructions to be added.)
+
+#### Create the Workflow
+
+(Instructions to be added.)
 
 # Importing Keyfactor Workflows
 
@@ -48,7 +103,7 @@ This guide explains how to import Keyfactor Workflows into your Keyfactor Comman
 
 - Access to the Keyfactor Command Web UI with administrative privileges.
 - Workflow definition files (typically in JSON format) exported from another environment or provided by Keyfactor.
-- The appropriate permissions to manage workflows.
+- Appropriate permissions to manage workflows.
 
 ---
 
@@ -68,7 +123,7 @@ This guide explains how to import Keyfactor Workflows into your Keyfactor Comman
 
 1. Click the **Import** button (usually at the top right of the Workflows page).
 2. In the dialog, click **Browse** and select your workflow JSON file.
-3. Review the workflow details shown in the preview.
+3. Review the workflow details in the preview.
 4. Click **Import** to add the workflow to your environment.
 
 ### 4. Configure and Enable the Workflow
@@ -82,9 +137,9 @@ This guide explains how to import Keyfactor Workflows into your Keyfactor Comman
 
 ## Troubleshooting
 
-- **Import Errors**: Ensure the workflow file is valid JSON and matches the schema expected by your Keyfactor version.
-- **Permission Issues**: Verify your account has the required permissions to import and manage workflows.
-- **Workflow Not Visible**: Refresh the page or check your filters.
+- **Import Errors:** Ensure the workflow file is valid JSON and matches the schema expected by your Keyfactor version.
+- **Permission Issues:** Verify your account has the required permissions to import and manage workflows.
+- **Workflow Not Visible:** Refresh the page or check your filters.
 
 ---
 
@@ -95,4 +150,4 @@ This guide explains how to import Keyfactor Workflows into your Keyfactor Comman
 
 ---
 
-© Keyfactor. This document is provided as an example and
+© Keyfactor. This document is provided as an example
