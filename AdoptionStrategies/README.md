@@ -19,7 +19,7 @@ If the renewal action is not completed within 30 days, a secondary alert is trig
 3.  Escalated Notification (30 Days Prior):
 Should the certificate remain unrenewed, a final alert is sent. This communication is escalated to include not only the application team but also their management, emphasizing the criticality of the issue and potential business impact.
 
-This progressive alerting model ensures accountability and visibility at appropriate organizational levels. To support this approach, an automated retirement mechanism should be implemented—allowing the application team to acknowledge task completion and suppress future alerts once the certificate has been successfully renewed. (See Retirement Methodology for details.)
+This progressive alerting model ensures accountability and visibility at appropriate organizational levels. To support this approach, an automated retirement mechanism should be implemented—allowing the application team to acknowledge task completion and suppress future alerts once the certificate has been successfully renewed. (See [Retirement Methodology](/AdoptionStrategies/README#retirement-methodology) for details.)
 #### Retirement Methodology
 A Retirement Methodology defines the process for ceasing all notifications and automated actions related to a certificate once it has been renewed or decommissioned. In Keyfactor Command, this can be implemented by leveraging metadata—allowing for intelligent recognition that the certificate no longer requires monitoring. By tagging or flagging certificates as retired through metadata, the system can suppress further alerts and automate the closure of related tasks, ensuring operational efficiency and preventing unnecessary communications.
 
