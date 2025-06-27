@@ -39,7 +39,7 @@ A Retirement Methodology defines the process for ceasing all notifications and a
 
 Once implemented, metadata can be used to dynamically filter out retired certificates from ongoing alerts. For example, applying a condition such as `Retired -ne True` within the alert collection query ensures that retired certificates are excluded, streamlining workflows and reducing unnecessary notifications.
 
-##### Implementation Steps
+##### Retirement Methodology Implementation Steps
 
 1. In Keyfactor Command, navigate to **Settings** and select **Certificate Metadata**.
 2. Click **Add** to create new metadata for certificates.
@@ -54,7 +54,7 @@ Once implemented, metadata can be used to dynamically filter out retired certifi
 
 ## Automating Alerts and Renewals
 
-Automating alerts and certificate renewals can be accomplished using Keyfactor Command Alerts and Workflows. The following prerequisites must be met:
+Automating alerts and certificate renewals can be accomplished using Keyfactor Command Alerts and Workflows. The following prerequisites must be met.  ([Workflow Examples](/AdoptionStrategies/Workflows/)).
 
 - **Universal Orchestrator Deployment:**  
   Deploy a Universal Orchestrator with a Certificate Store Type capability matching the certificate store environment (e.g., IISU for IIS websites).
@@ -73,7 +73,7 @@ Automating alerts and certificate renewals can be accomplished using Keyfactor C
   - Add a "Send Email" step to notify the application team of the action.
   - Update metadata (if using the [Retirement Methodology](#retirement-methodology)) to stop further automation and notifications for the old certificate.
 
-### Implementation Steps
+### Automating Alerts and Renewals Implementation Steps
 
 Assuming the Orchestrator and certificate store inventory are complete:
 
@@ -87,61 +87,24 @@ Assuming the Orchestrator and certificate store inventory are complete:
 
 #### Create the Alert
 
-(Instructions to be added.)
+1. In Keyfactor Command, select the **Alerts** tab and choose **Expiration** from the dropdown list.
+2. Select the "ADD" button to add a new alert.
+3. Choose the collection the alert should evaluate for expiring certificates in the **Certificate Collection** field.
+4. In the **Timeframe** field select the timeframe to evaluate the certificates in the collection.
+5. In **Display Name**, give the Alert a meaningful name.
+6. Make sure use workflows is selected.
+7. Select Save. (this will take you into the workflow with the Alert display name as the name of the Workflow)
 
 #### Create the Workflow
 
-(Instructions to be added.)
-
-# Importing Keyfactor Workflows
-
-This guide explains how to import Keyfactor Workflows into your Keyfactor Command environment. Workflows automate certificate lifecycle processes such as enrollment, renewal, and revocation.
-
----
-
-## Prerequisites
-
-- Access to the Keyfactor Command Web UI with administrative privileges.
-- Workflow definition files (typically in JSON format) exported from another environment or provided by Keyfactor.
-- Appropriate permissions to manage workflows.
-
----
-
-## Steps to Import a Workflow
-
-### 1. Log in to Keyfactor Command
-
-1. Open your browser and navigate to your Keyfactor Command instance.
-2. Log in with an account that has administrative rights.
-
-### 2. Navigate to Workflow Management
-
-1. In the left navigation pane, go to **Platform Administration**.
-2. Click on **Workflows**.
-
-### 3. Import the Workflow
-
-1. Click the **Import** button (usually at the top right of the Workflows page).
-2. In the dialog, click **Browse** and select your workflow JSON file.
-3. Review the workflow details in the preview.
-4. Click **Import** to add the workflow to your environment.
-
-### 4. Configure and Enable the Workflow
-
-1. After import, locate your workflow in the list.
-2. Click on the workflow name to review its configuration.
-3. Make any necessary adjustments (e.g., assign collections, update notification settings).
-4. Set the workflow status to **Enabled** if you want it to be active.
-
----
-
-## Troubleshooting
-
-- **Import Errors:** Ensure the workflow file is valid JSON and matches the schema expected by your Keyfactor version.
-- **Permission Issues:** Verify your account has the required permissions to import and manage workflows.
-- **Workflow Not Visible:** Refresh the page or check your filters.
-
----
+1. In the **Add Workflow Definition** give the workflow a meaningful description.
+2. Select the "Plus" sign to add a workflow step.
+3. Under "General" select the **Step Type** as **Renew Expired Certificate**
+4. Give the step a **Display Name** ("Certificate Renewal")
+5. Under the **Configuration Parameters** section, choose the template and Certificate Authority that you want to renew the certificate from. (if you want to use the existing CA you can use the expiring certificates information).
+6. (Optional)  Next you can include other steps such as sending an email to a group and/or updating metadata such as "Retired".
+7. Select SAVE WORKFLOW
+8. Select Publish Workflow to have it active.
 
 ## References
 
