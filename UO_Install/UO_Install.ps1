@@ -165,7 +165,6 @@ function Run_InstallScript
             ClientId         = $Variables.client_id      # OAuth client ID
             OrchestratorName = $Variables.Orchestratorname # Keyfactor orchestrator name
             Capabilities     = "all"                     # Grant all capabilities
-            ClientSecret     = $Variables.client_secret  # OAuth client secret
             Force            = $true                     # Force the installation process
             Verbose          = $Variables.Debug          # pring Verbose statements for troubleshooting
             NoRevocationCheck= $true                     # remove revocation check of Keyfactor certificate
@@ -181,6 +180,10 @@ function Run_InstallScript
         if ($Variables.inplace)
         {
             $TokenParams.InPlace = $Variables.InPlace
+        }
+        if ($Variables.client_secret)
+        {
+            $TokenParams.ClientSecret = ConvertTo-SecureString $Variables.client_secret -AsPlainText -Force
         }
         # Add service account credentials if they are used
         if ($Variables.use_service_account)
