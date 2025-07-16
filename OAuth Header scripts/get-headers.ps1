@@ -1,39 +1,30 @@
-try
-{
-    # Define script level variables for the script using a hashtable
-    $script:Variables = @{
-        # Authentication method (Basic or OAuth)
-        Auth_Method         = "basic"
-        # Keyfactor's user credentials if Auth varable is set to Basic
-        keyfactorUser       = "username"
-        keyfactorPassword   = "password"
+# Define script-level variables for the script
+$Script:Variables = @{
+    # Authentication method (basic or oauth)
+    Auth_Method           = "basic"
 
-        # OAuth-specific parameters if Auth variable is set to oauth
-        client_id           = ''
-        client_secret       = ''
-        token_url           = ""
-        scope               = ''
-        audience            = ""
-        GlobalHeaders = @{
-            "Content-Type" = "application/json"
-            "x-keyfactor-requested-with" = "APIClient"
-        }
+    # Keyfactor's user credentials if Auth_Method is set to Basic
+    keyfactorUser         = "username"
+    keyfactorPassword     = "password"
+    
+    # OAuth-specific parameters if Auth_Method is set to oauth
+    client_id             = "<Clientid>"
+    client_secret         = "Z<Secret>"
+    token_url             = "<TokenURL>"
+    scope                 = "<Scope>"
+    audience              = "<Audience>"
+    GlobalHeaders         = @{
+        "Content-Type"              = "application/json"
+        "x-keyfactor-requested-with" = "APIClient"
     }
 }
-catch
-{
-    # If the variables could not be loaded, display a warning and stop the script
-    Write-Warning -Message "Could not load variables" -WarningAction Stop
-}
 
-function Get-Headers 
-{
-    [CmdletBinding()]
+function Get-Headers {
     param (
-        [ValidateSet('1', '2')]
-        [Parameter(Mandatory = $false)]
-        [string]$APIVersion = '1'
+        [string]$APIVersion = "1" # Defaults to "1"
     )
+
+    # Check if Authentication Method is OAuth
     if ($Variables.Auth_Method -eq "oauth") 
     {
         $authHeaders = @{
@@ -47,9 +38,12 @@ function Get-Headers
         if ($Variables.scope) { $authBody['scope'] = $Variables.scope }
         if ($Variables.audience) { $authBody['audience'] = $Variables.audience }
 
-        try {
+        try 
+        {
             $token = (Invoke-RestMethod -Method Post -Uri $Variables.token_url -Headers $authHeaders -Body $authBody).access_token
-            Write-Information -MessageData "Access Token received successfully." -InformationAction Continue
+            Write-Information "Access Token received successfully."
+            
+            # Add token to headers
             $headers = $Variables.GlobalHeaders.Clone()
             $headers["Authorization"] = "Bearer $token"
             $headers["x-keyfactor-api-version"] = $APIVersion
@@ -60,15 +54,46 @@ function Get-Headers
             throw
         }
         return $headers
-    } 
+    }
+    # Check if Authentication Method is Basic
     elseif ($Variables.Auth_Method -eq "basic") 
     {
-        $authInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($Variables.keyfactorUser):$($Variables.keyfactorPassword)"))
-        $headers = $Variables.GlobalHeaders.Clone()
-        $headers["Authorization"] = "Basic $authInfo"
-        $headers["x-keyfactor-api-version"] = $APIVersion
+        Write-Information "Using Basic authentication..."
+
+        try 
+        {
+            # Create base64 encoded credentials
+            $user_pass = "$($Variables.keyfactorUser):$($Variables.keyfactorPassword)"
+            $authInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($user_pass))
+
+            # Add the authorization information to headers
+            $headers = $Variables.GlobalHeaders.Clone()
+            $headers["Authorization"] = "Basic $authInfo"
+            $headers["x-keyfactor-api-version"] = $APIVersion
+        } 
+        catch 
+        {
+            Write-Error "Failed to create Basic auth headers: $_"
+            throw $_
+        }
         return $headers
     }
+    else 
+    {
+        throw "Unsupported Auth_Method: $($Variables.Auth_Method)"
+    }
 }
+$InformationPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
-Get-Headers -APIVersion 2
+# Test the Get-Headers function by calling it
+try 
+{
+    $result = Get-Headers -APIVersion "2"
+    Write-Information "Headers:"
+    $result
+} 
+catch 
+{
+    Write-Error "An error occurred: $_"
+}
