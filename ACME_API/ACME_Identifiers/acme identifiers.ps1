@@ -66,12 +66,16 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("add", "remove", "show")]
     [ValidateNotNullOrEmpty()]
-    [string]$action
+    [string]$action,
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Secret
 )
 function load_variables
 {
     param(
-        $environment = $environment
+        $environment = $environment,
+        $Secret = $Secret
     )
     Write-Information "Entering function load_variables for $environment environment"
     switch($environment)
@@ -80,7 +84,7 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = '<YOUR_CLIENT_SECRET>'
+                CLIENT_SECRET   = $Secret
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
@@ -91,7 +95,7 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = '<YOUR_CLIENT_SECRET>'
+                CLIENT_SECRET   = $Secret
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
@@ -102,7 +106,7 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = '<YOUR_CLIENT_SECRET>'
+                CLIENT_SECRET   = $Secret
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
