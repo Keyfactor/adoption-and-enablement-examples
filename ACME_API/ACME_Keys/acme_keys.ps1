@@ -1,3 +1,49 @@
+<#
+.SYNOPSIS
+    Retrieves ACME keys from a Keyfactor ACME API endpoint using OAuth authentication.
+
+.DESCRIPTION
+    This script authenticates to a Keyfactor ACME API endpoint using OAuth 2.0 client credentials flow.
+    It fetches keys based on a specified template and displays them in a formatted table.
+    The script requires several mandatory parameters for OAuth and API access.
+
+.PARAMETER client_id
+    The OAuth client ID used for authentication.
+
+.PARAMETER client_secret
+    The OAuth client secret used for authentication.
+
+.PARAMETER Template
+    The name of the template for the keys to be fetched.
+
+.PARAMETER token_url
+    The OAuth token endpoint URL.
+
+.PARAMETER scope
+    The OAuth scope to request (optional).
+
+.PARAMETER audience
+    The OAuth audience to request (optional).
+
+.PARAMETER keyfactorDnsName
+    The DNS name of the Keyfactor ACME API endpoint.
+
+.FUNCTION Get-ACMEHeaders
+    Authenticates with the OAuth token endpoint and returns the required authorization headers.
+
+.FUNCTION get-keys
+    Fetches keys from the Keyfactor ACME API endpoint using the provided template and authentication headers.
+
+.EXAMPLE
+    .\acme_keys.ps1 -client_id "my-client-id" -client_secret "my-secret" -Template "MyTemplate" `
+        -token_url "https://auth.example.com/oauth/token" -scope "api.read" -audience "https://api.example.com" `
+        -keyfactorDnsName "keyfactor.example.com"
+
+.NOTES
+    - Requires PowerShell 5.1 or later.
+    - Ensure network connectivity to the Keyfactor ACME API endpoint and OAuth token URL.
+    - Errors during authentication or API calls are reported and will stop execution.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$client_id,
@@ -53,7 +99,7 @@ function Get-ACMEHeaders
     }
     return $headers
 }
-Function get-keys
+Function Get-keys
 {
     try 
     {

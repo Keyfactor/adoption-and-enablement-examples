@@ -1,3 +1,56 @@
+<#
+.SYNOPSIS
+    Manages ACME Identifiers via REST API for different environments.
+
+.DESCRIPTION
+    This script provides functions to add, remove, and show ACME Identifiers using a REST API.
+    It supports multiple environments (Production, Non-Production, Lab) and uses OAuth client credentials for authentication.
+    The script allows users to specify the identifier, type, and action to perform.
+
+.PARAMETER environment
+    Specifies the target environment. Valid values are "Production", "Non-Production", or "Lab".
+
+.PARAMETER Identifier
+    The identifier to add or remove. Optional for 'show' action.
+
+.PARAMETER Type
+    The type of identifier. Valid values are "Regex", "Fqdn", "Subnet", or "Wildcard". Optional for 'show' and 'remove' actions.
+
+.PARAMETER action
+    The action to perform. Valid values are "add", "remove", or "show".
+
+.FUNCTIONS
+    load_variables
+        Loads environment-specific variables required for API authentication and requests.
+
+    Get-ACMEHeaders
+        Retrieves OAuth token and constructs authorization headers for API requests.
+
+    Add-Identifier
+        Adds a new identifier to the ACME system.
+
+    Show-Identifiers
+        Retrieves and displays all identifiers from the ACME system.
+
+    Remove-Identifier
+        Removes an identifier from the ACME system by its ID.
+
+.EXAMPLE
+    .\acme identifiers.ps1 -environment "Production" -Identifier "example.com" -Type "Fqdn" -action "add"
+    Adds a new FQDN identifier to the Production environment.
+
+    .\acme identifiers.ps1 -environment "Lab" -action "show"
+    Shows all identifiers in the Lab environment.
+
+    .\acme identifiers.ps1 -environment "Non-Production" -action "remove"
+    Shows all identifiers and prompts for an ID to remove in the Non-Production environment.
+
+.NOTES
+    - Requires valid OAuth credentials and API endpoint configuration.
+    - Ensure the CLIENT_ID, CLIENT_SECRET, TOKEN_URL, SCOPE, AUDIENCE, and ACMEDNS variables are set appropriately for each environment.
+    - Error handling is implemented for API calls and authentication.
+
+#>
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("Production", "Non-Production", "Lab")]
