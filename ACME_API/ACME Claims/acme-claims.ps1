@@ -86,7 +86,7 @@ function load_variables
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<CUSTOMER.KEYFACTORPKI.COM>'
+                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
             }
         }
         'Non-Production'
@@ -97,7 +97,7 @@ function load_variables
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<CUSTOMER.KEYFACTORPKI.COM>'
+                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
             }
         }
         'Lab'
@@ -108,7 +108,7 @@ function load_variables
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<CUSTOMER.KEYFACTORPKI.COM>'
+                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
             }
         }
     }
@@ -159,7 +159,7 @@ Function update-claim
             $body['Template'] = $Template
         }
         $jsonbody = $body | ConvertTo-Json
-        $postcall = Invoke-RestMethod -Uri "https://$($Variables.hostname)/ACME/Claims/$Id" -Method Put -Headers (Get-ACMEHeaders) -ContentType "application/json" -body $jsonbody
+        $postcall = Invoke-RestMethod -Uri "$($Variables.hostname)/Claims/$Id" -Method Put -Headers (Get-ACMEHeaders) -ContentType "application/json" -body $jsonbody
         if ($postcall.StatusCode -eq 200)
         {
             Write-Information -MessageData "Claim: $($ClaimValue) was updated sucessfully"
@@ -184,7 +184,7 @@ Function add-claim
             $body['Template'] = $Template
         }
         $jsonbody = $body | ConvertTo-Json
-        $postcall = Invoke-RestMethod -Uri "https://$($Variables.hostname)/ACME/Claims" -Method Post -Headers (Get-ACMEHeaders) -ContentType "application/json" -body $jsonbody
+        $postcall = Invoke-RestMethod -Uri "$($Variables.hostname)/Claims" -Method Post -Headers (Get-ACMEHeaders) -ContentType "application/json" -body $jsonbody
         if ($postcall.StatusCode -eq 200)
         {
             Write-Information -MessageData "Claim: $($ClaimValue) was added sucessfully"
@@ -199,7 +199,7 @@ Function get-claims
 {
     try 
     {
-        $getcall = Invoke-webrequest -Uri "https://$($Variables.hostname)/ACME/Claims" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
+        $getcall = Invoke-webrequest -Uri "h$($Variables.hostname)/Claims" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
         if ($getcall.StatusCode -eq 200)
         {
             return $getcall.Content | ConvertFrom-Json
@@ -222,7 +222,7 @@ Function remove-claim
     )
     try 
     {
-        $deletecall = Invoke-webrequest -Uri "https://$($Variables.hostname)/ACME/Claims/$id" -Method Delete -Headers (Get-ACMEHeaders) -ContentType "application/json"
+        $deletecall = Invoke-webrequest -Uri "$($Variables.hostname)/Claims/$id" -Method Delete -Headers (Get-ACMEHeaders) -ContentType "application/json"
         if ($deletecall.StatusCode -eq 200)
         {
             return $deletecall.Content | ConvertFrom-Json

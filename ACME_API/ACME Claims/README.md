@@ -33,7 +33,7 @@ A PowerShell script for managing ACME claims through a REST API interface. This 
 
 Before using the script, configure the following variables in the appropriate environment section:
 ```powershell
-CLIENT_ID = '<YOUR_CLIENT_ID>' CLIENT_SECRET = '<YOUR_CLIENT_SECRET>' TOKEN_URL = '<TOKEN_URL>' SCOPE = '<YOUR_SCOPE>' AUDIENCE = '<YOUR_AUDIENCE>' ACMEDNS = '<CUSTOMER.KEYFACTORPKI.COM>'
+CLIENT_ID = '<YOUR_CLIENT_ID>' CLIENT_SECRET = '<YOUR_CLIENT_SECRET>' TOKEN_URL = '<TOKEN_URL>' SCOPE = '<YOUR_SCOPE>' AUDIENCE = '<YOUR_AUDIENCE>' ACMEDNS = '<https://CUSTOMER.KEYFACTORPKI.COM>/acme'
 ```
 ## Usage Examples
 
