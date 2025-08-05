@@ -27,31 +27,31 @@ A PowerShell script for managing ACME claims through a REST API interface. This 
 | Roles       | No       | Roles to assign to the claim                  | AccountAdmin, EnrollmentUser, SuperAdmin |
 | action      | Yes      | Action to perform on claims                   | add, remove, update, show                |
 | Template    | No       | Template short name associated with the claim | String                                   |
-| enviroment  | Yes      | Target environment for the operation          | production, Non-Production, Lab          |
+| environment  | Yes      | Target environment for the operation          | production, Non-Production, Lab          |
 
 ## Configuration
 
 Before using the script, configure the following variables in the appropriate environment section:
 ```powershell
-CLIENT_ID = '<YOUR_CLIENT_ID>' CLIENT_SECRET = '<YOUR_CLIENT_SECRET>' TOKEN_URL = '<TOKEN_URL>' SCOPE = '<YOUR_SCOPE>' AUDIENCE = '<YOUR_AUDIENCE>' ACMEDNS = '<CUSTOMER.KEYFACTORPKI.COM>'
+CLIENT_ID = '<YOUR_CLIENT_ID>' CLIENT_SECRET = '<YOUR_CLIENT_SECRET>' TOKEN_URL = '<TOKEN_URL>' SCOPE = '<YOUR_SCOPE>' AUDIENCE = '<YOUR_AUDIENCE>' ACMEDNS = '<https://CUSTOMER.KEYFACTORPKI.COM>/acme'
 ```
 ## Usage Examples
 
 Show all claims:
 ```powershell
-.\acme-claims.ps1 -action show -enviroment production
+.\acme-claims.ps1 -action show -environment production
 ```
 Add a new claim:
 ```powershell
-.\acme-claims.ps1 -action add -ClaimType "sub" -ClaimValue "userguid" -Roles "EnrollmentUser" -template "acme47" -enviroment production
+.\acme-claims.ps1 -action add -ClaimType "sub" -ClaimValue "userguid" -Roles "EnrollmentUser" -template "acme47" -environment production
 ```
 Update an existing claim:
 ```powershell
-.\acme-claims.ps1 -action update -ClaimType "sub" -ClaimValue "userguid" -Roles "EnrollmentUser" -template "acme47" -enviroment production
+.\acme-claims.ps1 -action update -ClaimType "sub" -ClaimValue "userguid" -Roles "EnrollmentUser" -template "acme47" -environment production
 ```
 Remove a claim (Will be presented with a list of claims to choose from):
 ```powershell
-.\acme-claims.ps1 -action remove -enviroment production
+.\acme-claims.ps1 -action remove -environment production
 ```
 ## Error Handling
 

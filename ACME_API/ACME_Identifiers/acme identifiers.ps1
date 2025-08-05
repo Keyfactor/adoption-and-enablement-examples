@@ -66,12 +66,16 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("add", "remove", "show")]
     [ValidateNotNullOrEmpty()]
-    [string]$action
+    [string]$action,
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Secret
 )
 function load_variables
 {
     param(
-        $environment = $environment
+        $environment = $environment,
+        $Secret = $Secret
     )
     Write-Information "Entering function load_variables for $environment environment"
     switch($environment)
@@ -80,33 +84,33 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = '<YOUR_CLIENT_SECRET>'
+                CLIENT_SECRET   = $Secret
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<CUSTOMER.KEYFACTORPKI.COM>'
+                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
             }
         }
         'Non-Production'
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = '<YOUR_CLIENT_SECRET>'
+                CLIENT_SECRET   = $Secret
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<CUSTOMER.KEYFACTORPKI.COM>'
+                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
             }
         }
         'Lab'
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = '<YOUR_CLIENT_SECRET>'
+                CLIENT_SECRET   = $Secret
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<CUSTOMER.KEYFACTORPKI.COM>'
+                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
             }
         }
     }
@@ -146,7 +150,7 @@ function Add-Identifier
             "Identifier" = $Identifier
             "Type"       = $Type
         }
-        $postcall = Invoke-WebRequest -Uri "https://$($Variables.ACMEDNS)/ACME/Identifiers" -Method Post -Headers (Get-ACMEHeaders) -ContentType "application/json" -Body ($body | ConvertTo-Json)
+        $postcall = Invoke-WebRequest -Uri "$($Variables.ACMEDNS)/Identifiers" -Method Post -Headers (Get-ACMEHeaders) -ContentType "application/json" -Body ($body | ConvertTo-Json)
         if ($postcall.StatusCode -eq 200)
         {
             Write-Information "Identifier: $Identifier was added successfully."
@@ -164,7 +168,7 @@ function Show-Identifiers
 {
     try 
     {
-        $getcall = Invoke-WebRequest -Uri "https://$($Variables.ACMEDNS)/ACME/Identifiers" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
+        $getcall = Invoke-WebRequest -Uri "$($Variables.ACMEDNS)/Identifiers" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
         if ($getcall.StatusCode -eq 200)
         {
             return $getcall.Content | ConvertFrom-Json
@@ -186,7 +190,7 @@ function Remove-Identifier
     )
     try 
     {
-        $deletecall = Invoke-WebRequest -Uri "https://$($Variables.ACMEDNS)/ACME/Identifiers/$id" -Method Delete -Headers (Get-ACMEHeaders) -ContentType "application/json"
+        $deletecall = Invoke-WebRequest -Uri "$($Variables.ACMEDNS)/Identifiers/$id" -Method Delete -Headers (Get-ACMEHeaders) -ContentType "application/json"
         if ($deletecall.StatusCode -eq 204)
         {
             Write-Host "Identifier: $Identifier was removed successfully."

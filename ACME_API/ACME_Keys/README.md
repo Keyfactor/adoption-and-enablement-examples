@@ -27,7 +27,7 @@ This script authenticates to a Keyfactor ACME API endpoint using OAuth 2.0 clien
 
 ## Usage
 ```powershell
-.\acme_keys.ps1 `-client_id "your-client-id"` -client_secret "your-client-secret" `-Template "YourTemplate"` -token_url "[https://auth.example.com/oauth/token](https://auth.example.com/oauth/token)" `-scope "api.read"` -audience "[https://api.example.com](https://api.example.com)" ` -keyfactorDnsName "keyfactor.example.com"
+.\acme_keys.ps1 `-client_id "your-client-id"` -client_secret "your-client-secret" `-Template "YourTemplate"` -token_url "(https://auth.example.com/oauth/token)" `-scope "api.read"` -audience "(https://api.example.com)" ` -keyfactorDnsName "https://keyfactor.example.com/acme"
 ```
 ## Features
 

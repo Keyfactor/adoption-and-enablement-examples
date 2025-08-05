@@ -37,7 +37,7 @@
 .EXAMPLE
     .\acme_keys.ps1 -client_id "my-client-id" -client_secret "my-secret" -Template "MyTemplate" `
         -token_url "https://auth.example.com/oauth/token" -scope "api.read" -audience "https://api.example.com" `
-        -keyfactorDnsName "keyfactor.example.com"
+        -keyfactorDnsName "https://keyfactor.example.com/acme"
 
 .NOTES
     - Requires PowerShell 5.1 or later.
@@ -103,7 +103,7 @@ Function Get-keys
 {
     try 
     {
-        $getcall = Invoke-webrequest -Uri "https://$($Variables.hostname)/ACME/KeyManagement?Template=$($Variables.Template)" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
+        $getcall = Invoke-webrequest -Uri "$($Variables.hostname)/KeyManagement?Template=$($Variables.Template)" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
         if ($getcall.StatusCode -eq 200)
         {
             return $getcall.Content | ConvertFrom-Json
