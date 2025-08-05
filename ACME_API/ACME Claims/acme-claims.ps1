@@ -21,7 +21,7 @@
 .PARAMETER Template
     The template associated with the claim (optional).
 
-.PARAMETER enviroment
+.PARAMETER environment
     The environment to target. Must be one of: production, Non-Production, Lab (required).
 
 .FUNCTIONS
@@ -44,7 +44,7 @@
         Removes a claim by ID.
 
 .EXAMPLE
-    .\acme-claims.ps1 -ClaimType "TypeA" -ClaimValue "Value1" -Roles "AccountAdmin" -action "add" -Template "TemplateA" -enviroment "production"
+    .\acme-claims.ps1 -ClaimType "TypeA" -ClaimValue "Value1" -Roles "AccountAdmin" -action "add" -Template "TemplateA" -environment "production"
 
 .NOTES
     - Requires PowerShell 5.1 or later.
@@ -68,7 +68,7 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("production", "Non-Production", "Lab")]
     [ValidateNotNullOrEmpty()]
-    [string]$enviroment
+    [string]$environment
 )
 function load_variables
 {
