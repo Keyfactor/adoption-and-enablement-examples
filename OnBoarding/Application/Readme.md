@@ -8,10 +8,10 @@ The provided PowerShell Application is designed for onboarding and managing **Ke
 - [Key Features](#key-features)
 - [Minimum Requirements](#minimum-requirements)
 - [Setup](#setup)
-- [Support](#support)
-- [Logging](#logging)
 - [Using the Application](#using-the-application)
 - [Notes](#notes)
+- [Support](#support)
+- [Logging](#logging)
 - [Error Handling](#error-handling)
 - [Conclusion](#conclusion)
 - [Links](#links)
@@ -90,18 +90,6 @@ Thenames in the INI file must remain the same for application to function
 | `Scope`      | Oauth Sub-Section   | **(Optional unless required by IDP)** The scope for Client Credential Application. |
 | `Audience`   | Oauth Sub-Section   | **(Optional unless required by IDP)** The Audience for Client Credential Application. |
 
----
-## **Support**
-This application and code serves as a working example is is not supported by Keyfactor Support.  Customers are encurraged to use, test, or change the application to fit thier usecases.
-
-
----
-
-## **Logging**
-- Verbose logging for **debugging** uses the `-loglevel` parameter:
-  - **Info**: Standard operational logs.
-  - **Debug**: Detailed logs for troubleshooting.
-  - **Verbose**: Step-by-step execution tracking.
 
 ---
 
@@ -133,6 +121,7 @@ This application and code serves as a working example is is not supported by Key
 ### **Running the Application for New Claim**
 1. fill out all required fields and select all required dropdowns
 2. Select Run Button
+3. Enter the Client Credntial Secret.
 3. Review the Logs in the Output box for Success
 
 ![What to expect](image.png)
@@ -154,6 +143,18 @@ This application and code serves as a working example is is not supported by Key
 - once you select the Run Batch Button it will direct you to the New Claim tab to see the output of the process
 - you can alway see the path of the INI file the aplication is used in the First Run tab under the Application Settings Path
 - Secrets are never stored and will be required on each run.
+---
+## **Support**
+This application and code serves as a working example is is not supported by Keyfactor Support.  Customers are encurraged to use, test, or change the application to fit thier usecases.
+
+
+---
+
+## **Logging**
+- Verbose logging for **debugging** uses the `-loglevel` parameter:
+  - **Info**: Standard operational logs.
+  - **Debug**: Detailed logs for troubleshooting.
+  - **Verbose**: Step-by-step execution tracking.
 ---
 
 ## **Error Handling**
