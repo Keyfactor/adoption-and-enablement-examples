@@ -66,16 +66,12 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("add", "remove", "show")]
     [ValidateNotNullOrEmpty()]
-    [string]$action,
-    [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Secret
+    [string]$action
 )
 function load_variables
 {
     param(
-        $environment = $environment,
-        $Secret = $Secret
+        $environment = $environment
     )
     Write-Information "Entering function load_variables for $environment environment"
     switch($environment)
@@ -84,7 +80,7 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = $Secret
+                CLIENT_SECRET   = ''
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
@@ -95,7 +91,7 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = $Secret
+                CLIENT_SECRET   = ''
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
@@ -106,7 +102,7 @@ function load_variables
         {
             $script:Variables = @{
                 CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = $Secret
+                CLIENT_SECRET   = ''
                 TOKEN_URL       = '<TOKEN_URL>'
                 SCOPE           = '<YOUR_SCOPE>'
                 AUDIENCE        = '<YOUR_AUDIENCE>'
@@ -211,6 +207,9 @@ $ErrorActionPreference = "Stop"
 try 
 {
     $Variables = load_variables -environment $environment
+    if ([string]::IsNullOrEmpty($Variables['client_secret'])) {
+        $Variables['client_secret'] = Read-Host "Please enter the client secret for the $environment environment"
+    }
     if ($action -eq "add")
     {
         Add-Identifier
