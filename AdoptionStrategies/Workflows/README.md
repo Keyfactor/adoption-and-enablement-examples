@@ -9,7 +9,7 @@ This guide explains how to import Keyfactor Workflows into your Keyfactor Comman
 - Access to the Keyfactor Command Web UI with administrative privileges.
 - Workflow definition files (typically in JSON format) exported from another environment or provided by Keyfactor.
 - Appropriate permissions to manage workflows.
-- Command v25.1
+- Command v25.1 or higher
 
 ---
 
