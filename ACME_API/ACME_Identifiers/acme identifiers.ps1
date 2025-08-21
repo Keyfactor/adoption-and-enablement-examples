@@ -1,55 +1,44 @@
 <#
 .SYNOPSIS
-    Manages ACME Identifiers via REST API for different environments.
+    Manages ACME DNS identifiers across different environments.
 
 .DESCRIPTION
-    This script provides functions to add, remove, and show ACME Identifiers using a REST API.
-    It supports multiple environments (Production, Non-Production, Lab) and uses OAuth client credentials for authentication.
-    The script allows users to specify the identifier, type, and action to perform.
+    This script provides functionality to add, remove, and show ACME DNS identifiers.
+    It supports multiple environments (Production, Non-Production, Lab) and handles OAuth authentication.
 
 .PARAMETER environment
-    Specifies the target environment. Valid values are "Production", "Non-Production", or "Lab".
-
-.PARAMETER Identifier
-    The identifier to add or remove. Optional for 'show' action.
-
-.PARAMETER Type
-    The type of identifier. Valid values are "Regex", "Fqdn", "Subnet", or "Wildcard". Optional for 'show' and 'remove' actions.
+    The target environment to operate in.
+    Valid values: "Production", "Non-Production", "Lab"
 
 .PARAMETER action
-    The action to perform. Valid values are "add", "remove", or "show".
+    The action to perform on identifiers.
+    Valid values: "add", "remove", "show"
 
-.FUNCTIONS
-    load_variables
-        Loads environment-specific variables required for API authentication and requests.
+.PARAMETER Identifier
+    Dynamic parameter that appears when action is "add".
+    The identifier string to be added.
 
-    Get-ACMEHeaders
-        Retrieves OAuth token and constructs authorization headers for API requests.
-
-    Add-Identifier
-        Adds a new identifier to the ACME system.
-
-    Show-Identifiers
-        Retrieves and displays all identifiers from the ACME system.
-
-    Remove-Identifier
-        Removes an identifier from the ACME system by its ID.
+.PARAMETER Type
+    Dynamic parameter that appears when action is "add".
+    The type of identifier to add.
+    Valid values: "Regex", "Fqdn", "Subnet", "Wildcard"
 
 .EXAMPLE
-    .\acme identifiers.ps1 -environment "Production" -Identifier "example.com" -Type "Fqdn" -action "add"
-    Adds a new FQDN identifier to the Production environment.
+    .\script.ps1 -environment Production -action show
+    Lists all identifiers in the Production environment.
 
-    .\acme identifiers.ps1 -environment "Lab" -action "show"
-    Shows all identifiers in the Lab environment.
+.EXAMPLE
+    .\script.ps1 -environment Lab -action add -Identifier "example.com" -Type Fqdn
+    Adds a new FQDN identifier "example.com" in the Lab environment.
 
-    .\acme identifiers.ps1 -environment "Non-Production" -action "remove"
-    Shows all identifiers and prompts for an ID to remove in the Non-Production environment.
+.EXAMPLE
+    .\script.ps1 -environment Non-Production -action remove
+    Shows all identifiers and prompts for an ID to remove from Non-Production environment.
 
 .NOTES
-    - Requires valid OAuth credentials and API endpoint configuration.
-    - Ensure the CLIENT_ID, CLIENT_SECRET, TOKEN_URL, SCOPE, AUDIENCE, and ACMEDNS variables are set appropriately for each environment.
-    - Error handling is implemented for API calls and authentication.
-
+    Author: Keyfactor Technical Account Management Team
+    Version: 1.0
+    Last Modified: 8\21\2025
 #>
 param(
     [Parameter(Mandatory = $true)]

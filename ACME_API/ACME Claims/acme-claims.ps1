@@ -1,55 +1,49 @@
+
 <#
 .SYNOPSIS
-    Manages ACME claims via REST API for Keyfactor environments.
+    Manages claims in an ACME system across different environments.
 
 .DESCRIPTION
-    This script provides functions to add, update, remove, and show claims in the ACME API. 
-    It supports multiple environments (Production, Non-Production, Lab) and uses OAuth client credentials for authentication.
-
-.PARAMETER ClaimType
-    The type of claim to manage (optional).
-
-.PARAMETER ClaimValue
-    The value of the claim to manage (optional).
-
-.PARAMETER Roles
-    The roles associated with the claim. Must be one of: AccountAdmin, EnrollmentUser, SuperAdmin (optional).
+    This script provides functionality to manage claims in an ACME system, including adding,
+    removing, updating, and displaying claims. It supports multiple environments (Production,
+    Non-Production, and Lab) and handles authentication through OAuth tokens.
 
 .PARAMETER action
-    The action to perform. Must be one of: add, remove, update, show (required).
-
-.PARAMETER Template
-    The template associated with the claim (optional).
+    Specifies the operation to perform. Valid values are:
+    - add: Creates a new claim
+    - remove: Deletes an existing claim
+    - update: Modifies an existing claim
+    - show: Displays all current claims
 
 .PARAMETER environment
-    The environment to target. Must be one of: production, Non-Production, Lab (required).
+    Specifies the target environment. Valid values are:
+    - Production
+    - Non-Production
+    - Lab
 
-.FUNCTIONS
-    load_variables
-        Loads environment-specific variables required for API authentication and requests.
+.PARAMETER ClaimType
+    The type of claim to be added or updated. Required for add/update operations.
 
-    Get-ACMEHeaders
-        Retrieves OAuth token and constructs authorization headers for API requests.
+.PARAMETER ClaimValue
+    The value of the claim to be added or updated. Required for add/update operations.
 
-    update-claim
-        Updates an existing claim by ID.
+.PARAMETER Roles
+    The roles to assign to the claim. Must be one of: AccountAdmin, EnrollmentUser, SuperAdmin.
+    Required for add/update operations.
 
-    add-claim
-        Adds a new claim.
-
-    get-claims
-        Retrieves all claims from the ACME API.
-
-    remove-claim
-        Removes a claim by ID.
+.PARAMETER Template
+    Optional template parameter for the claim. Used in add/update operations.
 
 .EXAMPLE
-    .\acme-claims.ps1 -ClaimType "TypeA" -ClaimValue "Value1" -Roles "AccountAdmin" -action "add" -Template "TemplateA" -environment "production"
+    .\script.ps1 -action show -environment Production
+    Displays all claims in the Production environment.
+
+.EXAMPLE
+    .\script.ps1 -action add -environment Lab -ClaimType "UserType" -ClaimValue "Admin" -Roles "SuperAdmin"
+    Adds a new claim in the Lab environment.
 
 .NOTES
-    - Requires PowerShell 5.1 or later.
-    - Ensure CLIENT_ID, CLIENT_SECRET, TOKEN_URL, SCOPE, AUDIENCE, and ACMEDNS are configured for each environment.
-    - Error handling and information logging are implemented throughout the script.
+    Requires appropriate API access and credentials for the ACME system.
 #>
 [CmdletBinding()]
 param(
