@@ -12,6 +12,7 @@ This script authenticates to a Keyfactor ACME API endpoint using OAuth 2.0 clien
 - Network connectivity to the Keyfactor ACME API endpoint
 - Valid OAuth credentials (client ID and secret)
 - Access to the Keyfactor ACME API endpoint
+- Keyfactor ACME 25.2.1
 
 ## Parameters
 
