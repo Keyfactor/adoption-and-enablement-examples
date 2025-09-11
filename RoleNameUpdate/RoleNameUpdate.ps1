@@ -93,12 +93,12 @@ function load_variables
         'Lab'
         {
             $script:envVariables = @{
-                CLIENT_ID       = 'd424706f-3c5f-453e-8b6e-2be54788bd17'
+                CLIENT_ID       = ''
                 CLIENT_SECRET   = ''
-                TOKEN_URL       = 'https://auth.pingone.com/3729a543-20bf-44b1-b92b-7ceef13aeecf/as/token'
-                SCOPE           = 'APISCOPE'
-                AUDIENCE        = 'APISCOPE'
-                KEYFACTORAPI    = 'https://boeingoauth.kfdelivery.com/KeyfactorAPI'
+                TOKEN_URL       = ''
+                SCOPE           = ''
+                AUDIENCE        = ''
+                KEYFACTORAPI    = ''
             }
         }
     }
