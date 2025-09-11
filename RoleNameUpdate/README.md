@@ -33,9 +33,10 @@ The **RoleNameUpdate.ps1** script automates the process of renaming a Keyfactor 
 | `TOKEN_URL`      | String   | OAuth Client Credential token URL.                                             | Yes           |
 | `SCOPE`          | String   | OAuth Client Credential Scope.                                                 | Yes           |
 | `AUDIENCE`       | String   | OAuth Client Credential Audience.                                              | Yes           |
-| `KEYFACTORAPI`   | String   | URL to the Keyfactor API URL. (https://customer.keyfactorpki.com/keyfactorapi) | Yes           |
+| `KEYFACTORAPI`   | String   | URL to the Keyfactor API URL. (<https://customer.keyfactorpki.com/keyfactorapi>) | Yes           |
 
 ---
+
 ## Parameters
 
 | Parameter           | Type     | Description                                                                                     | Required | Default  |
@@ -51,6 +52,7 @@ The **RoleNameUpdate.ps1** script automates the process of renaming a Keyfactor 
 ## Usage
 
 **Example:**
+
 ```powershell
 .\RoleNameUpdate.ps1 -environment "Production" -OriginalRoleName "OldRole" -NewRoleName "NewRole" -NewRoleEmail "newrole@example.com" -loglevel "Verbose"
 ```
@@ -78,6 +80,7 @@ The script includes several helper functions:
 ## Logging
 
 The script supports three log levels:
+
 - **Info**: General operational information.
 - **Debug**: Detailed debugging output.
 - **Verbose**: Extensive details for each operation.
