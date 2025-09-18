@@ -263,7 +263,7 @@ function Fetch_AllPages
     for ($CurrentPage = 1; $CurrentPage -le $TotalPages; $CurrentPage++) {
         write-message -Message "Fetching page $CurrentPage/$TotalPages from URL=$PageUrl" -type Verbose
         $FullUrl = "$PageUrl$CurrentPage"
-        $Response = (Invoke-HttpGet -Url $FullUrl -HeaderVersion $HeaderVersion)
+        $Response = Invoke-WebRequest $FullUrl -Headers (get-AuthHeaders -HeaderVersion $HeaderVersion) -Method Get
         $TotalResults += $Response.Content | ConvertFrom-Json
     }
     write-message -Message "Finished fetching all pages. Total results: $($TotalResults.Count)" -type Verbose
