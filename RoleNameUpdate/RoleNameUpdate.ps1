@@ -249,7 +249,7 @@ function Fetch_AllPages
     write-message -Message "Entering function Fetch_AllPages" -type Debug
     $TotalResults = @()
     $InitialResponse = Invoke-WebRequest "$Url" -Method Get -Headers (get-AuthHeaders -HeaderVersion $HeaderVersion) -UseBasicParsing
-    $TotalCount = $InitialResponse.Headers["x-total-count"]
+    $TotalCount = $InitialResponse.Headers["x-total-count"][0]
     write-message -Message "Total count of items to fetch: $TotalCount" -type Verbose
     if ($TotalCount -lt 50) {
         write-message -Message "Total count is less than page size limit. Returning initial response." -type Verbose
@@ -264,7 +264,9 @@ function Fetch_AllPages
         write-message -Message "Fetching page $CurrentPage/$TotalPages from URL=$PageUrl" -type Verbose
         $FullUrl = "$PageUrl$CurrentPage"
         $Response = Invoke-WebRequest $FullUrl -Headers (get-AuthHeaders -HeaderVersion $HeaderVersion) -Method Get
-        $TotalResults += $Response.Content | ConvertFrom-Json
+        # $Response = $Response | ConvertFrom-Json
+        write-host "$($Response.count)"
+        $TotalResults += $Response
     }
     write-message -Message "Finished fetching all pages. Total results: $($TotalResults.Count)" -type Verbose
     return $TotalResults
