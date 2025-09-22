@@ -166,7 +166,7 @@ function Get-Certificates
     $EncodedString = [uri]::EscapeDataString($rolename)
     $Url = "$($variables.keyfactorapi)/Certificates?IncludeRevoked=true&IncludeExpired=true&QueryString=OwnerRoleName%20-eq%20%22$EncodedString%22&PageReturned=1"
     $pageurl = "$($variables.keyfactorapi)/Certificates?IncludeRevoked=true&IncludeExpired=true&QueryString=OwnerRoleName%20-eq%20%22$EncodedString%22&collectionId=0&includeLocations=false&includeMetadata=false&ReturnLimit=100&PageReturned="
-    return (Fetch_AllPages -Url $Url -PageUrl $pageurl -HeaderVersion 1).Content | ConvertFrom-Json
+    return (Fetch_AllPages -Url $Url -PageUrl $pageurl -HeaderVersion 1)
 }
 function write-message
 {
@@ -249,26 +249,32 @@ function Fetch_AllPages
     write-message -Message "Entering function Fetch_AllPages" -type Debug
     $TotalResults = @()
     $InitialResponse = Invoke-WebRequest "$Url" -Method Get -Headers (get-AuthHeaders -HeaderVersion $HeaderVersion) -UseBasicParsing
-    $TotalCount = $InitialResponse.Headers["x-total-count"][0]
-    write-message -Message "Total count of items to fetch: $TotalCount" -type Verbose
+    $TotalCount = [int]$InitialResponse.Headers["x-total-count"][0]
+    write-message -Message "Total count of items to fetch: $TotalCount" -type Debug
+    if ($TotalCount -eq 0)
+    {
+        write-message -Message "Total count is 0." -type Debug
+        return
+    }
     if ($TotalCount -lt 50) {
-        write-message -Message "Total count is less than page size limit. Returning initial response." -type Verbose
+        write-message -Message "Total count is less than page size limit. Returning initial response." -type Debug
+        $InitialResponse = $InitialResponse.Content | ConvertFrom-Json
         return $InitialResponse
     }
 
     $TotalPages = [math]::Ceiling($TotalCount / 50)
-    write-message -Message "Total pages to fetch: $TotalPages" -type Verbose
-    write-message -Message "Initiating paginated fetch from URL=$Url with PageUrl=$PageUrl" -type Verbose
+    write-message -Message "Total pages to fetch: $TotalPages" -type Debug
+    write-message -Message "Initiating paginated fetch from URL=$Url with PageUrl=$PageUrl" -type Debug
 
     for ($CurrentPage = 1; $CurrentPage -le $TotalPages; $CurrentPage++) {
-        write-message -Message "Fetching page $CurrentPage/$TotalPages from URL=$PageUrl" -type Verbose
         $FullUrl = "$PageUrl$CurrentPage"
+        write-message -Message "Fetching page $CurrentPage/$TotalPages from URL=$FullUrl" -type Debug
+        write-message -Message "$fullurl" -type Debug
         $Response = Invoke-WebRequest $FullUrl -Headers (get-AuthHeaders -HeaderVersion $HeaderVersion) -Method Get
-        # $Response = $Response | ConvertFrom-Json
-        write-host "$($Response.count)"
+        $Response = $response | convertfrom-json
         $TotalResults += $Response
     }
-    write-message -Message "Finished fetching all pages. Total results: $($TotalResults.Count)" -type Verbose
+    write-message -Message "Finished fetching all pages. Total results: $($TotalResults.Count)" -type Debug
     return $TotalResults
 }
 function Build-Claim 
