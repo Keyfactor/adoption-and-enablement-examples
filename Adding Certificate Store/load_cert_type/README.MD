@@ -97,7 +97,7 @@ This will provide additional details to help troubleshoot the problem.
 
 ---
 
-## Notes:
+## Notes
 
 - Ensure that the required permissions are granted for the specified `client_id` to create store types in Keyfactor.
 - Use the `skip_verify` option cautiously if SSL verification is critical in your environment.
