@@ -2,7 +2,47 @@
 
 This repository contains a robust PowerShell script designed for managing **roles, claims**, and **log cleanup** in a secure and efficient manner. It interacts with **Azure AD**, **Keyfactor API**, and local systems to automate tasks like role management, claim creation, and log file cleanup.
 
+**NOTES**
+Tested on V25.2.1 of Keyfactor Command
+
 ---
+
+## Autoprovisioning OAuthRoles from EntraID Groups
+
+This script automates the provisioning of OAuthRoles in Keyfactor Command using a single security group in EntraID (Azure AD) with nested groups for all users who need access.
+
+### How It Works
+
+- **Single Security Group**: You specify one EntraID security group.
+- **Nested Groups**: All groups nested within this parent group represent access roles.
+- **Role & Claim Creation**:
+  - Each nested group is added to Keyfactor Command as an OAuth Claim (OAuthRole).
+  - A Keyfactor Command Role is created with the same name as the nested group.
+  - If the group has an email configured, it is used as the role email.
+  - The claim is added to the role
+
+### Example Workflow
+
+1. Enumerate nested groups in the parent security group.
+2. For each nested group:
+   - Create an OAuth Claim (OAuthRole) in Keyfactor Command.
+   - Create a Role in Keyfactor Command with the same name.
+   - Assign the group’s email (if present) to the role.
+3. Repeat on schedule to ensure new groups/users are provisioned.
+
+### Benefits
+
+- Centralized management: Control access via EntraID group membership.
+- Automated provisioning: No manual role/claim creation in Keyfactor Command.
+- Consistent access: Roles and claims always match EntraID structure.
+
+### Scheduling
+
+You can run this script on a schedule using:
+
+- Windows Task Scheduler
+- Azure Automation
+- Any CI/CD pipeline or automation tool that supports PowerShell
 
 ## Features
 
