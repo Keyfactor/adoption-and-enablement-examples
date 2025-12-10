@@ -106,6 +106,17 @@ Assuming the Orchestrator and certificate store inventory are complete:
 7. Select SAVE WORKFLOW
 8. Select Publish Workflow to have it active.
 
+## Pulling Emails from Entra
+The workflow "Entra Group Emails.json" uses an expiration alert but the steps can be used in any workflow.  The requirement is:
+1. an OAuth Client_Credential APplication in entra with the right gragh API permissions to read users and groups.
+2. a Keyfactor field with the displayname of the group.
+
+### How it works
+1. it calls Entra with the displayname to get the group ID
+2. it then makes a second call to Entra to request the email address from every user in the group to included nested groups.
+3. it will then put the emails in the proper format and send the desired email to that list of emails.
+### Limitations
+if there are more than 999 users in the group and its nested groups it will only pullback that limit.
 ## References
 
 - [Keyfactor Command Documentation](https://software.keyfactor.com)
