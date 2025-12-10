@@ -1,0 +1,161 @@
+{
+  "Id": "ee8245e4-0a1d-4237-b836-2445fc57bc9f",
+  "DisplayName": "Entra Group Emails",
+  "Description": "Pulls all users email from a group in intra based on displayname",
+  "Key": "8",
+  "KeyDisplayName": "test",
+  "IsPublished": true,
+  "WorkflowType": "Expiration",
+  "Steps": [
+    {
+      "Id": "8b020c40-0048-4cb8-9c75-0315a1f1ee44",
+      "DisplayName": "Set Display Name Var",
+      "UniqueName": "SetDisplayNameVar",
+      "ExtensionName": "PowerShell",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "ScriptParameters": {
+          "metadata": "$(metadata:RequestersEmail)"
+        },
+        "ScriptContent": "Param(\r\n    [string]$metadata\r\n)\r\n\r\nReturn @{'displayname' = $metadata}"
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "GetEntraGroup"
+      }
+    },
+    {
+      "Id": "049125e8-092f-4fae-80aa-1ea7eba77784",
+      "DisplayName": "Start-NOOP",
+      "UniqueName": "StartNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "SetDisplayNameVar"
+      }
+    },
+    {
+      "Id": "0fd873a8-101c-4935-bd43-222623dce632",
+      "DisplayName": "Set Entra Group ID",
+      "UniqueName": "SetEntraGroupID",
+      "ExtensionName": "PowerShell",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "ScriptParameters": {
+          "Group": "$(Group)"
+        },
+        "ScriptContent": "param($Group)\n\n$group = $group | convertfrom-json\nif (-not $group) { throw \"No group found with displayName '$GroupDisplayName'.\" }\n$groupId = $group.value[0].id\n\nreturn @{'GroupId' = $groupId}"
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "GetEntraGroupMembers"
+      }
+    },
+    {
+      "Id": "f1a8ac59-9498-4c6b-96fa-4009cefc15e4",
+      "DisplayName": "Get Entra Group Members",
+      "UniqueName": "GetEntraGroupMembers",
+      "ExtensionName": "OAuthRESTRequest",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Headers": {},
+        "DataBucketProperty": "Members",
+        "Verb": "GET",
+        "client_id": null,
+        "client_secret": null,
+        "TokenEndpoint": null,
+        "scope": "https://graph.microsoft.com/.default",
+        "audience": "",
+        "URL": "https://graph.microsoft.com/v1.0/groups/$(GroupId)/transitiveMembers/microsoft.graph.user?$select=mail,userPrincipalName,userType&$top=999",
+        "ContentType": "application/json",
+        "RequestContent": ""
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "SetGroupEmails"
+      }
+    },
+    {
+      "Id": "849ed23a-e93b-47fb-98e2-7cf379f1a480",
+      "DisplayName": "Set Group Emails",
+      "UniqueName": "SetGroupEmails",
+      "ExtensionName": "PowerShell",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "ScriptParameters": {
+          "Members": "$(Members)"
+        },
+        "ScriptContent": "param($members)\n\n$members = $members | convertfrom-json\n$userEmails = @()\n\nforeach ($u in $members.value) {\n    if ($u.userType -eq 'Guest') { continue }\n    if (-not $u.mail) { continue }\n    $normalized = $u.mail.Trim().ToLowerInvariant()\n    $userEmails += $normalized\n}\n\n$emails = ($userEmails | Select-Object -Unique) -join ';'\n@{ Emails = $emails }\n\n"
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "SendEmail"
+      }
+    },
+    {
+      "Id": "2caaab62-630c-4744-a717-879c8337806e",
+      "DisplayName": "Send Email",
+      "UniqueName": "SendEmail",
+      "ExtensionName": "Email",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Subject": "Test email from workflow",
+        "Message": "this is a test email from jhowlanddemo",
+        "Recipients": [
+          "$(Emails)"
+        ]
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "EndNOOP"
+      }
+    },
+    {
+      "Id": "d9d46d92-e131-4a6a-9137-b6c737bdd04f",
+      "DisplayName": "Get Entra Group",
+      "UniqueName": "GetEntraGroup",
+      "ExtensionName": "OAuthRESTRequest",
+      "Enabled": true,
+      "ConfigurationParameters": {
+        "Headers": {},
+        "DataBucketProperty": "Group",
+        "Verb": "GET",
+        "client_id": null,
+        "client_secret": null,
+        "TokenEndpoint": null,
+        "scope": "https://graph.microsoft.com/.default",
+        "audience": "",
+        "URL": "https://graph.microsoft.com/v1.0/groups?$filter=displayName+eq+%27$(displayname)%27&$count=true",
+        "ContentType": "application/json",
+        "RequestContent": ""
+      },
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {
+        "continue": "SetEntraGroupID"
+      }
+    },
+    {
+      "Id": "d03cd676-7974-44c9-ac29-c259bc481e4f",
+      "DisplayName": "End-NOOP",
+      "UniqueName": "EndNOOP",
+      "ExtensionName": "NOOPStep",
+      "Enabled": true,
+      "ConfigurationParameters": {},
+      "Signals": [],
+      "Conditions": [],
+      "Outputs": {}
+    }
+  ],
+  "DraftVersion": 28,
+  "PublishedVersion": 28,
+  "Enabled": true
+}
