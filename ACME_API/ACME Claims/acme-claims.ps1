@@ -1,340 +1,201 @@
-
-<#
-.SYNOPSIS
-    Manages claims in an ACME system across different environments.
-
-.DESCRIPTION
-    This script provides functionality to manage claims in an ACME system, including adding,
-    removing, updating, and displaying claims. It supports multiple environments (Production,
-    Non-Production, and Lab) and handles authentication through OAuth tokens.
-
-.PARAMETER action
-    Specifies the operation to perform. Valid values are:
-    - add: Creates a new claim
-    - remove: Deletes an existing claim
-    - update: Modifies an existing claim
-    - show: Displays all current claims
-
-.PARAMETER environment
-    Specifies the target environment. Valid values are:
-    - Production
-    - Non-Production
-    - Lab
-
-.PARAMETER ClaimType
-    The type of claim to be added or updated. Required for add/update operations.
-
-.PARAMETER ClaimValue
-    The value of the claim to be added or updated. Required for add/update operations.
-
-.PARAMETER Roles
-    The roles to assign to the claim. Must be one of: AccountAdmin, EnrollmentUser, SuperAdmin.
-    Required for add/update operations.
-
-.PARAMETER Template
-    Optional template parameter for the claim. Used in add/update operations.
-
-.EXAMPLE
-    .\script.ps1 -action show -environment Production
-    Displays all claims in the Production environment.
-
-.EXAMPLE
-    .\script.ps1 -action add -environment Lab -ClaimType "UserType" -ClaimValue "Admin" -Roles "SuperAdmin"
-    Adds a new claim in the Lab environment.
-
-.NOTES
-    Requires appropriate API access and credentials for the ACME system.
-#>
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("add", "remove", "update", "show")]
-    [ValidateNotNullOrEmpty()]
-    [string]$action,
-
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("production", "Non-Production", "Lab")]
-    [ValidateNotNullOrEmpty()]
-    [string]$environment
-)
-
-DynamicParam {
-    $paramDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-
-    if ($action -ne "show" -and $action -ne "remove") {
-        $attributes = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-        $attributes.Add((New-Object System.Management.Automation.ParameterAttribute -Property @{ Mandatory = $true }))
-        $paramDictionary.Add("ClaimType", (New-Object System.Management.Automation.RuntimeDefinedParameter("ClaimType", [string], $attributes)))
-
-        $attributes = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-        $attributes.Add((New-Object System.Management.Automation.ParameterAttribute -Property @{ Mandatory = $true }))
-        $paramDictionary.Add("ClaimValue", (New-Object System.Management.Automation.RuntimeDefinedParameter("ClaimValue", [string], $attributes)))
-
-        $attributes = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-        $validateSet = New-Object System.Management.Automation.ValidateSetAttribute("AccountAdmin", "EnrollmentUser", "SuperAdmin")
-        $attributes.Add($validateSet)
-        $attributes.Add((New-Object System.Management.Automation.ParameterAttribute -Property @{ Mandatory = $true }))
-        $paramDictionary.Add("Roles", (New-Object System.Management.Automation.RuntimeDefinedParameter("Roles", [string], $attributes)))
-
-        $attributes = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-        $attributes.Add((New-Object System.Management.Automation.ParameterAttribute -Property @{ Mandatory = $false }))
-        $paramDictionary.Add("Template", (New-Object System.Management.Automation.RuntimeDefinedParameter("Template", [string], $attributes)))
+function Get-AcmeEnvironment {
+    param($EnvironmentName)
+    $config = @{
+        'Prod' = @{
+            CLIENT_ID     = ''
+            CLIENT_SECRET = ''
+            TOKEN_URL     = ''
+            SCOPE         = ''
+            AUDIENCE      = ''
+            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+        }
+        'NonProd' = @{
+            CLIENT_ID     = ''
+            CLIENT_SECRET = ''
+            TOKEN_URL     = ''
+            SCOPE         = ''
+            AUDIENCE      = ''
+            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+        }
+        'lab' = @{
+            CLIENT_ID     = ''
+            CLIENT_SECRET = ''
+            TOKEN_URL     = ''
+            SCOPE         = ''
+            AUDIENCE      = ''
+            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+        }
     }
-
-    return $paramDictionary
+    $vars = $config[$EnvironmentName]
+    Write-Host "Loaded variables for $EnvironmentName environment."
+    return $vars
 }
-begin {
-    # Access dynamic parameters if needed
-    if ($action -ne "show" -and $action -ne "remove") {
-        $ClaimType = $PSBoundParameters["ClaimType"]
-        $ClaimValue = $PSBoundParameters["ClaimValue"]
-        $Roles = $PSBoundParameters["Roles"]
-        $Template = $PSBoundParameters["Template"]
+function Get-AcmeHeaders {
+    param($Vars)
+    $authBody = @{
+        grant_type    = 'client_credentials'
+        client_id     = $Vars.CLIENT_ID
+        client_secret = $Vars.CLIENT_SECRET
+        scope         = $Vars.SCOPE
+        audience      = $Vars.AUDIENCE
+    }
+    try {
+        $response = Invoke-RestMethod -Method Post -Uri $Vars.TOKEN_URL -Body $authBody -Headers @{'Content-Type' = 'application/x-www-form-urlencoded'}
+        return @{ Authorization = "Bearer $($response.access_token)"; Accept = "application/json" }
+    } catch {
+        throw "Failed to fetch OAuth token: $_"
     }
 }
-Process
-{
+function Invoke-AcmeRequest {
+    param($Uri, $Method = 'Get', $Body = $null, $Vars)
+    $params = @{
+        Uri               = $Uri
+        Method            = $Method
+        Headers           = Get-AcmeHeaders -Vars $Vars
+        ContentType       = "application/json"
+        UseBasicParsing   = $true
+        ErrorAction       = 'Stop'
+    }
+    if ($Body) { $params.Body = ($Body | ConvertTo-Json) }
+    return Invoke-WebRequest @params
+}
+function Test-AcmeConnection {
+    param($Vars)
+    try {
+        $response = Invoke-AcmeRequest -Uri "$($Vars.ACMEDNS)/status" -Vars $Vars
+        return $response.StatusCode -eq 204
+    } catch { return $false }
+}
+function Get-AcmeClaims {
+    param($Vars, $Id = $null)
+    $uri = "$($Vars.ACMEDNS)/Claims$(if ($Id) { "/$Id" })"
+    $response = Invoke-AcmeRequest -Uri $uri -Vars $Vars
+    return $response.Content | ConvertFrom-Json
+}
+function Add-AcmeClaim {
+    param($Vars, $ClaimValue, $Roles, $Template = $null)
+    $body = @{ ClaimType = 'Sub'; ClaimValue = $ClaimValue; Roles = ($Roles -split ' ') }
+    if ($Template) { $body.Template = $Template }
+    $response = Invoke-AcmeRequest -Uri "$($Vars.ACMEDNS)/Claims" -Method Post -Body $body -Vars $Vars
+    if ($response.StatusCode -eq 200) { Write-Information "Claim $ClaimValue added successfully.";Show-Claims -Vars $Vars; pause }
+}
+function Update-AcmeClaim {
+    param($Vars, $Claim, $Template, $Role, [switch]$Remove)
+    $body = @{
+        ClaimType  = $Claim.ClaimType
+        ClaimValue = $Claim.ClaimValue
+        Roles      = @(if ($Role) {$Role -split '\s+'} else {$Claim.Roles})
+        Template   = $Claim.Template
+    }
+    if ($Template) {
+        $templates = if ($Remove) { @($Template) } else { @($Template) + @($Claim.template) | Where-Object { $_ } }
+        $body.Template = ($templates | Select-Object -Unique) -join ' '
+    }
+    $response = Invoke-AcmeRequest -Uri "$($Vars.ACMEDNS)/Claims/$($Claim.id)" -Method Put -Body $body -Vars $Vars
+    if ($response.StatusCode -eq 200) { Write-Information "Claim updated successfully.";Show-Claims -Vars $Vars; pause }
+}
+function Remove-AcmeClaim {
+    param($Vars, $Id)
+    $response = Invoke-AcmeRequest -Uri "$($Vars.ACMEDNS)/Claims/$Id" -Method Delete -Vars $Vars
+    return $response.StatusCode -eq 204
+}
+function Show-Claims {
+    param($Vars)
+    $claims = Get-AcmeClaims -Vars $Vars
+    if ($claims) { return $claims | Format-Table -AutoSize | Out-Host } else { Write-Host "No claims found." -ForegroundColor Yellow }
+}
+function Remove-AcmeClaimMenu {
+    param($Vars)
+    while ($true) {
+        Clear-Host
+        $claims = Get-AcmeClaims -Vars $Vars
+        if (-not $claims) { Write-Host "No claims available."; return }
+        $claims | Format-Table -AutoSize | Out-Host
+        $id = Read-Host "Enter Claim ID to remove (or Enter to return)"
+        if ([string]::IsNullOrWhiteSpace($id)) { return }
+        if (Remove-AcmeClaim -Vars $Vars -Id $id) { Write-Host "Removed ID $id." -ForegroundColor Green }
+        Start-Sleep -Seconds 1
+    }
+}
+function Add-AcmeClaimMenu {
+    param($Vars)
+    $roleMap = @{ '1' = 'AccountAdmin'; '2' = 'EnrollmentUser'; '3' = 'SuperAdmin' }
+    while ($true) {
+        Clear-Host
+        Write-Host "=== Add Claim ===`n[1] AccountAdmin`n[2] EnrollmentUser`n[3] SuperAdmin`n[4] Return"
+        $response = Read-Host "Select roles (e.g. 1,2)"
+        if ($response -eq '4' -or [string]::IsNullOrWhiteSpace($response)) { return }
+        $selectedRoles = ($response -split '[,\s]+' | ForEach-Object { $roleMap[$_] } | Where-Object { $_ })
+        $claimValue = Read-Host "Enter Claim Subject"
+        $template = if ($selectedRoles -contains 'EnrollmentUser') { Read-Host "Template name required" } else { $null }
+        Add-AcmeClaim -Vars $Vars -ClaimValue $claimValue -Roles ($selectedRoles -join ' ') -Template $template
+        if ((Read-Host "Add another? (y/n)") -ne 'y') { return $true }
+    }
+}
+function Update-AcmeClaimMenu {
+    param($Vars)
+    while ($true) {
+        Clear-Host
+        Write-Host "=== Update Claim ===`n[1] Add Template`n[2] New Template (Clear others)`n[3] Update Roles`n[4] Return"
+        $action = Read-Host "Choose an action to complete or press enter to return to the action menu"
+        if ($action -eq '4') { return }
+        elseif (-not $action) { return}
+        $claims = Get-AcmeClaims -Vars $Vars
+        $claims | Format-Table -AutoSize | Out-Host
+        $id = Read-Host "Enter Claim ID or press enter to return to the action menu"
+        if (-not $id) { write-host "no entry selected, returning to action menu"; start-sleep -seconds 1.5; return}
+        $claim = $claims | Where-Object { $_.id -eq $id }
+        if (-not $claim.id) { write-host "Id: $id is not a valid claim Id. Returning to Action Menu."; start-sleep -seconds 1.5; return}
+        switch ($action) {
+            '1' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template") }
+            '2' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template") -Remove }
+            '3' { 
+                $roleMap = @{ '1' = 'AccountAdmin'; '2' = 'EnrollmentUser'; '3' = 'SuperAdmin' }
+                write-host "[1] AccountAdmin`n[2] EnrollmentUser`n[3] SuperAdmin`n[4] Return"
+                $roles = Read-Host "Enter new roles (space separated)"
+                if ($roles -eq '4' -or [string]::IsNullOrWhiteSpace($roles)) { return }
+                $selectedRoles = ($roles -split '[,\s]+' | Where-Object { $_ -and $roleMap.ContainsKey($_) } | ForEach-Object { $roleMap[$_] })
+                Update-AcmeClaim -Vars $Vars -Claim $claim -Role $selectedRoles
+            }
+            default { write-host "no entry selected, returning to action menu"; start-sleep -seconds 1.5; return}
+        }
+    }
+}
+function Invoke-ActionMenu {
+    param($Vars)
+    while ($true) {
+        Clear-Host
+        Write-Host "=== Action Menu ===`n[1] Show Claims`n[2] Add Claim`n[3] Update Claim`n[4] Remove Claim`n[5] Exit"
+        switch (Read-Host "Select Action") {
+            '1' { Show-Claims -Vars $Vars; pause }
+            '2' { Add-AcmeClaimMenu -Vars $Vars }
+            '3' { Update-AcmeClaimMenu -Vars $Vars }
+            '4' { Remove-AcmeClaimMenu -Vars $Vars }
+            '5' { return }
+        }
+    }
+}
+function Invoke-MainMenu {
+    while ($true) {
+        Clear-Host
+        Write-Host "=== Environment Menu ===`n[1] Production`n[2] Non-Production`n[3] Lab`n[4] Exit"
+        $choice = Read-Host "Choice"
+        if ($choice -eq '4') { return $null }
+        $env = switch($choice) { '1' {'Production'} '2' {'Non-Production'} '3' {'Lab'} }
+        if ($env) { return Get-AcmeEnvironment -EnvironmentName $env }
+    }
+}
 
-    function load_variables
-    {
-        param(
-            $environment = $environment
-        )
-        Write-Information "Entering function load_variables for $environment environment"
-        switch($environment)
-        {
-            'Production'
-            {
-                $script:Variables = @{
-                    CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                    CLIENT_SECRET   = ''
-                    TOKEN_URL       = '<TOKEN_URL>'
-                    SCOPE           = '<YOUR_SCOPE>'
-                    AUDIENCE        = '<YOUR_AUDIENCE>'
-                    ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
-                }
-            }
-            'Non-Production'
-            {
-                $script:Variables = @{
-                    CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                    CLIENT_SECRET   = ''
-                    TOKEN_URL       = '<TOKEN_URL>'
-                    SCOPE           = '<YOUR_SCOPE>'
-                    AUDIENCE        = '<YOUR_AUDIENCE>'
-                    ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
-                }
-            }
-            'Lab'
-            {
-                $script:Variables = @{
-                CLIENT_ID       = '<YOUR_CLIENT_ID>'
-                CLIENT_SECRET   = ''
-                TOKEN_URL       = '<TOKEN_URL>'
-                SCOPE           = '<YOUR_SCOPE>'
-                AUDIENCE        = '<YOUR_AUDIENCE>'
-                ACMEDNS         = '<https://CUSTOMER.KEYFACTORPKI.COM/ACME>'
-                }
-            }
-        }
-        return $Variables
+# Main Script
+$InformationPreference = "Continue"
+$ErrorActionPreference = "Stop"
+try {
+    $Variables = Invoke-MainMenu
+    if ($Variables -and (Test-AcmeConnection -Vars $Variables)) {
+        Invoke-ActionMenu -Vars $Variables
+    } elseif ($Variables) {
+        Write-Error "Acme Service unreachable."
     }
-
-    function Get-ACMEHeaders 
-    { 
-        $authHeaders = @{
-            'Content-Type' = 'application/x-www-form-urlencoded'
-        }
-        $authBody = @{
-            'grant_type' = 'client_credentials'
-            'client_id'  = $Variables.client_id
-            'client_secret' = $Variables.client_secret
-        }
-        if ($Variables.scope) { $authBody['scope'] = $Variables.scope }
-        if ($Variables.audience) { $authBody['audience'] = $Variables.audience }
-
-        try 
-        {
-            $token = (Invoke-RestMethod -Method Post -Uri $Variables.token_url -Headers $authHeaders -Body $authBody).access_token
-            $headers = @{}
-            $headers["Authorization"] = "Bearer $token"
-        } 
-        catch 
-        {
-            Write-Error -Message "Failed to fetch OAuth token: $($_.Exception.Message)"
-            throw
-        }
-        return $headers
-    }
-    Function update-claim
-    {
-        param(
-            [Parameter(Mandatory = $true)]
-            [INT]$Id
-        )
-        try 
-        {
-            $body = @{
-                "ClaimType"     = $ClaimType
-                "ClaimValue"    = $ClaimValue
-                "Roles"         = $Roles -split ' '
-            }
-            if ($Template)
-            {
-                $body['Template'] = $Template
-            }
-            $jsonbody = $body | ConvertTo-Json
-            $postcall = Invoke-RestMethod -Uri "$($Variables.ACMEDNS)/Claims/$Id" -Method Put -Headers (Get-ACMEHeaders) -ContentType "application/json" -body $jsonbody
-            if ($postcall.StatusCode -eq 200)
-            {
-                Write-Information -MessageData "Claim: $($ClaimValue) was updated sucessfully"
-            }
-        } 
-        catch 
-        {
-            Write-Error "An error occurred in update-claims: $($_)"
-        }
-    }
-    Function add-claim
-    {
-        try 
-        {
-            $body = @{
-                "ClaimType"     = $ClaimType
-                "ClaimValue"    = $ClaimValue
-                "Roles"         = $Roles -split ' '
-            }
-            if ($Template)
-            {
-                $body['Template'] = $Template
-            }
-            $jsonbody = $body | ConvertTo-Json
-            $postcall = Invoke-RestMethod -Uri "$($Variables.ACMEDNS)/Claims" -Method Post -Headers (Get-ACMEHeaders) -ContentType "application/json" -body $jsonbody
-            if ($postcall.StatusCode -eq 200)
-            {
-                Write-Information -MessageData "Claim: $($ClaimValue) was added sucessfully"
-            }
-        } 
-        catch 
-        {
-            Write-Error "An error occurred in post-claims: $($_)"
-        }
-    }
-    Function get-claims
-    {
-        try 
-        {
-            $getcall = Invoke-webrequest -Uri "$($Variables.ACMEDNS)/Claims" -Method Get -Headers (Get-ACMEHeaders) -ContentType "application/json"
-            if ($getcall.StatusCode -eq 200)
-            {
-                return $getcall.Content | ConvertFrom-Json
-            }
-            else {
-                Write-Error -Message "Failed to get claims: $($_.Exception.Message)"
-            }
-        } 
-        catch 
-        {
-            Write-Error "An error occurred in get-claims: $($_.Exception.Message)"
-        }
-    }
-
-    Function remove-claim
-    {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$id
-        )
-        try 
-        {
-            $deletecall = Invoke-webrequest -Uri "$($Variables.ACMEDNS)/Claims/$id" -Method Delete -Headers (Get-ACMEHeaders) -ContentType "application/json"
-            if ($deletecall.StatusCode -eq 204)
-            {
-                return $true
-            }
-        } 
-        catch 
-        {
-            Write-Error "An error occurred in get-claims: $($_)"
-        }
-    }
-
-    $InformationPreference = "Continue"
-    $ErrorActionPreference = "Stop"
-    try 
-    {
-        $Script:Variables = load_variables -environment $environment
-        if ([string]::IsNullOrEmpty($Variables['client_secret'])) {
-            $Variables['client_secret'] = Read-Host "Please enter the client secret for the $environment environment"
-        }
-        write-Information "Getting claims..."
-        $claims = get-claims
-        if ($claims.Count -gt 0)
-        {
-            if ($action -eq "show")
-            {
-                Write-Information "Showing all claims:"
-                $claims | Format-Table -AutoSize
-                return
-            }
-            if ($action -eq "remove")
-            {
-                $claims | Format-Table -AutoSize
-                write-host "Please type the Id you want to remove:"
-                $id = Read-Host
-                $result = remove-claim -Id $id
-                if ($result)
-                {
-                    Write-Information "Claim with ID: $id was removed successfully."
-                }
-                else 
-                {
-                    Write-Error "Failed to remove claim with ID: $id"
-                }
-            }
-            if ($action -eq "Update" -or $action -eq "add")
-            {
-                $claimExists = $claims | Where-Object { $_.template -eq $Template -and $_.ClaimType -eq $ClaimType -and $_.ClaimValue -eq $ClaimValue }
-                if ($claimExists.count -gt 0)
-                {
-                    write-Information "Found existing claim: $($claimExists.ClaimValue) with ID: $($claimExists.id)"
-                    if ($action -eq "update")
-                    {
-                        update-claim -Id $claimExists.id
-                        Write-Information "Claim: $($ClaimValue) was updated sucessfully"
-                    }
-                    elseif ($action -eq "add")
-                    {
-                        Write-Information "Claim: $($ClaimValue) already exists for this template and claim type."
-                    }
-                    else 
-                    {
-                        Write-Information "No matching claim found for action: $action"
-                    }
-                }
-                elseif ($action -eq "add")
-                {
-                    Write-Information "Claim: $($ClaimValue) does not exist, adding."
-                    add-claim
-                    Write-Information "Claim: $($ClaimValue) was added sucessfully"
-                }
-                else 
-                {
-                    Write-Information "No matching claim found for action: $action"
-                }
-            }
-        }
-        else 
-        {
-            Write-Information "Problems getting claims."
-        }
-    }
-    catch 
-    {
-        Write-Error "An error occurred: $_"
-    }
-    finally 
-    {
-        Write-Information "Script execution completed."
-    }
+} catch {
+    Write-Error "Fatal: $_"
 }
