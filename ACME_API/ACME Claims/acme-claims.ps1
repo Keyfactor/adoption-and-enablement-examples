@@ -18,12 +18,12 @@ function Get-AcmeEnvironment {
             ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
         }
         'Lab' = @{
-            CLIENT_ID       = 'd424706f-3c5f-453e-8b6e-2be54788bd17'
-            CLIENT_SECRET   = 'Z5ETEC_mY8Z6McI8t2KRz5h-eXeQYm~1y0xngF06VlF8.ttCtDX1vAAjAO_U6ghm'
-            TOKEN_URL       = 'https://auth.pingone.com/3729a543-20bf-44b1-b92b-7ceef13aeecf/as/token'
-            SCOPE           = 'APISCOPE'
-            AUDIENCE        = 'APISCOPE'
-            ACMEDNS         = 'https://boeingoauth.kfdelivery.com/ACME'
+            CLIENT_ID     = ''
+            CLIENT_SECRET = ''
+            TOKEN_URL     = ''
+            SCOPE         = ''
+            AUDIENCE      = ''
+            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
         }
     }
     $vars = $config[$EnvironmentName]
