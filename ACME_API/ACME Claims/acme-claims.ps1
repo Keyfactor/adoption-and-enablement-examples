@@ -18,12 +18,12 @@ function Get-AcmeEnvironment {
             ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
         }
         'Lab' = @{
-            CLIENT_ID     = ''
-            CLIENT_SECRET = ''
-            TOKEN_URL     = ''
-            SCOPE         = ''
-            AUDIENCE      = ''
-            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+            CLIENT_ID       = 'd424706f-3c5f-453e-8b6e-2be54788bd17'
+            CLIENT_SECRET   = 'Z5ETEC_mY8Z6McI8t2KRz5h-eXeQYm~1y0xngF06VlF8.ttCtDX1vAAjAO_U6ghm'
+            TOKEN_URL       = 'https://auth.pingone.com/3729a543-20bf-44b1-b92b-7ceef13aeecf/as/token'
+            SCOPE           = 'APISCOPE'
+            AUDIENCE        = 'APISCOPE'
+            ACMEDNS         = 'https://boeingoauth.kfdelivery.com/ACME'
         }
     }
     $vars = $config[$EnvironmentName]
@@ -141,6 +141,12 @@ function Add-AcmeClaimMenu {
         }
         $selectedRoles = ($response -split '[,\s]+' | ForEach-Object { $roleMap[$_] } | Where-Object { $_ })
         $claimValue = Read-Host "Enter Claim Subject"
+        $claims = Get-AcmeClaims -Vars $Vars
+        if ($claims | Where-Object { $_.claimValue -eq $claimValue })
+        {
+            Write-Host "Invalid claim, Claim with the given SUB already exists. Please try again" -ForegroundColor Red
+            continue
+        }
         $template = if ($selectedRoles -contains 'EnrollmentUser') { Read-Host "Template Shortname required" } else { $null }
         Add-AcmeClaim -Vars $Vars -ClaimValue $claimValue -Roles ($selectedRoles -join ' ') -Template $template
     }
@@ -153,6 +159,7 @@ function Update-AcmeClaimMenu {
         $id = Read-Host "Enter Claim ID or press enter to return to the action menu"
         if (-not $id) { write-host "no entry selected, returning to action menu" -ForegroundColor Yellow; start-sleep -seconds 1.5; return}
         $claim = $claims | Where-Object { $_.id -eq $id }
+        write-host "$claim"
         if (-not $claim.id) { write-host "Id: $id is not a valid claim Id. Please select a valid claim Id."; continue}
         while ($true) {
             Write-Host "=== Update Claim ===`n[1] Add Template`n[2] New Template (Clear others)`n[3] Update Roles`n[4] Return to Action Menu" -ForegroundColor Blue
@@ -163,23 +170,23 @@ function Update-AcmeClaimMenu {
                 Write-Host "Invalid action, please try again." -ForegroundColor Red
                 continue
             }
-        }
-        switch ($action) {
-            '1' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template Shortname") }
-            '2' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template Shortname") -Remove }
-            '3' { 
-                $roleMap = @{ '1' = 'EnrollmentUser'; '2' = 'AccountAdmin'; '3' = 'SuperAdmin' }
-                write-host "[1] EnrollmentUser`n[2] AccountAdmin`n[3] SuperAdmin`n[4] Return"
-                $roles = Read-Host "Enter new roles (space separated)"
-                if ($roles -eq '4' -or [string]::IsNullOrWhiteSpace($roles)) { return }
-                if ($action -notin '1','2','3') {
-                    Write-Host "Invalid action, please try again." -ForegroundColor Red
-                    continue
+            switch ($action) {
+                '1' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template Shortname") }
+                '2' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template Shortname") -Remove; show-claims -vars $vars }
+                '3' { 
+                    $roleMap = @{ '1' = 'EnrollmentUser'; '2' = 'AccountAdmin'; '3' = 'SuperAdmin' }
+                    write-host "[1] EnrollmentUser`n[2] AccountAdmin`n[3] SuperAdmin`n[4] Return"
+                    $roles = Read-Host "Enter new roles (space separated)"
+                    if ($roles -eq '4' -or [string]::IsNullOrWhiteSpace($roles)) { return }
+                    if ($action -notin '1','2','3') {
+                        Write-Host "Invalid action, please try again." -ForegroundColor Red
+                        continue
+                    }
+                    $selectedRoles = ($roles -split '[,\s]+' | Where-Object { $_ -and $roleMap.ContainsKey($_) } | ForEach-Object { $roleMap[$_] })
+                    Update-AcmeClaim -Vars $Vars -Claim $claim -Role $selectedRoles
                 }
-                $selectedRoles = ($roles -split '[,\s]+' | Where-Object { $_ -and $roleMap.ContainsKey($_) } | ForEach-Object { $roleMap[$_] })
-                Update-AcmeClaim -Vars $Vars -Claim $claim -Role $selectedRoles
+                default { write-host "no entry selected, returning to action menu" -ForegroundColor Yellow; start-sleep -seconds 1.5; return}
             }
-            default { write-host "no entry selected, returning to action menu" -ForegroundColor Yellow; start-sleep -seconds 1.5; return}
         }
     }
 }
