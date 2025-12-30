@@ -22,7 +22,8 @@ A PowerShell-based utility designed to manage user claims, roles, and templates 
 ## Setup & Configuration
 
 Open `acme-claims.ps1` and locate the `Get-AcmeEnvironment` function. Replace the placeholder values with your organization's specific details for each environment:
-```powershell 
+
+```powershell
 'Production' = @{ 
     CLIENT_ID = 'your_prod_client_id' 
     CLIENT_SECRET = 'your_prod_client_secret' 
@@ -36,9 +37,11 @@ Open `acme-claims.ps1` and locate the `Get-AcmeEnvironment` function. Replace th
 ## How to Use
 
 1. **Launch**: Execute the script in a PowerShell terminal:
+
    ```powershell
    .\acme-claims.ps1
    ```
+
 2. **Select Environment**: Choose from Production, Non-Production, or Lab.
 3. **Navigate Menus**:
    - Use the **Action Menu** to select between showing, adding, updating, or removing claims.
