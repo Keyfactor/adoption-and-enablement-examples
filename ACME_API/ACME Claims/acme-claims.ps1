@@ -220,6 +220,9 @@ $InformationPreference = "Continue"
 $ErrorActionPreference = "Stop"
 try {
     $Variables = Invoke-MainMenu
+    if (-not $Variables['CLIENT_SECRET']) { 
+        $Variables['CLIENT_SECRET'] = Read-Host -AsSecureString "Enter CLIENT_SECRET for selected environment"
+    }
     if (-not $Variables) { Write-Host "unable to load environment variables.Exiting script." -ForegroundColor Red; exit }
     if (-not (Get-AcmeHeaders -Vars $Variables)) { Write-Host "Unable to retrieve OAuth token, Please check variables." -ForegroundColor Red; exit }
     if (-not (Test-AcmeConnection -Vars $Variables)) {Write-host "Unable to connect to Acme Service, Please check variables." -ForegroundColor Red; exit}
