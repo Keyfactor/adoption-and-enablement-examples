@@ -8,6 +8,7 @@ function Get-AcmeEnvironment {
             SCOPE         = ''
             AUDIENCE      = ''
             ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+            KeyfactorDNS  = 'https://customer.keyfactorpki.com/keyfactorapi'
         }
         'Non-Production' = @{
             CLIENT_ID     = ''
@@ -16,14 +17,16 @@ function Get-AcmeEnvironment {
             SCOPE         = ''
             AUDIENCE      = ''
             ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+            KeyfactorDNS  = 'https://customer.keyfactorpki.com/keyfactorapi'
         }
         'Lab' = @{
-            CLIENT_ID     = 'd424706f-3c5f-453e-8b6e-2be54788bd17'
-            CLIENT_SECRET = 'Z5ETEC_mY8Z6McI8t2KRz5h-eXeQYm~1y0xngF06VlF8.ttCtDX1vAAjAO_U6ghm'
-            TOKEN_URL     = 'https://auth.pingone.com/3729a543-20bf-44b1-b92b-7ceef13aeecf/as/token'
-            SCOPE         = 'APISCOPE'
-            AUDIENCE      = 'APISCOPE'
-            ACMEDNS       = 'https://boeingoauth.kfdelivery.com/ACME'
+            CLIENT_ID     = ''
+            CLIENT_SECRET = ''
+            TOKEN_URL     = ''
+            SCOPE         = ''
+            AUDIENCE      = ''
+            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
+            KeyfactorDNS  = 'https://customer.keyfactorpki.com/keyfactorapi'
         }
     }
     $vars = $config[$EnvironmentName]
@@ -32,7 +35,7 @@ function Get-AcmeEnvironment {
     }
     return $vars
 }
-function Get-AcmeHeaders {
+function Get-Headers {
     param($Vars)
     $authBody = @{
         grant_type    = 'client_credentials'
@@ -52,13 +55,36 @@ function Invoke-AcmeRequest {
     $params = @{
         Uri               = $Uri
         Method            = $Method
-        Headers           = Get-AcmeHeaders -Vars $Vars
+        Headers           = Get-Headers -Vars $Vars
         ContentType       = "application/json"
         UseBasicParsing   = $true
         ErrorAction       = 'Stop'
     }
     if ($Body) { $params.Body = ($Body | ConvertTo-Json) }
     return Invoke-WebRequest @params
+}
+function Invoke-KeyfactorRequest {
+    param($Uri, $Method = 'Get', $Body = $null, $Vars)
+    $headers = Get-Headers -Vars $Vars
+    $headers["x-keyfactor-requested-with"] = "APIClient"
+    $headers["x-keyfactor-api-version"] = "1.0"
+    $params = @{
+        Uri               = $Uri
+        Method            = $Method
+        Headers           = $headers
+        ContentType       = "application/json"
+        UseBasicParsing   = $true
+        ErrorAction       = 'Stop'
+    }
+    if ($Body) { $params.Body = ($Body | ConvertTo-Json) }
+    return Invoke-WebRequest @params
+}
+function Get-Templates{
+    param($vars)
+    try{
+        $response = Invoke-KeyfactorRequest -Uri "$($vars.KeyfactorDNS)/EnrollmentPatterns?QueryString=AllowedEnrollmentType%20-eq%20%222%22&ReturnLimit=200" -Vars $vars
+        return $response.Content | ConvertFrom-Json
+    } catch { return $false }
 }
 function Test-AcmeConnection {
     param($Vars)
@@ -74,23 +100,19 @@ function Get-AcmeClaims {
     return $response.Content | ConvertFrom-Json
 }
 function Add-AcmeClaim {
-    param($Vars, $ClaimValue, $Roles, $Template = $null)
-    $body = @{ ClaimType = 'Sub'; ClaimValue = $ClaimValue; Roles = ($Roles -split ' ') }
+    param($Vars, $ClaimValue, $Roles, $Template = $null, $claimtype)
+    $body = @{ ClaimType = $claimtype; ClaimValue = $ClaimValue; Roles = ($Roles -split ' ') }
     if ($Template) { $body.Template = $Template }
     $response = Invoke-AcmeRequest -Uri "$($Vars.ACMEDNS)/Claims" -Method Post -Body $body -Vars $Vars
-    if ($response.StatusCode -eq 200) { Write-Information "Claim $ClaimValue added successfully." -foregroundcolor Green }
+    if ($response.StatusCode -eq 200) { Write-host "Claim $ClaimValue added successfully." -foregroundcolor Green }
 }
 function Update-AcmeClaim {
-    param($Vars, $Claim, $Template, $Role, [switch]$Remove)
+    param($Vars, $Claim, $Template, $Role)
     $body = @{
         ClaimType  = $Claim.ClaimType
         ClaimValue = $Claim.ClaimValue
         Roles      = @(if ($Role) {$Role -split '\s+'} else {$Claim.Roles})
-        Template   = $Claim.Template
-    }
-    if ($Template) {
-        $templates = if ($Remove) { @($Template) } else { @($Template) + @($Claim.template) | Where-Object { $_ } }
-        $body.Template = ($templates | Select-Object -Unique) -join ' '
+        Template   = $Template
     }
     $response = Invoke-AcmeRequest -Uri "$($Vars.ACMEDNS)/Claims/$($Claim.id)" -Method Put -Body $body -Vars $Vars
     if ($response.StatusCode -eq 200) { Write-Information "Claim updated successfully."}
@@ -109,7 +131,7 @@ function Remove-AcmeClaimMenu {
     param($Vars)
     while ($true) {
         $claims = Get-AcmeClaims -Vars $Vars
-        if (-not $claims) { Write-Host "No claims available."; return }
+        if (-not $claims) { Write-Host "No claims available." -ForegroundColor Yellow; return }
         $claims | Format-Table -AutoSize | Out-Host
         $id = Read-Host "Enter Claim ID to remove (or Enter to return to the action menu)"
         if ([string]::IsNullOrWhiteSpace($id)) { return }
@@ -131,18 +153,44 @@ function Remove-AcmeClaimMenu {
 function Add-AcmeClaimMenu {
     param($Vars)
     $roleMap = @{ '1' = 'EnrollmentUser'; '2' = 'AccountAdmin'; '3' = 'SuperAdmin' }
+    $typeMap = @{ '1' = 'Role'; '2' = 'Subject' }
     while ($true) {
-        Write-Host "=== Add Claim ===`n[1] EnrollmentUser`n[2] AccountAdmin`n[3] SuperAdmin`n[4] Return to action menu"
+        Write-Host "=== Add Claim ===`n[1] EnrollmentUser`n[2] AccountAdmin`n[3] SuperAdmin`n[4] Return to action menu" -ForegroundColor Blue
         $response = Read-Host "Select roles (e.g. 1,2)"
-        if ($response -eq '4' -or [string]::IsNullOrWhiteSpace($response)) { return }
-        if ($response -notin '1','2','3') {
+        $validSet = @('1','2','3')
+        $tokens = $response -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+        if ($tokens -contains '4' -or [string]::IsNullOrWhiteSpace($response)) { return }
+        $invalid = $tokens | Where-Object { $_ -notin $validSet }
+        if ($invalid -and $invalid.Count -gt 0) {
+            Write-Host "Invalid selection: $($invalid -join ', '). Please select again." -ForegroundColor Red
+            continue
+        }
+        $uniqueTokens = $tokens | Select-Object -Unique
+        $selectedRoles = $uniqueTokens | ForEach-Object { $roleMap[$_] }
+        Write-Host "=== ClaimType ===`n[1] OAuth Role`n[2] OAuth Subject`n[3] Return to action menu" -ForegroundColor Blue
+        $response = Read-Host "Select Claim Type"
+        if ($response -eq '3' -or [string]::IsNullOrWhiteSpace($response)) { return }
+        if ($response -notin '1','2') {
             Write-Host "Invalid selection, please select again." -ForegroundColor Red
             continue
         }
-        $selectedRoles = ($response -split '[,\s]+' | ForEach-Object { $roleMap[$_] } | Where-Object { $_ })
-        $claimValue = Read-Host "Enter Claim Subject"
-        $template = if ($selectedRoles -contains 'EnrollmentUser') { Read-Host "Template Shortname required" } else { $null }
-        Add-AcmeClaim -Vars $Vars -ClaimValue $claimValue -Roles ($selectedRoles -join ' ') -Template $template
+        $selectedClaimType = ($response -split '[,\s]+' | ForEach-Object { $typeMap[$_] } | Where-Object { $_ })
+        $claimValue = Read-Host "Enter Claim Value"
+        $claims = Get-AcmeClaims -Vars $Vars
+        if ($claims | Where-Object { $_.claimValue -eq $claimValue })
+        {
+            Write-Host "Invalid claim, Claim already exists. Please try again" -ForegroundColor Red
+            continue
+        }
+        $template = if ($selectedRoles -contains 'EnrollmentUser') 
+        { 
+            $templates = (Get-Templates -vars $Vars).template
+            $templates | Select-Object Id, TemplateName | Sort-Object Id | Format-Table -AutoSize | Out-Host
+            $templateid = Read-Host "Enter the ID of the template for this claim or press Enter to return"
+            if ([string]::IsNullOrWhiteSpace($response)) { return }
+            ($templates | Where-Object { $_.Id -eq $templateid }).TemplateName
+        } else { $null }
+        Add-AcmeClaim -Vars $Vars -ClaimValue $claimValue -Roles ($selectedRoles -join ' ') -Template $template -claimtype $selectedClaimType
     }
 }
 function Update-AcmeClaimMenu {
@@ -151,42 +199,49 @@ function Update-AcmeClaimMenu {
         $claims = Get-AcmeClaims -Vars $Vars
         $claims | Format-Table -AutoSize | Out-Host
         $id = Read-Host "Enter Claim ID or press enter to return to the action menu"
-        if (-not $id) { write-host "no entry selected, returning to action menu"; start-sleep -seconds 1.5; return}
+        if (-not $id) { write-host "no entry selected, returning to action menu" -ForegroundColor Yellow; start-sleep -seconds 1.5; return}
         $claim = $claims | Where-Object { $_.id -eq $id }
         if (-not $claim.id) { write-host "Id: $id is not a valid claim Id. Please select a valid claim Id."; continue}
         while ($true) {
-            Write-Host "=== Update Claim ===`n[1] Add Template`n[2] New Template (Clear others)`n[3] Update Roles`n[4] Return to Action Menu"
+            Write-Host "=== Update Claim ===`n[1] Replace current template`n[2] Update Roles`n[3] Return to Action Menu" -ForegroundColor Blue
             $action = Read-Host "Choose an action to complete or press enter to return to the action menu"
-            if ($action -eq '4') { return }
+            if ($action -eq '3') { return }
             elseif (-not $action) { return}
-            if ($action -notin '1','2','3','4') {
+            if ($action -notin '1','2','3') {
                 Write-Host "Invalid action, please try again." -ForegroundColor Red
                 continue
             }
-        }
-        switch ($action) {
-            '1' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template Shortname") }
-            '2' { Update-AcmeClaim -Vars $Vars -Claim $claim -Template (Read-Host "Template Shortname") -Remove }
-            '3' { 
+            if ($action -eq '2'){ 
                 $roleMap = @{ '1' = 'EnrollmentUser'; '2' = 'AccountAdmin'; '3' = 'SuperAdmin' }
                 write-host "[1] EnrollmentUser`n[2] AccountAdmin`n[3] SuperAdmin`n[4] Return"
                 $roles = Read-Host "Enter new roles (space separated)"
                 if ($roles -eq '4' -or [string]::IsNullOrWhiteSpace($roles)) { return }
-                if ($action -notin '1','2','3') {
-                    Write-Host "Invalid action, please try again." -ForegroundColor Red
-                    continue
-                }
+                if ($action -notin '1','2','3') {Write-Host "Invalid action, please try again." -ForegroundColor Red; continue}
                 $selectedRoles = ($roles -split '[,\s]+' | Where-Object { $_ -and $roleMap.ContainsKey($_) } | ForEach-Object { $roleMap[$_] })
-                Update-AcmeClaim -Vars $Vars -Claim $claim -Role $selectedRoles
+                $template = if ($selectedRoles -contains 'EnrollmentUser') { 
+                    $templates = (Get-Templates -vars $Vars).template
+                    $templates | Select-Object Id, TemplateName | Sort-Object Id | Format-Table -AutoSize | Out-Host
+                    $templateid = Read-Host "Enter the ID of the template for this claim or press Enter to return"
+                    if ([string]::IsNullOrWhiteSpace($templateid)) { return }
+                    ($templates | Where-Object { $_.Id -eq $templateid }).TemplateName
+                } else { $null }
+                Update-AcmeClaim -Vars $Vars -Claim $claim -Role $selectedRoles -Template $template
             }
-            default { write-host "no entry selected, returning to action menu"; start-sleep -seconds 1.5; return}
+            else{
+                $templates = (Get-Templates -vars $Vars).template
+                $templates | Select-Object Id, TemplateName | Sort-Object Id | Format-Table -AutoSize | Out-Host
+                $templateid = Read-Host "Enter the ID of the template for this claim or press Enter to return"
+                if ($templateid -contains $null) { return }
+                $template = ($templates | Where-Object { $_.Id -eq $templateid }).TemplateName
+                Update-AcmeClaim -Vars $Vars -Claim $claim -Template $template 
+            } 
         }
     }
 }
 function Invoke-ActionMenu {
     param($Vars)
     while ($true) {
-        Write-Host "=== Action Menu ===`n[1] Show Claims`n[2] Add Claim`n[3] Update Claim`n[4] Remove Claim`n[5] Exit"
+        Write-Host "=== Action Menu ===`n[1] Show Claims`n[2] Add Claim`n[3] Update Claim`n[4] Remove Claim`n[5] Exit" -ForegroundColor Blue
         $action = Read-Host "Select an Action"
         if ($action -notin '1','2','3','4','5') {
             Write-Host "Invalid action, please select again." -ForegroundColor Red
@@ -203,7 +258,7 @@ function Invoke-ActionMenu {
 }
 function Invoke-MainMenu {
     while ($true) {
-        Write-Host "=== Environment Menu ===`n[1] Production`n[2] Non-Production`n[3] Lab`n[4] Exit"
+        Write-Host "=== Environment Menu ===`n[1] Production`n[2] Non-Production`n[3] Lab`n[4] Exit" -ForegroundColor Blue
         $choice = Read-Host "Choice"
         if ($choice -eq '4') { return $null }
         if ($choice -notin '1','2','3') {
@@ -220,9 +275,12 @@ $InformationPreference = "Continue"
 $ErrorActionPreference = "Stop"
 try {
     $Variables = Invoke-MainMenu
-    if (-not $Variables) { Write-Host "unable to load environment variables.Exiting script."; exit }
-    if (-not (Get-AcmeHeaders -Vars $Variables)) { Write-Host "Unable to retrieve OAuth token, Please check variables."; exit }
-    if (-not (Test-AcmeConnection -Vars $Variables)) {Write-host "Unable to connect to Acme Service, Please check variables."; exit}
+    if (-not $Variables['CLIENT_SECRET']) { 
+        $Variables['CLIENT_SECRET'] = Read-Host -AsSecureString "Enter CLIENT_SECRET for selected environment"
+    }
+    if (-not $Variables) { Write-Host "unable to load environment variables.Exiting script." -ForegroundColor Red; exit }
+    if (-not (Get-Headers -Vars $Variables)) { Write-Host "Unable to retrieve OAuth token, Please check variables." -ForegroundColor Red; exit }
+    if (-not (Test-AcmeConnection -Vars $Variables)) {Write-host "Unable to connect to Acme Service, Please check variables." -ForegroundColor Red; exit}
     Invoke-ActionMenu -Vars $Variables
 } catch {
     write-error "An error occurred: $_"
