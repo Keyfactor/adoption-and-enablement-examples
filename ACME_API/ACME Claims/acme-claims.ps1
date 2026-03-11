@@ -25,8 +25,8 @@ function Get-AcmeEnvironment {
             TOKEN_URL     = ''
             SCOPE         = ''
             AUDIENCE      = ''
-            ACMEDNS       = 'https://Customer.kfdelivery.com/ACME'
-            KeyfactorDNS  = 'https://customer.keyfactorpki.com/keyfactorapi'
+            ACMEDNS       = 'https://boeingoauth.kfdelivery.com/ACME'
+            KeyfactorDNS  = 'https://boeingoauth.kfdelivery.com/keyfactorapi'
         }
     }
     $vars = $config[$EnvironmentName]
