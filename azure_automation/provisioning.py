@@ -8,6 +8,7 @@ from azure.identity import ManagedIdentityCredential
 from azure.keyvault.secrets import SecretClient
 import os
 
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 environment = "Development"
