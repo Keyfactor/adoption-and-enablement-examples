@@ -1,20 +1,16 @@
 import logging
 import requests
 import json
-import urllib3
 import time
 import sys
 from azure.identity import ManagedIdentityCredential
 from azure.keyvault.secrets import SecretClient
-import os
 
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 environment = "Development"
 log_level = logging.DEBUG
 
-# Logging
+#Logging
 global logger
 logger = logging.getLogger(environment)
 logger.setLevel(log_level)
@@ -30,114 +26,26 @@ logger.propagate = False
 def load_variables():
     """
     Load configuration values, pulling secrets from Key Vault via Managed Identity.
-    """
-    kv_uri = _require_env("https://jhowland-0082450-akv.vault.azure.net/")
-    logger.info("Environment variable for Key Vault URI: %s", kv_uri)
-
-    # Map your config keys to Key Vault secret names
-    secret_map = {
-        "entra_client_id": os.getenv("KV_SECRET_ENTRA_CLIENT_ID", "entra-client-id"),
-        "entra_client_secret": os.getenv("KV_SECRET_ENTRA_CLIENT_SECRET", "entra-client-secret"),
-        "client_id": os.getenv("KV_SECRET_PING_CLIENT_ID", "ping-client-id"),
-        "client_secret": os.getenv("KV_SECRET_PING_CLIENT_SECRET", "ping-client-secret"),
-    }
-
+    """ 
+    kv_uri ="https://KEYVAULTURL-akv.vault.azure.net/"
     credential = ManagedIdentityCredential()
     kv_client = SecretClient(vault_url=kv_uri, credential=credential)
 
-    # Fetch each secret once (cached in a dict)
-    secrets = {}
-    for key, secret_name in secret_map.items():
-        try:
-            secrets[key] = _get_secret_value(kv_client, secret_name)
-            logger.info("Loaded secret for key '%s' from Key Vault secret '%s'", key, secret_name)
-        except Exception as ex:
-            logger.error("Failed to load Key Vault secret '%s' for key '%s': %s", secret_name, key, ex)
-            raise
-
     return {
         # secrets
-        "entra_client_id": secrets["entra_client_id"],
-        "entra_client_secret": secrets["entra_client_secret"],
-        "client_id": secrets["client_id"],
-        "client_secret": secrets["client_secret"],
+        "entra_client_id": kv_client.get_secret("SECRET").value,
+        "entra_client_secret": kv_client.get_secret("SECRET").value,
+        "client_id": kv_client.get_secret("SECRET").value,
+        "client_secret": kv_client.get_secret("SECRET").value,
 
         # non-secrets (constants)
-        'entra_token_url': 'https://login.microsoftonline.com/39da5865-ec98-4920-a720-2a478c2c8a18/oauth2/v2.0/token',
-        'token_url': 'https://auth.pingone.com/3729a543-20bf-44b1-b92b-7ceef13aeecf/as/token',
-        'scope': 'APISCOPE',
-        'audience': 'APISCOPE',
-        'keyfactordns': 'https://jhowland2541.kftestlab.com/Keyfactor/API',
-        'scheme': 'azure',
-        'entra_all_users_group': 'jhowlandtest',
-        'cert_check': True
-    }
-
-
-def _require_env(name: str) -> str:
-    val = os.getenv(name)
-    if not val:
-        raise RuntimeError(f"Missing required environment variable: {name}")
-    return val
-
-
-def _get_secret_value(client: SecretClient, secret_name: str) -> str:
-    # If you use versions, you can pass secret_name + version, but typically not needed.
-    return client.get_secret(secret_name).value
-
-
-def _require_env(name: str) -> str:
-    val = os.getenv(name)
-    if not val:
-        raise RuntimeError(f"Missing required environment variable: {name}")
-    return val
-
-
-def _get_secret_value(client: SecretClient, secret_name: str) -> str:
-    # If you use versions, you can pass secret_name + version, but typically not needed.
-    return client.get_secret(secret_name).value
-
-    """
-    Load configuration values, pulling secrets from Key Vault via Managed Identity.
-    """
-    kv_uri = _require_env("https://jhowland-0082450-akv.vault.azure.net/")
-
-    # Map your config keys to Key Vault secret names
-    secret_map = {
-        "entra_client_id": os.getenv("KV_SECRET_ENTRA_CLIENT_ID", "entra-client-id"),
-        "entra_client_secret": os.getenv("KV_SECRET_ENTRA_CLIENT_SECRET", "entra-client-secret"),
-        "client_id": os.getenv("KV_SECRET_PING_CLIENT_ID", "ping-client-id"),
-        "client_secret": os.getenv("KV_SECRET_PING_CLIENT_SECRET", "ping-client-secret"),
-    }
-
-    credential = ManagedIdentityCredential()
-    kv_client = SecretClient(vault_url=kv_uri, credential=credential)
-
-    # Fetch each secret once (cached in a dict)
-    secrets = {}
-    for key, secret_name in secret_map.items():
-        try:
-            secrets[key] = _get_secret_value(kv_client, secret_name)
-            logger.info("Loaded secret for key '%s' from Key Vault secret '%s'", key, secret_name)
-        except Exception as ex:
-            logger.error("Failed to load Key Vault secret '%s' for key '%s': %s", secret_name, key, ex)
-            raise
-
-    return {
-        # secrets
-        "entra_client_id": secrets["entra_client_id"],
-        "entra_client_secret": secrets["entra_client_secret"],
-        "client_id": secrets["client_id"],
-        "client_secret": secrets["client_secret"],
-
-        # non-secrets (constants)
-        'entra_token_url': 'https://login.microsoftonline.com/39da5865-ec98-4920-a720-2a478c2c8a18/oauth2/v2.0/token',
-        'token_url': 'https://auth.pingone.com/3729a543-20bf-44b1-b92b-7ceef13aeecf/as/token',
-        'scope': 'APISCOPE',
-        'audience': 'APISCOPE',
-        'keyfactordns': 'https://jhowland2541.kftestlab.com/Keyfactor/API',
-        'scheme': 'azure',
-        'entra_all_users_group': 'jhowlandtest',
+        'entra_token_url': 'https://TOKENURL',
+        'token_url': 'https://TOKENURL',
+        'scope': 'SCOPE',
+        'audience': 'AUDIENCE',
+        'keyfactordns': 'https://KEYFACTORCMDAPIURL/KeyfactorAPI',
+        'scheme': 'IDPSCHEMEINKF',
+        'entra_all_users_group': 'PARENTNESTEDGROUP',
         'cert_check': True
     }
 
@@ -202,7 +110,7 @@ class KeyfactorClient:
     # helper to allow & in value for api call
     def _check_name(self, name: str):
         if '&' in name:
-            name = name.replace('&', '%26')
+            name =  name.replace('&', '%26')
         return name
 
     def _request_with_retry(self, method: str, url: str, **kwargs):
@@ -330,8 +238,7 @@ def get_graph_transitive_members(group_name: str) -> list:
         search_resp.raise_for_status()
         search_data = search_resp.json()
         if search_data.get("value"):
-            logger.debug(
-                f"GET {search_resp.status_code} - {search_url} - Retrieved {len(search_data.get('value', []))} groups")
+            logger.debug(f"GET {search_resp.status_code} - {search_url} - Retrieved {len(search_data.get('value', []))} groups")
         if not search_data.get("value"):
             logger.warning(f"Group '{group_name}' not found")
             return []
@@ -442,7 +349,7 @@ def claims_check(role, member_name):
     return True
 
 
-def rebuild_claims(role, new_claim=None):
+def rebuild_claims(role, new_claim = None):
     """
     Rebuilds and updates the claims of a role. It processes each claim, applies any
     necessary transformations, and incorporates an optional new claim if provided.
@@ -676,7 +583,7 @@ def process_work(collection_needed, role_needed, oauth_claim_needed, member_name
             role = build_new_role(member_name, collection_id)
         elif not collection_needed:
             collection_id = client.collection_name_get(member_name)[0]['Id']
-            role = build_new_role(member_name, collection_id)
+            role =  build_new_role(member_name, collection_id)
         return role
 
 
