@@ -81,6 +81,28 @@ Team\Group Role:
 
 This model allows for default permissions to be granted to all users and specific permissions to be granted to specific groups.
 
+## How It Works
+
+```text
+Microsoft Graph API
+        │
+        │  (Transitive group members of `all_users_group`)
+        ▼
+   EntraClient
+        │
+        │  List of group display names (lowercase)
+        ▼
+  For each group member:
+        │
+        ├── Role NOT found
+        │       └──► Create new Role + OAuth Claim
+        │
+        ├── Role found, Claim MISSING
+        │       └──► Update Role, add OAuth Claim
+        │
+        └── Role found, Claim EXISTS
+                └──► Skip (no action needed)
+```
 
 ## Prerequisites
 
