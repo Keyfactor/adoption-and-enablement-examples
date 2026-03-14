@@ -38,7 +38,7 @@ def load_variables():
         vault_uri = automationassets.get_automation_variable("vault_uri")
         credential = ManagedIdentityCredential()
         kv_client = SecretClient(vault_url=vault_uri, credential=credential)
-        client_secret = kv_client.get_secret("client-secret").value
+        client_secret = (kv_client.get_secret("client-secret").value).lower()
     elif secret_location == "automation":
         logger.info("vault_uri is not configured, falling back to client-secret from automation variable.")
         client_secret = automationassets.get_automation_variable("client-secret")
@@ -56,29 +56,33 @@ def load_variables():
 
 
 def create_entra_auth_headers():
-    token_resp = requests.post(
-    variables["token_url"],
-    headers={"Content-Type": "application/x-www-form-urlencoded"},
-    data={
-        "grant_type": "client_credentials",
-        "client_id": variables["client_id"],
-        "client_secret": variables["client_secret"],
-        "scope": "https://graph.microsoft.com/.default"
-    },
-    timeout=30
-    )
-    token_resp.raise_for_status()
-    token = token_resp.json()["access_token"]
-    logger.debug(f"Obtained access token for Microsoft Graph API: {token[:20]}...")  # Print only the beginning of the token for security
-    if token:
-        logger.debug(f"Obtained access token for Microsoft Graph API: {token[:20]}...")  # Log only the beginning of the token for security
-    else:
-        logger.error("Failed to obtain access token for Microsoft Graph API")
-        raise Exception("Failed to obtain access token for Microsoft Graph API")
-    return {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    try:
+        token_resp = requests.post(
+        variables["token_url"],
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": variables["client_id"],
+            "client_secret": variables["client_secret"],
+            "scope": "https://graph.microsoft.com/.default"
+        },
+        timeout=30
+        )
+        token_resp.raise_for_status()
+        token = token_resp.json()["access_token"]
+        logger.debug(f"Obtained access token for Microsoft Graph API: {token[:20]}...")  # Print only the beginning of the token for security
+        if token:
+            logger.debug(f"Obtained access token for Microsoft Graph API: {token[:20]}...")  # Log only the beginning of the token for security
+        else:
+            logger.error("Failed to obtain access token for Microsoft Graph API")
+            raise Exception("Failed to obtain access token for Microsoft Graph API")
+        return {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error obtaining access token for Microsoft Graph API: {e}")
+        raise
 
 
 class KeyfactorClient:
