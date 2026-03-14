@@ -3,12 +3,13 @@ import requests
 import json
 import time
 import sys
-from azure.identity import ManagedIdentityCredential
-from azure.keyvault.secrets import SecretClient
+import automationassets
 
 
-environment = "Development"
-log_level = logging.DEBUG
+
+environment = automationassets.get_automation_variable("environment").lower()
+log_level_name = automationassets.get_automation_variable("log_level").upper()
+log_level = getattr(logging, log_level_name, logging.INFO)
 
 #Logging
 global logger
@@ -25,59 +26,58 @@ logger.propagate = False
 
 def load_variables():
     """
-    Load configuration values, pulling secrets from Key Vault via Managed Identity.
-    """ 
-    kv_uri ="https://KEYVAULTURL-akv.vault.azure.net/"
-    credential = ManagedIdentityCredential()
-    kv_client = SecretClient(vault_url=kv_uri, credential=credential)
+    Load configuration values, using Key Vault when vault_uri is configured,
+    otherwise using client-secret from Automation variables.
+    """
+    secret_location = automationassets.get_automation_variable("secret_location").lower()
+    logger.info(f"Loading configuration from {secret_location}")
+    if secret_location == "vault":
+        logger.info("vault_uri is configured, attempting to load secrets from Key Vault.")
+        from azure.keyvault.secrets import SecretClient
+        from azure.identity import ManagedIdentityCredential
+        vault_uri = automationassets.get_automation_variable("vault_uri")
+        credential = ManagedIdentityCredential()
+        kv_client = SecretClient(vault_url=vault_uri, credential=credential)
+        client_secret = kv_client.get_secret("client-secret").value
+    elif secret_location == "automation":
+        logger.info("vault_uri is not configured, falling back to client-secret from automation variable.")
+        client_secret = automationassets.get_automation_variable("client-secret")
 
     return {
-        # secrets
-        "entra_client_id": kv_client.get_secret("SECRET").value,
-        "entra_client_secret": kv_client.get_secret("SECRET").value,
-        "client_id": kv_client.get_secret("SECRET").value,
-        "client_secret": kv_client.get_secret("SECRET").value,
-
-        # non-secrets (constants)
-        'entra_token_url': 'https://TOKENURL',
-        'token_url': 'https://TOKENURL',
-        'scope': 'SCOPE',
-        'audience': 'AUDIENCE',
-        'keyfactordns': 'https://KEYFACTORCMDAPIURL/KeyfactorAPI',
-        'scheme': 'IDPSCHEMEINKF',
-        'entra_all_users_group': 'PARENTNESTEDGROUP',
-        'cert_check': True
+        "client_id": automationassets.get_automation_variable("client_id"),
+        "client_secret": client_secret,
+        "token_url": automationassets.get_automation_variable("token_url"),
+        "scope": automationassets.get_automation_variable("scope"),
+        "audience": automationassets.get_automation_variable("audience"),
+        "keyfactordns": automationassets.get_automation_variable("keyfactor_base_url"),
+        "scheme": automationassets.get_automation_variable("idp_scheme"),
+        "entra_all_users_group": automationassets.get_automation_variable("parent_group")
     }
 
 
-def create_auth_headers(header_version: int):
-    """
-    Creates authentication headers necessary for API requests by retrieving an access token
-    using the specified client credentials and constructing a header with required fields.
-
-    :param header_version: An integer representing the API version to be included in the headers.
-    :return: A dictionary containing the authentication headers needed for API access.
-    """
+def create_entra_auth_headers():
     token_resp = requests.post(
-        variables["token_url"],
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "grant_type": "client_credentials",
-            "client_id": variables["client_id"],
-            "client_secret": variables["client_secret"],
-            **({"scope": variables["scope"]} if variables.get("scope") else {}),
-            **({"audience": variables["audience"]} if variables.get("audience") else {}),
-        },
-        timeout=30, verify=variables["cert_check"]
+    variables["token_url"],
+    headers={"Content-Type": "application/x-www-form-urlencoded"},
+    data={
+        "grant_type": "client_credentials",
+        "client_id": variables["client_id"],
+        "client_secret": variables["client_secret"],
+        "scope": "https://graph.microsoft.com/.default"
+    },
+    timeout=30
     )
     token_resp.raise_for_status()
-    access_token = token_resp.json()["access_token"]
+    token = token_resp.json()["access_token"]
+    logger.debug(f"Obtained access token for Microsoft Graph API: {token[:20]}...")  # Print only the beginning of the token for security
+    if token:
+        logger.debug(f"Obtained access token for Microsoft Graph API: {token[:20]}...")  # Log only the beginning of the token for security
+    else:
+        logger.error("Failed to obtain access token for Microsoft Graph API")
+        raise Exception("Failed to obtain access token for Microsoft Graph API")
     return {
-        "content-type": "application/json",
-        "accept": "text/plain",
-        "x-keyfactor-requested-with": "APIClient",
-        "x-keyfactor-api-version": f"{header_version}.0",
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
     }
 
 
@@ -102,6 +102,32 @@ class KeyfactorClient:
         self.retries = retries
         self.backoff = backoff
 
+    def _get_access_token(self):
+        token_resp = requests.post(
+        self.vars["token_url"],
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": self.vars["client_id"],
+            "client_secret": self.vars["client_secret"],
+            **({"scope": self.vars["scope"]} if self.vars.get("scope") else {}),
+            **({"audience": self.vars["audience"]} if self.vars.get("audience") else {}),
+        },
+        timeout=30
+        )
+        token_resp.raise_for_status()
+        access_token = token_resp.json()["access_token"]
+        return access_token
+
+
+    def _create_auth_headers(self, header_version: int):
+        return {
+            "content-type": "application/json",
+            "accept": "text/plain",
+            "x-keyfactor-requested-with": "APIClient",
+            "x-keyfactor-api-version": f"{header_version}.0",
+            "Authorization": f"Bearer {self._get_access_token()}",
+        }
     # Helper to build full URL from base and endpoint
     def _build_url(self, endpoint: str) -> str:
         base = self.vars["keyfactordns"].rstrip("/")
@@ -118,8 +144,7 @@ class KeyfactorClient:
         for attempt in range(1, self.retries + 1):
             try:
                 logger.debug(f"Attempt {attempt}: {method.upper()} {url}")
-                resp = self.session.request(method, url, timeout=60, verify=self.vars["cert_check"],
-                                            **kwargs)
+                resp = self.session.request(method, url, timeout=60, **kwargs)
                 resp.raise_for_status()
                 return resp
             except requests.RequestException as e:
@@ -130,17 +155,17 @@ class KeyfactorClient:
         raise last_exception
 
     def get(self, endpoint: str, header_version: int = 1):
-        headers = create_auth_headers(header_version)
+        headers = self._create_auth_headers(header_version)
         url = self._build_url(endpoint)
         return self._request_with_retry("get", url, headers=headers)
 
     def post(self, endpoint: str, body: dict, header_version: int = 1):
-        headers = create_auth_headers(header_version)
+        headers = self._create_auth_headers(header_version)
         url = self._build_url(endpoint)
         return self._request_with_retry("post", url, headers=headers, data=json.dumps(body))
 
     def put(self, endpoint: str, body: dict, header_version: int = 1):
-        headers = create_auth_headers(header_version)
+        headers = self._create_auth_headers(header_version)
         url = self._build_url(endpoint)
         return self._request_with_retry("put", url, headers=headers, data=json.dumps(body))
 
@@ -213,28 +238,10 @@ def get_graph_transitive_members(group_name: str) -> list:
     """
     logger.info(f"Getting transitive members for group '{group_name}'")
     try:
-        token_resp = requests.post(
-            variables["entra_token_url"],
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            data={
-                "grant_type": "client_credentials",
-                "client_id": variables["entra_client_id"],
-                "client_secret": variables["entra_client_secret"],
-                "scope": "https://graph.microsoft.com/.default"
-            },
-            timeout=30, verify=variables["cert_check"]
-        )
-        token_resp.raise_for_status()
-        access_token = token_resp.json()["access_token"]
-        if access_token:
-            logger.debug(f"Access token retrieved successfully")
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
+        headers = create_entra_auth_headers()
+        logger.info(f"Using authentication headers: {headers}")
         search_url = f"https://graph.microsoft.com/v1.0/groups?$filter=displayName eq '{group_name}'"
-        search_resp = requests.get(search_url, headers=headers, timeout=30,
-                                   verify=variables["cert_check"])
+        search_resp = requests.get(search_url, headers=headers, timeout=30)
         search_resp.raise_for_status()
         search_data = search_resp.json()
         if search_data.get("value"):
@@ -247,8 +254,7 @@ def get_graph_transitive_members(group_name: str) -> list:
                        f"?$select=displayName")
         groups = []
         while members_url:
-            members_resp = requests.get(members_url, headers=headers, timeout=30,
-                                        verify=variables["cert_check"])
+            members_resp = requests.get(members_url, headers=headers, timeout=30)
             members_resp.raise_for_status()
             members_data = members_resp.json()
             group_members = [
@@ -267,26 +273,6 @@ def get_graph_transitive_members(group_name: str) -> list:
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching transitive group members from Entra for group '{group_name}': {e}")
         return []
-
-
-def build_collection(member_name: str):
-    """
-    Builds a collection with specific attributes and creates it using a client method.
-
-    :param member_name: The name to be used for the collection's name, description,
-        and query fields.
-    :return: The ID of the created collection.
-    """
-    logger.info(f"creating collection")
-    data = {
-        "Name": f"{member_name}",
-        "Description": f"{member_name}",
-        "Query": f"OwnerRoleName -eq \"{member_name}\"",
-        "DuplicationField": 0,
-        "ShowOnDashboard": False,
-        "Favorite": True
-    }
-    return (client.collection_create_post(data))['Id']
 
 
 def build_oauth_claim(member_name: str):
@@ -446,39 +432,14 @@ def build_claim(claim) -> dict:
     return new_claim
 
 
-def build_new_role(member_name, collection_id=None):
-    """
-    Creates a new role for the given member with specified permissions
-    and claims.
-
-    This function is responsible for building a new role using the provided
-    `member_name`. If a `collection_id` is specified, it will associate the
-    role with that collection ID, ensuring that the proper permissions
-    are assigned. The role is configured with claims and permission set
-    retrieved via the API, and it uses predefined schemes for authentication.
-    Logs the creation process and returns the API response.
-
-    :param member_name: Name of the member for whom the role is being created.
-    :type member_name: str
-    :param collection_id: Optional, ID of the collection to associate
-        with the permissions. Defaults to None.
-    :type collection_id: str, optional
-    :return: API response containing details of the created role.
-    :rtype: dict
-    """
+def build_new_role(member_name):
     logger.info("Creating New Role")
     data = {
         "name": member_name,
         "description": member_name,
         "emailaddress": "",
         "permissionSetid": (client.permissionset_name_get('global'))[0]['Id'],
-        "permissions": [
-            f"/certificates/collections/metadata/modify/{collection_id}/",
-            f"/certificates/collections/revoke/{collection_id}/",
-            f"/certificates/collections/change_owner/{collection_id}/",
-            f"/certificates/collections/private_key/read/{collection_id}/",
-            f"/certificates/collections/read/{collection_id}/"
-        ],
+        "permissions": [ ],
         "claims": [
             {
                 "claimtype": 4,
@@ -493,82 +454,11 @@ def build_new_role(member_name, collection_id=None):
     return new_role
 
 
-def add_collection_permissions(role, collection_id):
-    """
-    Adds specified collection permissions to the provided role. If the necessary
-    permissions for the given collection ID are not already present in the role's
-    `Permissions` list, they will be added. This function ensures that the role
-    has appropriate permissions to handle private keys, metadata modification,
-    revocation, ownership changes, and collection reading for the given collection.
-
-    :param role: A dictionary representing the role, which must include a `Permissions`
-        list to which the permissions will be appended.
-    :type role: dict
-    :param collection_id: The unique identifier representing a specific collection.
-    :type collection_id: str
-    :return: The updated role with the required collection permissions added.
-    :rtype: dict
-    """
-    logger.info("Creating Collection Permissions for Role")
-    if f"/certificates/collections/private_key/read/{collection_id}/" not in role.get('Permissions', []):
-        role['Permissions'].append(f"/certificates/collections/private_key/read/{collection_id}/")
-        role['Permissions'].append(f"/certificates/collections/metadata/modify/{collection_id}/")
-        role['Permissions'].append(f"/certificates/collections/revoke/{collection_id}/")
-        role['Permissions'].append(f"/certificates/collections/change_owner/{collection_id}/")
-        role['Permissions'].append(f"/certificates/collections/read/{collection_id}/")
-    logger.debug(f"Role Permissions: {role.get('Permissions')}")
-    return role
-
-
-def process_work(collection_needed, role_needed, oauth_claim_needed, member_name, role=None):
-    """
-    Processes and manages roles, permissions, OAuth claims, and collections. This function provides
-    the necessary operations to either update or build a new role based on specific requirements
-    such as permissions, OAuth claims, and collection criteria. It interacts with external services
-    to provision these operations where needed.
-
-    :param permission_needed: Flag indicating whether permissions should be added or checked
-        for the current role.
-    :type permission_needed: bool
-    :param collection_needed: Flag indicating whether a collection needs to be created
-        and associated with the role.
-    :type collection_needed: bool
-    :param role_needed: Flag indicating whether a new role should be built instead of modifying
-        the current role.
-    :type role_needed: bool
-    :param oauth_claim_needed: Flag indicating whether an OAuth claim needs to be built and
-        associated with the role.
-    :type oauth_claim_needed: bool
-    :param member_name: The name of the member for whom the role or collections are being processed.
-    :type member_name: str
-    :param role: The existing role object, if any, to be modified or used in the process.
-        Optional parameter.
-    :type role: dict, optional
-    :param collection_id: The ID of an existing collection, if available and applicable.
-        Optional parameter.
-    :type collection_id: str, optional
-    :return: The newly created or updated role object.
-    :rtype: dict
-    """
+def process_work(role_needed, oauth_claim_needed, member_name, role=None):
     if not role_needed:
-        global_permission = '/certificates/' in role["Permissions"]
-        permission_needed = True
-        collection = client.collection_name_get(member_name)
-
-        if collection and not global_permission:
-            collection_id = collection[0]['Id']
-            permission_needed = not any(str(collection_id) in p for p in role["Permissions"])
-
-        if collection_needed:
-            collection_id = build_collection(member_name)
-            role = add_collection_permissions(role, collection_id)
-
         if oauth_claim_needed:
             new_claim = build_oauth_claim(member_name)
             role = rebuild_claims(role, new_claim)
-
-        if not collection_needed and permission_needed:
-            role = add_collection_permissions(role, collection_id)
 
         if 'Immutable' in role:
             del role['Immutable']
@@ -578,28 +468,11 @@ def process_work(collection_needed, role_needed, oauth_claim_needed, member_name
         return client.role_update_put(role)
 
     if role_needed:
-        if collection_needed:
-            collection_id = build_collection(member_name)
-            role = build_new_role(member_name, collection_id)
-        elif not collection_needed:
-            collection_id = client.collection_name_get(member_name)[0]['Id']
-            role =  build_new_role(member_name, collection_id)
+        role =  build_new_role(member_name)
         return role
 
 
 def main():
-    """
-    Main function to orchestrate the process of managing roles, claims, and collections
-    for members obtained from the Graph API. This function initializes required
-    global variables, loads configurations, interacts with the Keyfactor Client,
-    and processes each member iteratively for role creation, claim verification,
-    or collection management.
-
-    :raises Exception: If an error occurs during processing of a member, it will
-        be logged, and the process will continue to the next member. These errors
-        do not halt the overall execution of the function.
-    :return: None
-    """
     global variables
     global client
     variables = load_variables()
@@ -617,26 +490,18 @@ def main():
                 logger.info(f"Role not found for: {member_name}, creating new role.")
                 logger.info(f"Checking if claim is in keyfactor")
                 oauth_claim_needed, role_needed = True, True
-                logger.info("Checking if a collection is in keyfactor")
-                collection = client.collection_name_get(member_name)
-                collection_needed = not collection
                 logger.info(f"role needs created: {role_needed}")
-                logger.info(f"collection needs created: {collection_needed}")
                 logger.info(f"claim needs created: {oauth_claim_needed}")
-                process_work(collection_needed, role_needed, oauth_claim_needed, member_name)
+                process_work(role_needed, oauth_claim_needed, member_name)
             else:
                 logger.info(f"Role found for: {member_name}, creating new role.")
                 complete_role = (client.role_id_get(role[0]['Id']))
                 logger.debug(f"Role Data: {complete_role}")
                 logger.info(f"Checking if claim is in keyfactor")
                 oauth_claim_needed = claims_check(complete_role, member_name)
-                logger.info("Checking if a collection is in keyfactor")
-                collection = client.collection_name_get(member_name)
-                collection_needed = not collection
-                logger.debug(f"collection needs created: {collection_needed}")
                 logger.debug(f"claim needs created: {oauth_claim_needed}")
-                if collection_needed or oauth_claim_needed:
-                    process_work(collection_needed, role_needed, oauth_claim_needed, member_name, complete_role)
+                if oauth_claim_needed:
+                    process_work(role_needed, oauth_claim_needed, member_name, complete_role)
                 else:
                     logger.info(f"Role is complete, Nothing to do for: {member_name}")
         except Exception as e:
