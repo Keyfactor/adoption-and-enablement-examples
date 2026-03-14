@@ -443,6 +443,7 @@ def build_new_role(member_name):
         "description": member_name,
         "emailaddress": "",
         "permissionSetid": (client.permissionset_name_get('global'))[0]['Id'],
+        "EnableCertOwnership": True,
         "permissions": [ ],
         "claims": [
             {
@@ -469,6 +470,7 @@ def process_work(role_needed, oauth_claim_needed, member_name, role=None):
 
         role = rebuild_claims(role)
         logger.debug(msg=f"New Role Data: {role}")
+        role['EnableCertOwnership'] = True
         return client.role_update_put(role)
 
     if role_needed:
