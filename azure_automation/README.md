@@ -212,7 +212,8 @@ The execution environment must be able to reach:
 | 3.10 | typing_extensions | 4.15.0 |
 | 3.10 | urllib3 | 2.6.3 |
 
-#### From a pip install command.
+#### Using pip command to save the whl's in a directory called packages
+
 ```aiignore
 pip download -d ./packages \
   azure-core==1.38.2 \
