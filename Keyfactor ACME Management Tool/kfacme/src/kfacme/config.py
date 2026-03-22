@@ -1,16 +1,11 @@
-from __future__ import annotations
 from pathlib import Path
 import importlib.util
 from typing import Any, Dict
 
 
-def load_user_variables(base_path: str | Path = ".") -> Dict[str, Any]:
-    """
-    Loads the user's ./kfacme/variables.py from disk and calls load_variables().
-    Expects load_variables() to return a dict.
-    """
+def load_user_variables(variables_file: str | Path | None = None, base_path: str | Path = ".") -> Dict[str, Any]:
     base = Path(base_path).resolve()
-    var_file = base / "kfacme" / "variables.py"
+    var_file = Path(variables_file).resolve() if variables_file else base / "kfacme" / "variables.py"
 
     if not var_file.exists():
         raise FileNotFoundError(
@@ -18,7 +13,6 @@ def load_user_variables(base_path: str | Path = ".") -> Dict[str, Any]:
             f"Run `kfacme init` first to generate it."
         )
 
-    # Load module from an explicit file path (no sys.path hacks)
     spec = importlib.util.spec_from_file_location("kfacme_user_variables", var_file)
     if spec is None or spec.loader is None:
         raise ImportError(f"Could not load module spec from {var_file}")

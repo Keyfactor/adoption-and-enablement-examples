@@ -6,8 +6,7 @@ import jwt
 from prettytable import PrettyTable
 from .acme_client import *
 from .config import load_user_variables
-
-
+from getpass import getpass
 def get_oidc_json(oidc_url):
     response = requests.get(oidc_url)
     response.raise_for_status()  # Raise an exception if the request fails
@@ -81,11 +80,20 @@ def display_claim_types_and_get_choice():
     click.secho("=== Choose ClaimType ===", fg="cyan")
     click.echo("[1] Role")
     click.echo("[2] Subject")
-    click.echo("[3] ClientId")
+    click.echo("[3] Client Id")
     click.echo("[4] Exit to Action Menu")
     click.echo("You can only select one ClaimType.")
 
-    choices = click.prompt("Choose which ClaimType to assign to the Claim (1-4)", type=str)
+    choices = click.prompt(
+        "Choose which ClaimType to assign to the Claim (1-4)",
+        type=str,
+        default="",
+        show_default=False,
+    ).strip()
+
+    if not choices:
+        click.secho("No ClaimType selected. Returning...", fg="yellow")
+        return None
 
     type_mapping = {
         "1": "role",
@@ -93,42 +101,49 @@ def display_claim_types_and_get_choice():
         "3": "clientid",
     }
     claim_type = type_mapping[choices] if choices in type_mapping else None
-    if claim_type is None:
-        click.secho(f"Invalid choice: {choices}. Please try again.", fg="red")
+    if not claim_type:
+        click.secho(f"Invalid choice: {choices}.", fg="red")
         return
     return claim_type
 
 
 def display_roles_and_get_choice():
-    while True:
-        click.clear()
-        click.secho("=== Choose Roles ===", fg="cyan")
-        click.echo("[1] AccountAdmin")
-        click.echo("[2] EnrollmentUser")
-        click.echo("[3] SuperAdmin")
-        click.echo("[4] Exit to Action Menu")
-        click.echo("You can select multiple roles by entering numbers separated by commas (e.g., 1,3).")
+    click.clear()
+    click.secho("=== Choose Roles ===", fg="cyan")
+    click.echo("[1] AccountAdmin")
+    click.echo("[2] EnrollmentUser")
+    click.echo("[3] SuperAdmin")
+    click.echo("[4] Exit to Action Menu")
+    click.echo("You can select multiple roles by entering numbers separated by commas (e.g., 1,3).")
 
-        choices = click.prompt("Choose which Roles to assign to the Claim (1-4)", type=str)
-        choices = [choice.strip() for choice in choices.split(",")]
+    choices = click.prompt(
+        "Choose which Roles to assign to the Claim (1-4)",
+        type=str,
+        default="",
+        show_default=False,
+    ).strip()
 
-        roles_mapping = {
-            "1": "AccountAdmin",
-            "2": "EnrollmentUser",
-            "3": "SuperAdmin",
-        }
-        roles = []
-        for choice in choices:
-            if choice == "4":  # Exit case
-                click.secho("Exiting to Claims Menu...", fg="cyan")
-                return
-            elif choice in roles_mapping:
-                roles.append(roles_mapping[choice])
-            else:
-                click.secho(f"Invalid choice: {choice}. Please try again.", fg="red")
-                return
-        roles = list(set(roles))
-        return roles
+    if not choices:
+        click.secho("No role selected. Returning...", fg="yellow")
+        return None
+
+    roles_mapping = {
+        "1": "AccountAdmin",
+        "2": "EnrollmentUser",
+        "3": "SuperAdmin",
+    }
+
+    roles = []
+    for choice in [c.strip() for c in choices.split(",")]:
+        if choice == "4":
+            click.secho("Exiting to Claims Menu...", fg="cyan")
+            return None
+        if choice not in roles_mapping:
+            click.secho(f"Invalid choice: {choice}.", fg="red")
+            return None
+        roles.append(roles_mapping[choice])
+
+    return list(dict.fromkeys(roles))
 
 
 def display_accounts_and_get_choice(accounts):
@@ -150,7 +165,7 @@ def display_accounts_and_get_choice(accounts):
     print(table)
 
     account_choice = input(
-        "Enter the account ID of the Keyfactor ACME account you want to change or press Enter to return: "
+        "Enter the Index User ID of the Keyfactor ACME account you want to change or press Enter to return: "
     ).strip()
 
     if not account_choice:
@@ -161,7 +176,8 @@ def display_accounts_and_get_choice(accounts):
     selected_account = next((account for account in accounts if account.get("Index") == int(account_choice)), None)
     if selected_account:
         if selected_account.get("status") == "revoked":
-            click.secho(f"Account {selected_account.get('accountId')} is revoked. Please select another account.", fg="red")
+            click.secho(f"Account {selected_account.get('accountId')} is revoked. Please select another account.",
+                        fg="red")
             sleep(2)
             return display_accounts_and_get_choice(accounts)
         return selected_account["accountId"]
@@ -172,12 +188,12 @@ def display_accounts_and_get_choice(accounts):
 
 
 def display_templates_and_get_choice(templates):
-    print(f"{'ID':<10}{'TemplateName':<20}")
-    print("-" * 30)
+    print(f"{'ID':<10}{'Template Name':<20}{'Pattern Name':<20}")
+    print("-" * 50)
     for template in templates:
         template_name = template.get("Template", {}).get("TemplateName", "")
-        print(f"{template['Id']:<10}{template_name:<20}")
-    print("-" * 30)
+        print(f"{template['Id']:<10}{template_name:<20}{template.get('Name', ''):<20}")
+    print("-" * 50)
 
     template_choice = input(
         "Enter the ID of the Certificate Template to associate with this claim or press Enter to return: ").strip()
@@ -201,14 +217,20 @@ def update_claim():
         if not claims:
             click.secho("No claims found", fg="red")
             return
-        from prettytable import PrettyTable
         table = PrettyTable()
         table.field_names = claims[0].keys()
         for claim in claims:
             table.add_row(claim.values())
         print(table)
-        click.secho("Only claim Roles and Template can be updated")
+        click.secho("Only Claim Roles and Template can be updated")
         choice_claim_id = input("Enter a Claim Id to Update: ")
+        if not choice_claim_id.isdigit():
+            click.secho("No Claim IS Selected, Returning to previous menu", fg="red")
+            sleep(2)
+            claims_menu()
+        if not any(claim["id"] == int(choice_claim_id) for claim in claims):
+            click.secho(f"Invalid Claim Id. There is no claim with ID {choice_claim_id}.", fg="red")
+            update_claim()
         matching_claim = next((claim for claim in claims if str(claim.get("id")) == str(choice_claim_id)), None)
         while True:
             click.secho("=== Update Claim Menu ===", fg="cyan")
@@ -216,19 +238,22 @@ def update_claim():
             click.echo("[2] Template")
             click.echo("[3] return to claims menu")
 
-            choice = click.prompt("Choose which catagory you want to update (1-3)", type=int)
+            choice = click.prompt("Choose which category you want to update (1-3)", default="", type=int)
 
             if choice == 1:
                 roles = display_roles_and_get_choice()
-                if roles:
-                    matching_claim["roles"] = roles
-                    if 'EnrollmentUser' in roles:
-                        templates = (acme_client.template_patterns_get()).json()
-                        template = display_templates_and_get_choice(templates)
-                        if template is None:
-                            update_claim()
-                        if template:
-                            matching_claim["template"] = template
+                if not roles:
+                    click.secho("No roles selected. Returning to Update Claim Menu...", fg="yellow")
+                    continue
+
+                matching_claim["roles"] = roles
+                if 'EnrollmentUser' in roles:
+                    templates = (acme_client.template_patterns_get()).json()
+                    template = display_templates_and_get_choice(templates)
+                    if template is None:
+                        update_claim()
+                    if template:
+                        matching_claim["template"] = template
 
             elif choice == 2:
                 templates = (acme_client.template_patterns_get()).json()
@@ -264,7 +289,6 @@ def remove_claim():
         if not claims:
             click.secho("No claims found", fg="red")
             return
-        from prettytable import PrettyTable
         table = PrettyTable()
         table.field_names = claims[0].keys()
         for claim in claims:
@@ -294,7 +318,6 @@ def show_claims():
     if not claims:
         click.secho("No claims found", fg="red")
         return
-    from prettytable import PrettyTable
     table = PrettyTable()
     table.field_names = claims[0].keys()
     for claim in claims:
@@ -304,34 +327,43 @@ def show_claims():
 
 
 def add_claim():
-    while True:
-        roles = display_roles_and_get_choice()
-        claim_type = display_claim_types_and_get_choice()
-        click.secho("=== Enter ClaimValue ===", fg="cyan")
-        claim_value = click.prompt("Enter the ClaimValue to assign to the Claim", type=str)
-        body = {
-            "ClaimType": claim_type,
-            "ClaimValue": claim_value,
-            "Roles": roles
-        }
-        template = None
-        if 'EnrollmentUser' in roles:
-            templates = (acme_client.template_patterns_get()).json()
-            template = display_templates_and_get_choice(templates)
-            if template is None:
-                add_claim()
-            if template:
-                body["Template"] = template
+    roles = display_roles_and_get_choice()
+    if not roles:
+        click.secho("No roles selected. Returning to Claims Menu...", fg="yellow")
+        sleep(2)
+        return
 
-        result = acme_client.claim_post(body)
-        if result.status_code == 200:
-            click.secho(f"Claim: {claim_value} was added successfully")
-            sleep(2)
-            return
-        else:
-            click.secho(result.text)
-            sleep(2)
-            return
+    claim_type = display_claim_types_and_get_choice()
+    if not claim_type:
+        click.secho("No claim type selected. Returning to Claims Menu...", fg="yellow")
+        sleep(2)
+        return
+
+    click.secho("=== Enter Claim Value ===", fg="cyan")
+    claim_value = click.prompt("Enter the Claim Value to assign to the Claim", type=str)
+    body = {
+        "ClaimType": claim_type,
+        "ClaimValue": claim_value,
+        "Roles": roles
+    }
+    template = None
+    if 'EnrollmentUser' in roles:
+        templates = (acme_client.template_patterns_get()).json()
+        template = display_templates_and_get_choice(templates)
+        if template is None:
+            add_claim()
+        if template:
+            body["Template"] = template
+    print(body)
+    result = acme_client.claim_post(body)
+    if result.status_code == 200:
+        click.secho(f"Claim: {claim_value} was added successfully")
+        sleep(2)
+        return
+    else:
+        click.secho(result.text)
+        sleep(2)
+        return
 
 
 def show_identifiers():
@@ -340,7 +372,6 @@ def show_identifiers():
     if not identifiers:
         click.secho("No identifiers found", fg="red")
         return
-    print(identifiers)
     for idx, claim in enumerate(identifiers, start=1):
         claim["Index"] = idx
     table = PrettyTable()
@@ -392,20 +423,20 @@ def add_identifier():
     while True:
         click.clear()
         click.secho("=== Identifier Main Menu ===", fg="cyan")
-        click.echo("[1] Fqdn EX(appsrvr12.keyexample.com)")
+        click.echo("[1] FQDN EX(appsrvr12.keyexample.com)")
         click.echo("[2] Regex EX([a-zA-Z0-9]+.keyexample.com)")
         click.echo("[3] Subnet EX(192.168.12.0/24 or 2001:db8:abcd::/48)")
         click.echo("[4] Wildcard EX(*.keyexample.com)")
         click.echo("[5] Exit to previous menu")
 
-        choice = click.prompt("Choose the Identifier Type (1-5)", type=int)
+        choice = click.prompt("Choose the Identifier Type (1-5)", default="", type=int)
 
         identifier = None
         itype = None
 
         if choice == 1:
             identifier = input("Enter the FQDN: ").strip()
-            itype = "Fqdn"
+            itype = "fqdn"
             if not _is_valid_fqdn(identifier):
                 click.secho(f"Invalid FQDN: {identifier}", fg="red")
                 sleep(2)
@@ -501,7 +532,7 @@ def remove_identifier():
         return remove_identifier()
     choice = int(choice)
     if not any(claim["Index"] == choice for claim in identifiers):
-        click.secho(f"Invalid Choice. The is no index value of {choice}.", fg="red")
+        click.secho(f"Invalid choice. There is no index value of {choice}.", fg="red")
         remove_identifier()
     else:
         matching_identifier = next((claim for claim in identifiers if str(claim.get("Index")) == str(choice)), None)
@@ -568,34 +599,36 @@ def change_template():
     return
 
 
-def eab_keys():
-    client_id = input("Enter the Client ID (press enter pr return to the previous memu): ").strip()
+def eab_keys(client_id:str = None, client_secret:str = None):
     if not client_id:
-        click.secho("No Client ID entered. Returning to previous menu...", fg="yellow")
-        sleep(2)
-        return
+        client_id = input("Enter the Client ID (press enter pr return to the previous menu): ").strip()
+        if not client_id:
+            click.secho("No Client ID entered. Returning to previous menu...", fg="yellow")
+            sleep(2)
+            return sub_menu()
 
-    client_secret = input("Enter the Client Secret (press enter pr return to the previous memu): ").strip()
     if not client_secret:
-        click.secho("No Secret entered. Returning to previous menu...", fg="yellow")
-        sleep(2)
-        return
+        client_secret = getpass("Enter the Client Secret (press enter pr return to the previous menu) ").strip()
+        if not client_secret:
+            click.secho("No Secret entered. Returning to previous menu...", fg="yellow")
+            sleep(2)
+            return sub_menu()
     clear_screen()
     try:
         headers = create_auth_headers(client_id, client_secret)
         templates = (acme_client.template_patterns_get()).json()
         if not templates:
             click.secho("No templates found", fg="red")
-            return
+            return sub_menu()
         click.secho("Select the template associated with your Account")
         template = display_templates_and_get_choice(templates)
         result = acme_client.key_management_get(template, headers)
         click.secho(result.text, fg="green")
         sleep(5)
-        return
+        return sub_menu()
     except Exception as e:
         click.secho("You do not have access to EAB keys for that template.  Please try again", fg="red")
-        eab_keys()
+        return sub_menu()
 
 
 def delete_eab_keys():
@@ -603,15 +636,15 @@ def delete_eab_keys():
     accounts = json.loads(response.text)
     if not accounts:
         click.secho("No accounts found", fg="red")
-        return
+        return sub_menu()
     id = display_accounts_and_get_choice(accounts)
     if id is None:
-        return
+        return sub_menu()
     click.secho(f"Are you sure you want to delete the account with ID {id}?", fg="red")
     click.secho("This action cannot be undone.", fg="red")
     click.secho("Press Enter to continue or Ctrl+C to exit.", fg="red")
 
-    result = acme_client.admin_accounts_revoke_post(id,True)
+    result = acme_client.admin_accounts_revoke_post(id, True)
     if result:
         click.secho(f"Account with ID {id} deleted successfully", fg="green")
     else:
@@ -621,7 +654,7 @@ def delete_eab_keys():
 def show_system_settings():
     result = acme_client.app_settings_get()
     settings = json.loads(result.text)
-    if not settings :
+    if not settings:
         click.secho("No settings  found", fg="red")
         return
 
@@ -659,12 +692,12 @@ def change_setting(s):
             "desired_value": "False",
             "already_msg": "Wildcard Enrollments are already denied",
         },
-        "revokation_enabled": {
+        "revocation_enabled": {
             "name": "Certificate Revocation Enabled",
             "desired_value": "True",
             "already_msg": "Certificate Revocation is already enabled",
         },
-        "revokation_disabled": {
+        "revocation_disabled": {
             "name": "Certificate Revocation Enabled",
             "desired_value": "False",
             "already_msg": "Certificate Revocation is already disabled",
@@ -690,6 +723,7 @@ def change_setting(s):
 
     if current_value == desired_value:
         click.secho(config["already_msg"], fg="red")
+        sleep(2)
         return
 
     body = {"value": config["desired_value"]}
@@ -697,44 +731,47 @@ def change_setting(s):
     result = acme_client.app_settings_put(target["id"], body)
     if result.status_code == 204:
         click.secho(f"Setting {s} was changed successfully")
-        sleep(2)
+        show_system_settings()
+        system_settings_menu()
+
     else:
         click.secho(f"Setting {s} change failed", fg="red")
 
 
-def get_sub():
-    client_id = input("Enter the Client ID (press enter pr return to the previous memu): ").strip()
+def get_sub(client_id:str = None, client_secret:str = None):
     if not client_id:
-        click.secho("No Client ID entered. Returning to previous menu...", fg="yellow")
-        sleep(2)
-        sub_menu()
-
-    client_secret = input("Enter the Client Secret (press enter pr return to the previous memu): ").strip()
+        client_id = input("Enter the Client ID (press enter or return to the previous menu): ").strip()
+        if not client_id:
+            click.secho("No Client ID entered. Returning to previous menu...", fg="yellow")
+            sleep(2)
+            return sub_menu()
     if not client_secret:
-        click.secho("No Secret entered. Returning to previous menu...", fg="yellow")
-        sleep(2)
-        sub_menu()
+        client_secret = input("Enter the Client Secret (press enter or return to the previous menu): ").strip()
+        if not client_secret:
+            click.secho("No Secret entered. Returning to previous menu...", fg="yellow")
+            sleep(2)
+            return sub_menu()
     clear_screen()
     headers = create_auth_headers(client_id, client_secret)
     if not headers:
         click.secho("Invalid Client ID or Secret. Please try again.", fg="red")
-        get_sub()
+        return sub_menu()
     auth_header = headers.get("Authorization")  # Get the Authorization header
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split("Bearer ")[1]  # Extract everything after 'Bearer '
         sub = extract_sub_from_token(token)
-        click.secho(f"extracted subject: {sub}", fg="green")
-        sleep(5)
-        return
+        click.secho(f"Extracted subject: {sub}", fg="green")
+        click.secho("Press Enter to continue...", fg="green")
+        click.pause()
+        return sub_menu()
     else:
         click.secho("No valid Authorization header or token found.", fg="red")
         sleep(2)
-        return
+        return sub_menu()
 
 
 def system_settings_menu():
     while True:
-        click.clear()
         click.secho("=== System Setting Main Menu ===", fg="cyan")
         click.echo("[1] Show Settings")
         click.echo("[2] Allow Wildcard Enrollments")
@@ -752,12 +789,12 @@ def system_settings_menu():
         elif choice == 3:
             change_setting('wildcard_deny')
         elif choice == 4:
-            change_setting('revokation_enabled')
+            change_setting('revocation_enabled')
         elif choice == 5:
-            change_setting('revokation_disabled')
+            change_setting('revocation_disabled')
         elif choice == 6:
             click.secho("Exiting to Main Menu...", fg="cyan")
-            return
+            return sub_menu()
 
 
 def change_template_mapping_menu():
@@ -768,15 +805,30 @@ def change_template_mapping_menu():
         click.echo("[2] change template mapping")
         click.echo("[3] Exit to Main Menu")
 
-        choice = click.prompt("Choose what action you want to execute (1-3)", type=int)
+        choice = click.prompt(
+            "Choose what action you want to execute (1-3)",
+            type=str,
+            default="",
+            show_default=False,
+        ).strip()
 
+        if not choice:
+            click.secho("Returning to Main Menu...", fg="cyan")
+            return sub_menu()
+
+        if not choice.isdigit():
+            click.secho("Invalid choice. Please enter a number between 1 and 5.", fg="red")
+            click.pause()
+            continue
+
+        choice = int(choice)
         if choice == 1:
             show_accounts()
         elif choice == 2:
             change_template()
         elif choice == 3:
             click.secho("Exiting to Main Menu...", fg="cyan")
-            return
+            return sub_menu()
 
 
 def claims_menu():
@@ -784,13 +836,29 @@ def claims_menu():
     while True:
         click.clear()
         click.secho("=== Claims Menu ===", fg="cyan")
-        click.echo("[1] Show Claims")  # done
-        click.echo("[2] Add Claim")  # done
+        click.echo("[1] Show Claims")
+        click.echo("[2] Add Claim")
         click.echo("[3] Update Claim")
-        click.echo("[4] Remove Claim")  # dome
-        click.echo("[5] Exit to Main Menu")  # done
+        click.echo("[4] Remove Claim")
+        click.echo("[5] Exit to Main Menu")
 
-        choice = click.prompt("Choose what action you want to execute (1-5)", type=int)
+        choice_raw = click.prompt(
+            "Choose what action you want to execute (1-5) or press Enter to return",
+            type=str,
+            default="",
+            show_default=False,
+        ).strip()
+
+        if not choice_raw:
+            click.secho("Returning to Main Menu...", fg="cyan")
+            return sub_menu()
+
+        if not choice_raw.isdigit():
+            click.secho("Invalid choice. Please enter a number between 1 and 5.", fg="red")
+            click.pause()
+            continue
+
+        choice = int(choice_raw)
 
         if choice == 1:
             show_claims()
@@ -802,7 +870,7 @@ def claims_menu():
             remove_claim()
         elif choice == 5:
             click.secho("Exiting to Main Menu...", fg="cyan")
-            sub_menu()
+            return sub_menu()
         else:
             click.secho("Invalid choice. Please enter a number between 1 and 5.", fg="red")
             click.pause()
@@ -817,51 +885,70 @@ def identifiers_menu():
         click.echo("[3] Remove Identifiers")
         click.echo("[4] Exit to Main Menu")
 
-        choice = click.prompt("Choose what action you want to execute (1-5)", type=int)
+        choice_raw = click.prompt(
+            "Choose what action you want to execute (1-4) or press Enter to return",
+            type=str,
+            default="",
+            show_default=False,
+        ).strip()
+
+        if not choice_raw:
+            click.secho("Returning to Main Menu...", fg="cyan")
+            return sub_menu()
+
+        if not choice_raw.isdigit():
+            click.secho("Invalid choice. Please enter a number between 1 and 4.", fg="red")
+            click.pause()
+            continue
+
+        choice = int(choice_raw)
 
         if choice == 1:
-            show_identifiers()  # done
+            show_identifiers()
         elif choice == 2:
             add_identifier()
         elif choice == 3:
             remove_identifier()
         elif choice == 4:
             click.secho("Exiting to Main Menu...", fg="cyan")
-            return
+            return sub_menu()
+        else:
+            click.secho("Invalid choice. Please enter a number between 1 and 4.", fg="red")
+            click.pause()
 
 
 def admin():
     while True:
         click.clear()
         click.secho("=== Administration Menu ===", fg="cyan")
-        click.echo("[1] Claims")
-        click.echo("[2] Identifiers")
-        click.echo("[3] Get EAB Keys")
-        click.echo("[4] Get claim Subject")
-        click.echo("[5] Change Template Mapping")
-        click.echo("[6] Delete EAB Keys")
-        click.echo("[7] Manage Systeme Settings")
+        click.echo("[1] Get claim Subject")
+        click.echo("[2] Get EAB Keys")
+        click.echo("[3] Delete EAB Keys")
+        click.echo("[4] Change Template Mapping")
+        click.echo("[5] Claims")
+        click.echo("[6] Identifiers")
+        click.echo("[7] Manage System Settings")
         click.echo("[8] Exit")
 
-        choice = click.prompt("Choose what action you want to execute (1-8)", type=int)
+        choice = click.prompt("Choose what action you want to execute (1-8)", default="", type=int)
 
         if choice == 1:
-            claims_menu()
-        elif choice == 2:
-            identifiers_menu()
-        elif choice == 3:
-            eab_keys()
-        elif choice == 4:
             get_sub()
-        elif choice == 5:
-            change_template_mapping_menu()
-        elif choice == 6:
+        elif choice == 2:
+            eab_keys()
+        elif choice == 3:
             delete_eab_keys()
+        elif choice == 4:
+            change_template_mapping_menu()
+        elif choice == 5:
+            claims_menu()
+        elif choice == 6:
+            identifiers_menu()
         elif choice == 7:
             system_settings_menu()
         elif choice == 8:
             click.secho("Exiting", fg="cyan")
-            exit(0)
+            sys.exit(0)
         else:
             click.secho("Invalid choice. Please enter a number between 1 and 8.", fg="red")
             sub_menu()
@@ -871,22 +958,25 @@ def account():
     while True:
         click.clear()
         click.secho("=== Account Admin ===", fg="cyan")
-        click.echo("[1] Claims")  # done
-        click.echo("[2] Get EAB Keys")  # done
-        click.echo("[3] Get claim Subject")  # done
-        click.echo("[4] Exit")
+        click.echo("[1] Get claim Subject")
+        click.echo("[2] Get EAB Keys")
+        click.echo("[3] Delete EAB Keys")
+        click.echo("[4] Change Template Mapping")
+        click.echo("[5] Exit")
 
-        choice = click.prompt("Choose what action you want to execute (1-4)", type=int)
+        choice = click.prompt("Choose what action you want to execute (1-5)", default="", type=int)
 
         if choice == 1:
-            claims_menu()
+            get_sub()
         elif choice == 2:
             eab_keys()
         elif choice == 3:
-            get_sub()
+            delete_eab_keys()
         elif choice == 4:
+            change_template_mapping_menu()
+        elif choice == 5:
             click.secho("Exiting", fg="cyan")
-            exit(0)
+            sys.exit(0)
         else:
             click.secho("Invalid choice. Please enter a number between 1 and 4.", fg="red")
             click.pause()
@@ -902,71 +992,124 @@ def user():
         click.echo("[2] Get claim Subject")
         click.echo("[3] Exit")
 
-        choice = click.prompt("Choose what action you want to execute (1-3)", type=int)
+        choice = click.prompt("Choose what action you want to execute (1-3)", default="", type=int)
 
         if choice == 1:
-            eab_keys()  # done
+            eab_keys(variables.get("client_id"),variables.get("client_secret"))  # done
         elif choice == 2:
-            get_sub()
+            get_sub(variables.get("client_id"),variables.get("client_secret"))
         elif choice == 3:
             click.secho("Exiting", fg="cyan")
-            exit(0)
+            sys.exit(0)
         else:
             click.secho("Invalid choice. Please enter a number between 1 and 4.", fg="red")
             click.pause()
 
 
-def sub_menu():
+def determine_access_level():
     try:
-        if acme_client.app_settings_get():
+        claims_resp = acme_client.claim_get()
+        claims = claims_resp.json()
+        if claims:
+            click.secho("You have Super Admin access.", fg="green")
+            variables['user_type'] = 'admin'
+            sleep(3)
+            clear_screen()
             admin()
-        elif acme_client.admin_accounts_get():
-            account()
-        else:
-            user()
-    finally:
-        click.secho("could not determine acme role. Exiting...", fg="cyan")
-        exit(0)
+            return
+    except Exception:
+        pass
 
+    try:
+        accounts_resp = acme_client.admin_accounts_get()
+        accounts = accounts_resp.json()
+        if accounts:
+            click.secho("You have Account Admin access.", fg="green")
+            variables['user_type'] = 'account'
+            sleep(3)
+            clear_screen()
+            account()
+            return
+    except Exception:
+        pass
+
+    click.secho("You have Enrollment User access .", fg="green")
+    variables['user_type'] = 'user'
+    sleep(3)
+    clear_screen()
+    user()
+
+def sub_menu():
+    """Present the Main Menu and handle user choices."""
+    user_type = variables.get("user_type")
+    if user_type is None:
+        determine_access_level()
+    elif user_type == 'admin':
+        admin()
+    elif user_type == 'account':
+        account()
+    elif user_type == 'user':
+        user()
 
 
 @click.command()
-def main_menu(base_path: str = "."):
+@click.option("--base-path", default=".", show_default=True,
+              type=click.Path(exists=True, file_okay=False, path_type=str))
+def main_menu(base_path: str) -> None:
     # load global variable
     global variables
     global acme_client
 
-    # load Variables
-    variables = load_user_variables(base_path)
 
-    # validate Required Varioables
-    REQUIRED = ["scope", "audience", "oidc_discovery_url", "acme_dns", "keyfactor_dns", "cert_check"]
-    missing = [k for k in REQUIRED if not variables.get(k)]
-    if missing:
-        raise ValueError(f"Missing required config keys in variables.py: {', '.join(missing)}")
+    try:
+        variables = load_user_variables(base_path=base_path)
+    except Exception as exc:
+        click.secho(f"Failed to load configuration: {exc}", fg="red")
+        raise SystemExit(1)
 
-    # Load OIDC Variales
-    get_oidc_json(variables['oidc_discovery_url'])
+    # validate Required Variables
+    required_keys = ["scope", "audience", "oidc_discovery_url", "acme_dns", "keyfactor_dns", "cert_check"]
+    missing_keys = [key for key in required_keys if variables.get(key) in (None, "")]
+    if missing_keys:
+        raise ValueError(f"Missing required config keys in variables.py: {', '.join(missing_keys)}")
 
-    # load acme client class
+    client_id = variables.get("client_id")
+    if not client_id:
+        client_id = click.prompt("Enter OIDC Client ID", type=str).strip()
+        if not client_id:
+            click.secho("Client ID is required", fg="red")
+            raise SystemExit(1)
+        variables["client_id"] = client_id
+
+    client_secret = variables.get("client_secret")
+    if not client_secret:
+        client_secret = click.prompt("Enter OIDC Client Secret", type=str, hide_input=True).strip()
+        if not client_secret:
+            click.secho("Client Secret is required", fg="red")
+            raise SystemExit(1)
+        variables["client_secret"] = client_secret
+
+    try:
+        get_oidc_json(variables["oidc_discovery_url"])
+    except Exception as exc:
+        click.secho(f"Failed to load OIDC metadata: {exc}", fg="red")
+        raise SystemExit(1)
+
     acme_client = AcmeClient(variables)
 
-    if not variables['client_id']:
-        variables['client_id'] = click.prompt("Enter OIDC Client ID", type=str)
-        if not variables['client_id']:
-            click.secho("Client ID is required", fg="red")
-            exit(1)
-    if not variables['client_secret']:
-        variables['client_secret'] = click.prompt("Enter OIDC Client Secret", type=str)
-        if not variables['client_secret']:
-            click.secho("Client Secret is required", fg="red")
-            exit(1)
     click.echo("Validating Access Token...")
-    if not create_auth_headers(variables['client_id'], variables['client_secret']):
+    sleep(1)
+    headers = create_auth_headers(variables["client_id"], variables["client_secret"])
+    if not headers:
         click.echo("Failed to create Authorization Token")
-        exit(1)
+        raise SystemExit(1)
+    else:
+        click.secho("Access Token is valid", fg="green")
+
     click.echo("Determining ACME role level")
-    sub_menu()
+    sleep(1)
+    determine_access_level()
+
 
 if __name__ == "__main__":
     main_menu()

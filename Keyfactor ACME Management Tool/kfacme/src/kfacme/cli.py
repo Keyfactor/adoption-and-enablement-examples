@@ -3,6 +3,7 @@ import sys
 from .scaffold import init_project
 from .app import main_menu
 from . import __version__
+from .config import load_user_variables
 
 
 def main(argv=None) -> int:
@@ -15,6 +16,12 @@ def main(argv=None) -> int:
         action="version",
         version=f"%(prog)s {__version__}",
     )
+    parser.add_argument(
+        "--variables-file",
+        default=None,
+        help="Path to variables.py",
+    )
+    
     # Subparsers for commands
     sub = parser.add_subparsers(dest="command")
 
@@ -33,7 +40,7 @@ def main(argv=None) -> int:
 
     # Handle the default case when no subcommand is provided
     if args.command is None:
-        main_menu()
+        main_menu.callback(str(args.variables_file))
         return 0
 
     # If nothing matches, print the help

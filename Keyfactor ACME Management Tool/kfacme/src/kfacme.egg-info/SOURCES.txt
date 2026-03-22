@@ -1,6 +1,5 @@
 LICENSE.txt
 MANIFEST.in
-README.md
 pyproject.toml
 setup.py
 src/kfacme/__init__.py
