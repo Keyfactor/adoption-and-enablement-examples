@@ -153,7 +153,7 @@ function Remove-AcmeClaimMenu {
 function Add-AcmeClaimMenu {
     param($Vars)
     $roleMap = @{ '1' = 'EnrollmentUser'; '2' = 'AccountAdmin'; '3' = 'SuperAdmin' }
-    $typeMap = @{ '1' = 'Role'; '2' = 'Subject' }
+    $typeMap = @{ '1' = 'role'; '2' = 'sub' }
     while ($true) {
         Write-Host "=== Add Claim ===`n[1] EnrollmentUser`n[2] AccountAdmin`n[3] SuperAdmin`n[4] Return to action menu" -ForegroundColor Blue
         $response = Read-Host "Select roles (e.g. 1,2)"
@@ -188,7 +188,7 @@ function Add-AcmeClaimMenu {
             $templates | Select-Object Id, TemplateName | Sort-Object Id | Format-Table -AutoSize | Out-Host
             $templateid = Read-Host "Enter the ID of the template for this claim or press Enter to return"
             if ([string]::IsNullOrWhiteSpace($response)) { return }
-            ($templates | Where-Object { $_.Id -eq $templateid }).TemplateName
+            ($templates | Where-Object { $_.Id -eq $templateid }).CommonName
         } else { $null }
         Add-AcmeClaim -Vars $Vars -ClaimValue $claimValue -Roles ($selectedRoles -join ' ') -Template $template -claimtype $selectedClaimType
     }
@@ -232,7 +232,7 @@ function Update-AcmeClaimMenu {
                 $templates | Select-Object Id, TemplateName | Sort-Object Id | Format-Table -AutoSize | Out-Host
                 $templateid = Read-Host "Enter the ID of the template for this claim or press Enter to return"
                 if ($templateid -contains $null) { return }
-                $template = ($templates | Where-Object { $_.Id -eq $templateid }).TemplateName
+                $template = ($templates | Where-Object { $_.Id -eq $templateid }).CommonName
                 Update-AcmeClaim -Vars $Vars -Claim $claim -Template $template 
             } 
         }
